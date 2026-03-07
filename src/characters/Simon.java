@@ -43,26 +43,25 @@ public class Simon extends Character {
         System.out.println();
     }
 
-    public void showBackstory() {
-        System.out.println();
-        System.out.println(ColorUtil.boldBrightCyan("┌───────────────────────────── 📘 SIMON'S BACKSTORY 📘 ─────────────────────────────┐"));
-        System.out.println(ColorUtil.brightYellow("  Simon Versace — a mage with an unshakable dream of becoming the most powerful"));
-        System.out.println(ColorUtil.brightYellow("  sorcerer alive. From childhood, mana coursed naturally through"));
-        System.out.println(ColorUtil.brightYellow("  his veins, earning him the title of prodigy in the whispers of others."));
-        System.out.println(ColorUtil.brightYellow("  Yet beneath that promise of greatness, Simon was still just a boy—"));
-        System.out.println(ColorUtil.brightYellow("  vulnerable, human, and plagued by a fear he could never quite conquer: spiders."));
-        System.out.println();
-        System.out.println(ColorUtil.brightYellow("  He hails from the Forest of Silence, a place where no birds sing and no"));
-        System.out.println(ColorUtil.brightYellow("  wind dares stir the trees. The air is unnaturally still, as if the forest"));
-        System.out.println(ColorUtil.brightYellow("  itself is holding its breath—an unsettling quiet that lingers in the minds"));
-        System.out.println(ColorUtil.brightYellow("  of all who dwell there. Within its academy, Simon immersed himself in study,"));
-        System.out.println(ColorUtil.brightYellow("  mastering theory and knowledge with ease. But soon, he discovered that wisdom"));
-        System.out.println(ColorUtil.brightYellow("  confined to books was not enough to fulfill his ambitions."));
-        System.out.println();
-        System.out.println(ColorUtil.brightYellow("  If he truly wished to claim power, he would need more than learning—"));
-        System.out.println(ColorUtil.brightYellow("  he would need experience."));
-        System.out.println(ColorUtil.boldBrightCyan("└──────────────────────────────────────────────────────────────────────────────────┘"));
-        System.out.println();
+    @Override
+    public String showBackstory() {
+        return "┌───────────────────────────── 📘 SIMON'S BACKSTORY 📘 ─────────────────────────────┐\n" +
+                "  Simon Versace — a mage with an unshakable dream of becoming the most powerful\n" +
+                "  sorcerer alive. From childhood, mana coursed naturally through\n" +
+                "  his veins, earning him the title of prodigy in the whispers of others.\n" +
+                "  Yet beneath that promise of greatness, Simon was still just a boy—\n" +
+                "  vulnerable, human, and plagued by a fear he could never quite conquer: spiders.\n" +
+                "\n" +
+                "  He hails from the Forest of Silence, a place where no birds sing and no\n" +
+                "  wind dares stir the trees. The air is unnaturally still, as if the forest\n" +
+                "  itself is holding its breath—an unsettling quiet that lingers in the minds\n" +
+                "  of all who dwell there. Within its academy, Simon immersed himself in study,\n" +
+                "  mastering theory and knowledge with ease. But soon, he discovered that wisdom\n" +
+                "  confined to books was not enough to fulfill his ambitions.\n" +
+                "\n" +
+                "  If he truly wished to claim power, he would need more than learning—\n" +
+                "  he would need experience.\n" +
+                "└──────────────────────────────────────────────────────────────────────────────────┘";
     }
 
 

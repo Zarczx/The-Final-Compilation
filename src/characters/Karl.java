@@ -46,25 +46,24 @@ public class Karl extends Character{
         System.out.println();
     }
 
-    public void showBackstory() {
-        System.out.println();
-        System.out.println(ColorUtil.boldBrightCyan("┌───────────────────────────── 📘 KARL'S BACKSTORY 📘 ─────────────────────────────┐"));
-        System.out.println(ColorUtil.brightYellow  ("  Karl Clover Dior IV was born and raised in the Forest of Silence, a place where"));
-        System.out.println(ColorUtil.brightYellow  ("  the air is thick with mist and danger lurks in every shadow."));
-        System.out.println(ColorUtil.brightYellow  ("  His father, once a skilled archer, taught him the bow not as a weapon of"));
-        System.out.println(ColorUtil.brightYellow  ("  glory but as a means of survival against Rotfang Wolves, Carrion Bats, and"));
-        System.out.println(ColorUtil.brightYellow  ("  the twisted Dreadbark Treants that haunted their home."));
-        System.out.println();
-        System.out.println(ColorUtil.brightYellow  ("  The forest shaped Karl's instincts—quiet, patient, always watching—and his"));
-        System.out.println(ColorUtil.brightYellow  ("  arrows rarely missed their mark. When the silence deepened and the Hollow"));
-        System.out.println(ColorUtil.brightYellow  ("  Stag began to prowl, Karl realized that the forest itself had become"));
-        System.out.println(ColorUtil.brightYellow  ("  corrupted, demanding a hunter strong enough to fight back."));
-        System.out.println();
-        System.out.println(ColorUtil.brightYellow  ("  Now, with his father's teachings in his heart and the weight of his homeland"));
-        System.out.println(ColorUtil.brightYellow  ("  on his shoulders, Karl hunts not just for survival but to restore the balance"));
-        System.out.println(ColorUtil.brightYellow  ("  of the place he calls home."));
-        System.out.println(ColorUtil.boldBrightCyan("└──────────────────────────────────────────────────────────────────────────────────┘"));
-        System.out.println();
+    @Override
+    public String showBackstory() {
+        return "┌───────────────────────────── 📘 KARL'S BACKSTORY 📘 ─────────────────────────────┐\n" +
+                "  Karl Clover Dior IV was born and raised in the Forest of Silence, a place where\n" +
+                "  the air is thick with mist and danger lurks in every shadow.\n" +
+                "  His father, once a skilled archer, taught him the bow not as a weapon of\n" +
+                "  glory but as a means of survival against Rotfang Wolves, Carrion Bats, and\n" +
+                "  the twisted Dreadbark Treants that haunted their home.\n" +
+                "\n" +
+                "  The forest shaped Karl's instincts—quiet, patient, always watching—and his\n" +
+                "  arrows rarely missed their mark. When the silence deepened and the Hollow\n" +
+                "  Stag began to prowl, Karl realized that the forest itself had become\n" +
+                "  corrupted, demanding a hunter strong enough to fight back.\n" +
+                "\n" +
+                "  Now, with his father's teachings in his heart and the weight of his homeland\n" +
+                "  on his shoulders, Karl hunts not just for survival but to restore the balance\n" +
+                "  of the place he calls home.\n" +
+                "└──────────────────────────────────────────────────────────────────────────────────┘";
     }
 
 

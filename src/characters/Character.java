@@ -305,6 +305,10 @@ public abstract class Character {
         return hp > 0;
     }
 
+    public String showBackstory() {
+        return "";
+    }
+
     public boolean consumeEnergy(int cost) {
         if (energy < cost) {
             return false; // not enough energy
@@ -432,4 +436,5 @@ public abstract class Character {
     }
 
 
+    public int getLevel() {return level;}
 }
