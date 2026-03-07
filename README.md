@@ -25,7 +25,7 @@ Welcome to our collaborative project! This guide will walk you through the essen
 
 This copies the project to your computer.
 
-1. Go to: https://github.com/Lterckski/The-Final-Compilation
+1. Go to: https://github.com/Zarczx/The-Final-Compilation.git
 2. Click the green **Code** button, then copy the URL.
 3. In your terminal, run:
    ```

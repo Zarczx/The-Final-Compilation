@@ -48,24 +48,23 @@ public class Kael extends  Character{      // 15% crit chance
         System.out.println();
     }
 
-    public void showBackstory() {
-        System.out.println();
-        System.out.println(ColorUtil.boldBrightCyan  ("┌───────────────────────────── 📘 KAEL'S BACKSTORY 📘 ─────────────────────────────┐"));
-        System.out.println(ColorUtil.brightYellow("  Kael Saint Laurent was born in the shadow of the Black Castle, in a family that"));
-        System.out.println(ColorUtil.brightYellow("  lived modestly within the crumbling Town of Decay. His childhood was"));
-        System.out.println(ColorUtil.brightYellow("  marked by sickness in the streets and guards demanding bribes, yet Kael never"));
-        System.out.println(ColorUtil.brightYellow("  let the rot of the world steal his spirit. He spent hours watching the castle"));
-        System.out.println(ColorUtil.brightYellow("  soldiers train, imitating their sword movements with sticks until his hands"));
-        System.out.println(ColorUtil.brightYellow("  blistered, slowly turning mimicry into skill."));
-        System.out.println();
-        System.out.println(ColorUtil.brightYellow("  Even as a child, he carried himself with the bearing of a leader. Kael would"));
-        System.out.println(ColorUtil.brightYellow("  gather the other children of the town into ragtag games of knights and kings,"));
-        System.out.println(ColorUtil.brightYellow("  but unlike the corrupted rulers above, he always played the protector—"));
-        System.out.println(ColorUtil.brightYellow("  shielding his friends from imagined dangers. In a place where hope was rare,"));
-        System.out.println(ColorUtil.brightYellow("  Kael's presence became a quiet anchor, hinting that even in the midst of"));
-        System.out.println(ColorUtil.brightYellow("  decay, someone could rise to stand against the darkness."));
-        System.out.println(ColorUtil.boldBrightCyan("└──────────────────────────────────────────────────────────────────────────────────┘"));
-        System.out.println();
+    @Override
+    public String showBackstory() {
+        return "┌───────────────────────────── 📘 KAEL'S BACKSTORY 📘 ─────────────────────────────┐\n" +
+                "  Kael Saint Laurent was born in the shadow of the Black Castle, in a family that\n" +
+                "  lived modestly within the crumbling Town of Decay. His childhood was\n" +
+                "  marked by sickness in the streets and guards demanding bribes, yet Kael never\n" +
+                "  let the rot of the world steal his spirit. He spent hours watching the castle\n" +
+                "  soldiers train, imitating their sword movements with sticks until his hands\n" +
+                "  blistered, slowly turning mimicry into skill.\n" +
+                "\n" +
+                "  Even as a child, he carried himself with the bearing of a leader. Kael would\n" +
+                "  gather the other children of the town into ragtag games of knights and kings,\n" +
+                "  but unlike the corrupted rulers above, he always played the protector—\n" +
+                "  shielding his friends from imagined dangers. In a place where hope was rare,\n" +
+                "  Kael's presence became a quiet anchor, hinting that even in the midst of\n" +
+                "  decay, someone could rise to stand against the darkness.\n" +
+                "└──────────────────────────────────────────────────────────────────────────────────┘";
     }
 
     // Passive - Blade Swift
