@@ -1,14 +1,36 @@
 package GameGUI;
 
-/**
- * Main.java — Entry point for the GUI version of the game.
- *
- * HOW TO RUN:
- *   IntelliJ → Right-click this file → "Run 'Main.main()'"
- *   Eclipse  → Right-click → Run As → Java Application
- */
+
+import javax.swing.*;
+import java.awt.*;
+
 public class Main {
+    private static CardLayout cardLayout = new CardLayout();
+    private static JPanel mainPanel = new JPanel(cardLayout);
+
     public static void main(String[] args) {
-        new GameEngine().start();
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("The Final Compilation");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1280, 720);
+            frame.setResizable(false);
+            frame.setLocationRelativeTo(null);
+
+            // 1. Add the screens to the card container
+            mainPanel.add(new TitleScreen(), "TITLE");
+            mainPanel.add(new GameScreen(), "GAME");
+
+            frame.add(mainPanel);
+
+            // Start on the Title Screen
+            cardLayout.show(mainPanel, "TITLE");
+
+            frame.setVisible(true);
+        });
+    }
+
+    // Helper method to switch to the game
+    public static void startGame() {
+        cardLayout.show(mainPanel, "GAME");
     }
 }
