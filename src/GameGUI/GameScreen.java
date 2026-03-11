@@ -45,9 +45,11 @@ import java.util.Random;
 public class GameScreen extends JPanel {
 
     // ─── Screen names (CardLayout keys) ──────────────────────────────────────
-    private static final String SCREEN_INTRO     = "intro";
-    private static final String SCREEN_SELECTION = "selection";
-    private static final String SCREEN_BATTLE    = "battle";
+    private static final String SCREEN_INTRO        = "intro";
+    private static final String SCREEN_SELECTION    = "selection";
+    private static final String SCREEN_POST_SELECT  = "postSelect";
+    private static final String SCREEN_WORLD1_INTRO = "world1Intro";
+    private static final String SCREEN_BATTLE       = "battle";
 
     // ─── Layout ───────────────────────────────────────────────────────────────
     private final CardLayout cardLayout = new CardLayout();
@@ -56,6 +58,19 @@ public class GameScreen extends JPanel {
     // ─── Sub-panels ───────────────────────────────────────────────────────────
     private HeroSelectionPanel heroSelectionPanel;
     private BattlePanel        battlePanel;
+    private JPanel             postSelectPanel;
+    private JPanel             world1IntroPanel;
+
+    // ─── Post-selection dialogue widgets ─────────────────────────────────────
+    private JTextArea postDialogueBox;
+    private JButton   postContinueBtn;
+    private int       postDialogueIndex = 0;
+
+    // ─── World 1 intro dialogue widgets ──────────────────────────────────────
+    private JTextArea w1DialogueBox;
+    private JButton   w1ContinueBtn;
+    private int       w1DialogueIndex  = 0;
+    private Timer     w1TypingTimer;
 
     // ─── Intro screen widgets (preserved from original GameScreen.java) ───────
     JTextArea dialogueBox;
@@ -107,6 +122,12 @@ public class GameScreen extends JPanel {
         heroSelectionPanel.setOnHeroConfirmed(this::onHeroConfirmed);
         cardPanel.add(heroSelectionPanel, SCREEN_SELECTION);
 
+        postSelectPanel = buildPostSelectScreen();
+        cardPanel.add(postSelectPanel, SCREEN_POST_SELECT);
+
+        world1IntroPanel = buildWorld1IntroScreen();
+        cardPanel.add(world1IntroPanel, SCREEN_WORLD1_INTRO);
+
         battlePanel = new BattlePanel();
         battlePanel.setOnReturnToSelection(this::goToSelection);
         battlePanel.setOnRestartBattle(this::restartBattle);
@@ -120,8 +141,10 @@ public class GameScreen extends JPanel {
 
     // ─── Screen navigation ────────────────────────────────────────────────────
 
-    private void goToIntro()     { cardLayout.show(cardPanel, SCREEN_INTRO);     }
-    private void goToSelection() { cardLayout.show(cardPanel, SCREEN_SELECTION); }
+    private void goToIntro()        { cardLayout.show(cardPanel, SCREEN_INTRO);        }
+    private void goToSelection()    { cardLayout.show(cardPanel, SCREEN_SELECTION);    }
+    private void goToPostSelect()   { cardLayout.show(cardPanel, SCREEN_POST_SELECT);  }
+    private void goToWorld1Intro()  { cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO); }
 
     private void goToBattle() {
         if (confirmedHero == null) return;
@@ -151,14 +174,13 @@ public class GameScreen extends JPanel {
     private void onHeroConfirmed(HeroDefinition hero) {
         this.confirmedHero = hero;
 
-        // Pick an enemy (you already have this helper method)
-        EnemyDefinition enemy = pickEnemy();
+        // Build the post-selection dialogues for this specific hero
+        buildPostSelectDialogues(hero);
 
-        // Tell the battle panel to load this specific data
-        battlePanel.startBattle(confirmedHero, enemy);
-
-        // Switch the view to the battle screen
-        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        // Go to the post-selection screen (backstory + weapon gift)
+        goToPostSelect();
+        postDialogueIndex = 0;
+        startPostTyping();
     }
 
     // ─── Result overlay (called by BattlePanel) ───────────────────────────────
@@ -363,10 +385,10 @@ public class GameScreen extends JPanel {
         runBtn.setBounds(187, 47, 100, 33);
         popup.add(runBtn);
 
-        // Fight → go to hero selection (replaces original's inline battle panel)
+        // Fight → start the battle with the already-confirmed hero
         fightBtn.addActionListener(e -> {
             battleChoicePopup.setVisible(false);
-            goToSelection(); // ← New: full hero selection screen
+            goToBattle();
         });
 
         runBtn.addActionListener(e -> {
@@ -401,8 +423,7 @@ public class GameScreen extends JPanel {
 
         if (dialogueIndex >= dialogues.length) {
             continueBtn.setEnabled(false);
-            battleChoicePopup.setVisible(true);
-            dialogueBox.setText("Choose your character.");
+            goToSelection(); // Player picks hero first; battleChoicePopup shown after
             return;
         }
 
@@ -435,5 +456,260 @@ public class GameScreen extends JPanel {
         JButton btn = new JButton(text);
         btn.setBounds(x, y, w, h);
         return btn;
+    }
+
+    // ─── Post-selection dialogue screen ──────────────────────────────────────
+
+    /** Lines of dialogue shown after a hero is confirmed, before World 1 begins. */
+    private String[] postDialogues;
+
+    /**
+     * Populates postDialogues based on the chosen hero — mirrors StoryEngine's
+     * chooseCharacter() backstory + weapon-gift text for each character.
+     */
+    private void buildPostSelectDialogues(HeroDefinition hero) {
+        String heroLine;
+        String weaponLine;
+        String armorLine;
+
+        switch (hero.name) {
+            case "Kael Saint Laurent" -> {
+                heroLine  = "⚔️ You have chosen KAEL SAINT LAURENT, the valiant Swordsman!\n\n" +
+                        hero.backstory;
+                weaponLine = "🗡️ The gods bestow upon you your starting gear...\n\n" +
+                        "The Old Broadsword rests firmly in your grasp, its blade marked\n" +
+                        "by the scars of past battles.";
+                armorLine  = "🛡️ The Leather Guard settles on your shoulders — worn, but reliable.\n\n" +
+                        "You are ready. The forest of World 1 awaits.";
+            }
+            case "Karl Clover Dior IV" -> {
+                heroLine  = "🏹 You have chosen KARL CLOVER DIOR IV, the swift Archer!\n\n" +
+                        hero.backstory;
+                weaponLine = "🏹 The gods bestow upon you your starting gear...\n\n" +
+                        "The Shortbow hums softly — each arrow you notch feels like an\n" +
+                        "extension of your will.";
+                armorLine  = "🛡️ The Leather Guard settles on your shoulders — worn, but reliable.\n\n" +
+                        "You are ready. The forest of World 1 awaits.";
+            }
+            case "Simon Versace" -> {
+                heroLine  = "🌟 You have chosen SIMON VERSACE, the arcane Mage!\n\n" +
+                        hero.backstory;
+                weaponLine = "🔮 The gods bestow upon you your starting gear...\n\n" +
+                        "The Wooden Staff pulses faintly, whispering secrets\n" +
+                        "of forgotten spells.";
+                armorLine  = "🛡️ The Leather Guard shimmers with faint runes — fragile,\n" +
+                        "yet brimming with arcane energy.\n\n" +
+                        "You are ready. The forest of World 1 awaits.";
+            }
+            default -> {
+                heroLine   = "You have chosen: " + hero.name + ".\n\n" + hero.backstory;
+                weaponLine = "✨ The gods bestow upon you your starting gear...";
+                armorLine  = "You are ready. The forest of World 1 awaits.";
+            }
+        }
+
+        postDialogues = new String[] { heroLine, weaponLine, armorLine };
+    }
+
+    /**
+     * Builds the post-selection card — a full-screen dialogue panel styled like
+     * the intro screen, used for backstory + weapon-gift sequence.
+     */
+    private JPanel buildPostSelectScreen() {
+        JPanel screen = new JPanel(null);
+        screen.setBackground(new Color(28, 26, 44));
+        screen.setPreferredSize(new Dimension(1280, 720));
+
+        // Dark scenic background
+        JPanel bg = new JPanel();
+        bg.setBounds(0, 0, 1280, 520);
+        bg.setBackground(new Color(20, 18, 35));
+        screen.add(bg);
+
+        // Dialogue box — same style as intro
+        postDialogueBox = new JTextArea();
+        postDialogueBox.setBounds(60, 530, 1000, 140);
+        postDialogueBox.setBackground(new Color(30, 28, 50));
+        postDialogueBox.setForeground(Color.WHITE);
+        postDialogueBox.setFont(new Font("Serif", Font.PLAIN, 16));
+        postDialogueBox.setEditable(false);
+        postDialogueBox.setLineWrap(true);
+        postDialogueBox.setWrapStyleWord(true);
+        postDialogueBox.setBorder(BorderFactory.createLineBorder(new Color(100, 80, 180), 2));
+        screen.add(postDialogueBox);
+
+        // Continue button
+        postContinueBtn = new JButton("▶  Continue");
+        postContinueBtn.setBounds(1100, 610, 140, 40);
+        postContinueBtn.setBackground(new Color(70, 50, 120));
+        postContinueBtn.setForeground(Color.WHITE);
+        postContinueBtn.setFocusPainted(false);
+        postContinueBtn.addActionListener(e -> continuePostDialogue());
+        screen.add(postContinueBtn);
+
+        return screen;
+    }
+
+    /** Tracks the currently running post-selection typing timer so it can be stopped. */
+    private Timer postTypingTimer;
+
+    /** Kicks off typing animation for the current postDialogueIndex line. */
+    private void startPostTyping() {
+        if (postDialogues == null || postDialogueIndex >= postDialogues.length) return;
+
+        // Stop any previously running timer before starting a new one
+        if (postTypingTimer != null && postTypingTimer.isRunning()) {
+            postTypingTimer.stop();
+        }
+
+        String text = postDialogues[postDialogueIndex];
+        postDialogueBox.setText("");
+        int[] ci = {0};
+
+        postTypingTimer = new Timer(25, null);
+        postTypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                postDialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                postTypingTimer.stop();
+            }
+        });
+        postTypingTimer.start();
+    }
+
+    /**
+     * Advances through post-selection dialogues.
+     * If still typing, first click skips to end of current line.
+     * After the last line, transitions to World 1 (SCREEN_BATTLE).
+     */
+    private void continuePostDialogue() {
+        // If still typing, skip to end of current line instead of advancing
+        if (postTypingTimer != null && postTypingTimer.isRunning()) {
+            postTypingTimer.stop();
+            postDialogueBox.setText(postDialogues[postDialogueIndex]);
+            return;
+        }
+
+        postDialogueIndex++;
+        if (postDialogueIndex < postDialogues.length) {
+            startPostTyping();
+        } else {
+            // All backstory + weapon-gift lines shown — enter World 1 intro dialogue
+            postDialogueIndex = 0;
+            w1DialogueIndex = 0;
+            goToWorld1Intro();
+            startW1Typing();
+        }
+    }
+
+    // ─── World 1 intro dialogue screen ───────────────────────────────────────
+
+    /** Dialogue lines from World1.java's opening story sequence, before combat begins. */
+    private static final String[] WORLD1_DIALOGUES = {
+            "You wake up gasping for air. The world is drained of color.\n\n" +
+                    "You are lying on a bed of gray moss in a dead forest. The trees are skeletal\n" +
+                    "giants, stripped to bone-white wood. A cold mist coils around your ankles,\n" +
+                    "and silence presses from every side — watching, waiting.",
+
+            "A heavy bell tolls in the distance...\n" +
+                    "\"Dong... Dong...\"",
+
+            "From the mist steps a figure cloaked in tattered robes.\n" +
+                    "He leans heavily on a staff. As he lifts his hood, you jolt back —\n" +
+                    "the face is familiar. It looks exactly like your professor, Khai.\n" +
+                    "But his eyes are weary, holding the weight of centuries.",
+
+            "🟢 \"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n\n" +
+                    "\"We suffer because an evil Necromancer has corrupted these lands.\n" +
+                    "He has drained the nature itself. We must find the Three Stones of Life\n" +
+                    "that hold this reality together. Only then will your path home reveal itself.\"\n\n" +
+                    "🟢 Khai fades back into the mist. A low growl vibrates through the ground...\n\n" +
+                    "⚔️  Three Rotfang Wolves emerge from the tree line. Their glowing red eyes\n" +
+                    "fixate on you. They do not hunt for food — they hunt to kill."
+    };
+
+    /**
+     * Builds the World 1 intro card — same style as the post-select screen.
+     * Shows the opening story sequence from World1.java before the first battle.
+     */
+    private JPanel buildWorld1IntroScreen() {
+        JPanel screen = new JPanel(null);
+        screen.setBackground(new Color(15, 12, 28));
+        screen.setPreferredSize(new Dimension(1280, 720));
+
+        JPanel bg = new JPanel(null);
+        bg.setBounds(0, 0, 1280, 520);
+        bg.setBackground(new Color(10, 8, 22));
+        screen.add(bg);
+
+        JLabel worldLabel = new JLabel("— WORLD 1 : THE FOREST OF ENDINGS —", SwingConstants.CENTER);
+        worldLabel.setBounds(0, 220, 1280, 50);
+        worldLabel.setForeground(new Color(140, 110, 220));
+        worldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
+        bg.add(worldLabel);
+
+        w1DialogueBox = new JTextArea();
+        w1DialogueBox.setBounds(60, 530, 1000, 150);
+        w1DialogueBox.setBackground(new Color(20, 16, 38));
+        w1DialogueBox.setForeground(Color.WHITE);
+        w1DialogueBox.setFont(new Font("Serif", Font.PLAIN, 16));
+        w1DialogueBox.setEditable(false);
+        w1DialogueBox.setLineWrap(true);
+        w1DialogueBox.setWrapStyleWord(true);
+        w1DialogueBox.setBorder(BorderFactory.createLineBorder(new Color(80, 55, 160), 2));
+        screen.add(w1DialogueBox);
+
+        w1ContinueBtn = new JButton("▶  Continue");
+        w1ContinueBtn.setBounds(1100, 650, 140, 40);
+        w1ContinueBtn.setBackground(new Color(60, 40, 110));
+        w1ContinueBtn.setForeground(Color.WHITE);
+        w1ContinueBtn.setFocusPainted(false);
+        w1ContinueBtn.addActionListener(e -> continueW1Dialogue());
+        screen.add(w1ContinueBtn);
+
+        return screen;
+    }
+
+    /** Kicks off typing animation for the current w1DialogueIndex line. */
+    private void startW1Typing() {
+        if (w1DialogueIndex >= WORLD1_DIALOGUES.length) return;
+
+        if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+
+        String text = WORLD1_DIALOGUES[w1DialogueIndex];
+        w1DialogueBox.setText("");
+        int[] ci = {0};
+
+        w1TypingTimer = new Timer(25, null);
+        w1TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w1TypingTimer.stop();
+            }
+        });
+        w1TypingTimer.start();
+    }
+
+    /**
+     * Advances through World 1 intro dialogues.
+     * First click while typing skips to end of current line.
+     * After the last line, transitions to the actual battle (SCREEN_BATTLE).
+     */
+    private void continueW1Dialogue() {
+        if (w1TypingTimer != null && w1TypingTimer.isRunning()) {
+            w1TypingTimer.stop();
+            w1DialogueBox.setText(WORLD1_DIALOGUES[w1DialogueIndex]);
+            return;
+        }
+
+        w1DialogueIndex++;
+        if (w1DialogueIndex < WORLD1_DIALOGUES.length) {
+            startW1Typing();
+        } else {
+            // World 1 intro complete — now enter the actual battle
+            w1DialogueIndex = 0;
+            goToBattle();
+        }
     }
 }
