@@ -25,7 +25,6 @@ public class TitleScreen extends JPanel {
             e.printStackTrace();
         }
 
-        // animation timer (change frame every 400ms)
         timer = new Timer(400, e -> {
             frame++;
             if(frame >= backgrounds.length){
@@ -38,23 +37,25 @@ public class TitleScreen extends JPanel {
 
         setLayout(new GridBagLayout());
 
-        JLabel title = new JLabel("The Final Compilation");
-        title.setFont(new Font("Arial", Font.BOLD, 60));
-        title.setForeground(Color.WHITE);
+        // Logo image — fallback to text if asset missing
+        JLabel title = new JLabel();
+        java.net.URL logoUrl = getClass().getResource("/assets/GUIButtons/TheFinalCompilationLogo.png");
+        if (logoUrl != null) {
+            ImageIcon raw = new ImageIcon(logoUrl);
+            Image scaled = raw.getImage().getScaledInstance(600, 150, Image.SCALE_SMOOTH);
+            title.setIcon(new ImageIcon(scaled));
+        } else {
+            title.setText("The Final Compilation");
+            title.setFont(new Font("Arial", Font.BOLD, 60));
+            title.setForeground(Color.WHITE);
+        }
 
         JButton startBtn = new JButton("Start");
 
         startBtn.addActionListener(e -> {
-            // get the JFrame that contains this panel
             JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-
-            // remove the current TitleScreen panel
             topFrame.getContentPane().removeAll();
-
-            // add the new GameScreen panel
             topFrame.getContentPane().add(new GameScreen());
-
-            // refresh the JFrame
             topFrame.revalidate();
             topFrame.repaint();
         });

@@ -8,71 +8,31 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
 
-/**
- * GameScreen.java  — REFACTORED
- *
- * This is the main game container. It was originally a monolithic class
- * containing: intro dialogue, login popup, exam popup, character selection,
- * battle choice popup, sprite rendering, and HP bars — all inline.
- *
- * After refactoring, responsibilities are separated:
- *
- *  ┌─────────────────────────────────────────────────────────────┐
- *  │  GameScreen      (this file)                                │
- *  │   Orchestrates screen transitions via CardLayout            │
- *  │   Owns: dialogue, login popup, exam popup (from original)   │
- *  │   Delegates to:                                             │
- *  │    ├── HeroSelectionPanel  (hero picking screen)            │
- *  │    ├── BattlePanel         (combat screen)                  │
- *  │    └── BattleLogic         (pure engine, no Swing)          │
- *  │                                                             │
- *  │  Data lives in: HeroData.java                               │
- *  └─────────────────────────────────────────────────────────────┘
- *
- * Preserved from original GameScreen.java:
- *  - All dialogue[] strings (intro story)
- *  - kaelStory[] (now generalized to hero story via HeroData)
- *  - Login popup (username + password)
- *  - Exam popup
- *  - Character selection popup (now full HeroSelectionPanel)
- *  - Battle choice popup (Fight / Run)
- *  - Typing animation (startTyping)
- *  - continueDialogue() flow
- *  - JLayeredPane structure
- *  - Sprite animation system (moved to BattlePanel)
- *  - createButton() helper
- */
 public class GameScreen extends JPanel {
 
-    // ─── Screen names (CardLayout keys) ──────────────────────────────────────
     private static final String SCREEN_INTRO        = "intro";
     private static final String SCREEN_SELECTION    = "selection";
     private static final String SCREEN_POST_SELECT  = "postSelect";
     private static final String SCREEN_WORLD1_INTRO = "world1Intro";
     private static final String SCREEN_BATTLE       = "battle";
 
-    // ─── Layout ───────────────────────────────────────────────────────────────
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel     cardPanel  = new JPanel(cardLayout);
 
-    // ─── Sub-panels ───────────────────────────────────────────────────────────
     private HeroSelectionPanel heroSelectionPanel;
     private BattlePanel        battlePanel;
     private JPanel             postSelectPanel;
     private JPanel             world1IntroPanel;
 
-    // ─── Post-selection dialogue widgets ─────────────────────────────────────
     private JTextArea postDialogueBox;
     private JButton   postContinueBtn;
     private int       postDialogueIndex = 0;
 
-    // ─── World 1 intro dialogue widgets ──────────────────────────────────────
     private JTextArea w1DialogueBox;
     private JButton   w1ContinueBtn;
     private int       w1DialogueIndex  = 0;
     private Timer     w1TypingTimer;
 
-    // ─── Intro screen widgets (preserved from original GameScreen.java) ───────
     JTextArea dialogueBox;
     JButton   continueBtn, menuBtn, backBtn, exitBtn;
 
@@ -89,22 +49,18 @@ public class GameScreen extends JPanel {
     int       dialogueIndex = 0;
     int       charIndex     = 0;
 
-    // ─── State ────────────────────────────────────────────────────────────────
+    private JLabel sceneBgLabel;
     private HeroDefinition confirmedHero = null;
 
-    // ─── Preserved dialogue strings (from original GameScreen.java) ──────────
     String[] dialogues = {
-            "💡 It's just another Tuesday, you come in for your Java examination.\n" +
-                    "You walk in and Professor Khai greets you warmly as you sit before\n" +
-                    "the CodeChum login screen.\n" +
-                    "You place your hands on the keyboard and login... L15Y07W.... ⌨️",
+            "💡 It's just another Tuesday, you come in for your Java examination.",
 
-            "The moment you press \"Start\", the monitor ripples like water... 🌊\n" +
-                    "The screen glitches... ⚡\n" +
-                    "And the world turns to black as the room seems to wrap around you. 🕳️",
+            "You walk in and Professor Khai greets you warmly as you sit before\n" +
+                    "the CodeChum login screen.",
 
-            "When you come to your senses, you're no longer in the lab.\n" +
-                    "You wake up in an unfamiliar place. 👁️"
+            "You place your hands on the keyboard and login... L15Y07W.... ⌨️",
+
+            "Enter your Username, password, and click Sign in.",
     };
 
     // ─── Constructor ──────────────────────────────────────────────────────────
@@ -115,7 +71,6 @@ public class GameScreen extends JPanel {
 
         cardPanel.setBackground(new Color(28, 26, 44));
 
-        // Build each screen
         cardPanel.add(buildIntroScreen(), SCREEN_INTRO);
 
         heroSelectionPanel = new HeroSelectionPanel();
@@ -135,16 +90,16 @@ public class GameScreen extends JPanel {
 
         add(cardPanel, BorderLayout.CENTER);
 
-        // Start the intro
+        setSceneBackground("assets/Backgrounds/NGEBackground.png");
         startTyping(dialogues[dialogueIndex], null);
     }
 
     // ─── Screen navigation ────────────────────────────────────────────────────
 
-    private void goToIntro()        { cardLayout.show(cardPanel, SCREEN_INTRO);        }
-    private void goToSelection()    { cardLayout.show(cardPanel, SCREEN_SELECTION);    }
-    private void goToPostSelect()   { cardLayout.show(cardPanel, SCREEN_POST_SELECT);  }
-    private void goToWorld1Intro()  { cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO); }
+    private void goToIntro()       { cardLayout.show(cardPanel, SCREEN_INTRO);        }
+    private void goToSelection()   { cardLayout.show(cardPanel, SCREEN_SELECTION);    }
+    private void goToPostSelect()  { cardLayout.show(cardPanel, SCREEN_POST_SELECT);  }
+    private void goToWorld1Intro() { cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO); }
 
     private void goToBattle() {
         if (confirmedHero == null) return;
@@ -153,47 +108,28 @@ public class GameScreen extends JPanel {
         cardLayout.show(cardPanel, SCREEN_BATTLE);
     }
 
-    private void restartBattle() {
-        // Same hero, new enemy
-        goToBattle();
-    }
+    private void restartBattle() { goToBattle(); }
 
-    /** Picks an enemy matching the current world level (mirrors StoryEngine world flow). */
     private EnemyDefinition pickEnemy() {
-        // For now picks a random enemy — extend to use StoryEngine.getCurrWorldLevel()
         var enemies = HeroData.ENEMIES;
         return enemies.get(new Random().nextInt(enemies.size()));
     }
 
-    // ─── Hero confirmed callback ──────────────────────────────────────────────
+    // ─── Hero confirmed ───────────────────────────────────────────────────────
 
-    /**
-     * Called by HeroSelectionPanel when the player clicks "Enter the Arena".
-     * Mirrors the old Kael button listener + fightBtn listener flow.
-     */
     private void onHeroConfirmed(HeroDefinition hero) {
         this.confirmedHero = hero;
-
-        // Build the post-selection dialogues for this specific hero
         buildPostSelectDialogues(hero);
-
-        // Go to the post-selection screen (backstory + weapon gift)
         goToPostSelect();
         postDialogueIndex = 0;
         startPostTyping();
     }
 
-    // ─── Result overlay (called by BattlePanel) ───────────────────────────────
+    // ─── Result overlay ───────────────────────────────────────────────────────
 
-    /**
-     * BattlePanel calls this to display the victory/defeat overlay.
-     * Using a JLayeredPane on the battle screen ensures it sits on top.
-     */
     public void showResultOverlay(JPanel overlay) {
-        // Instead of looking for the JFrame, add it directly to the BattlePanel
-        // since the BattlePanel is what's currently visible during a result.
         battlePanel.add(overlay);
-        battlePanel.setComponentZOrder(overlay, 0); // Force it to the front
+        battlePanel.setComponentZOrder(overlay, 0);
         overlay.setBounds(0, 0, battlePanel.getWidth(), battlePanel.getHeight());
         overlay.setVisible(true);
         battlePanel.repaint();
@@ -205,13 +141,32 @@ public class GameScreen extends JPanel {
             if (parent instanceof JFrame frame) return frame.getLayeredPane();
             parent = parent.getParent();
         }
-        // Fallback: create our own
         JLayeredPane lp = new JLayeredPane();
         add(lp, BorderLayout.NORTH);
         return lp;
     }
 
-    // ─── Intro screen (preserved from original GameScreen.java) ──────────────
+    // ─── Background helper ────────────────────────────────────────────────────
+
+    private void setSceneBackground(String resourcePath) {
+        if (sceneBgLabel == null) return;
+        String absPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+        java.net.URL url = getClass().getResource(absPath);
+        if (url != null) {
+            ImageIcon raw    = new ImageIcon(url);
+            Image     scaled = raw.getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
+            sceneBgLabel.setIcon(new ImageIcon(scaled));
+            sceneBgLabel.setText("");
+        } else {
+            sceneBgLabel.setIcon(null);
+            sceneBgLabel.setText("<html><center><font color='#ff6666'>⚠ Missing:<br>"
+                    + resourcePath + "</font></center></html>");
+            System.out.println("[GameScreen] Asset not found: " + absPath);
+        }
+        sceneBgLabel.repaint();
+    }
+
+    // ─── Intro screen ─────────────────────────────────────────────────────────
 
     private JPanel buildIntroScreen() {
         JLayeredPane layeredPane = new JLayeredPane();
@@ -227,12 +182,13 @@ public class GameScreen extends JPanel {
         wrapper.setLayout(null);
         wrapper.setPreferredSize(new Dimension(1280, 720));
 
-        // Background panel (scene art placeholder)
-        JPanel sceneBg = new JPanel();
-        sceneBg.setBounds(0, 0, 1280, 520);
-        sceneBg.setBackground(new Color(30, 28, 50));
+        sceneBgLabel = new JLabel();
+        sceneBgLabel.setBounds(0, 0, 1280, 520);
+        sceneBgLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        sceneBgLabel.setVerticalAlignment(SwingConstants.CENTER);
+        sceneBgLabel.setBackground(new Color(30, 28, 50));
+        sceneBgLabel.setOpaque(true);
 
-        // Dialogue box — preserved from original
         dialogueBox = new JTextArea();
         dialogueBox.setBounds(33, 533, 933, 153);
         dialogueBox.setEditable(false);
@@ -243,26 +199,29 @@ public class GameScreen extends JPanel {
         dialogueBox.setForeground(new Color(220, 210, 180));
         dialogueBox.setBorder(BorderFactory.createLineBorder(new Color(80, 70, 110), 2));
 
-        // Side buttons — preserved from original
-        continueBtn = createButton("Continue", 1000, 560, 140, 50);
-        menuBtn     = createButton("Menu",     1133, 560, 140, 50);
-        backBtn     = createButton("Back",     1000, 613, 140, 50);
-        exitBtn     = createButton("Exit",     1133, 613, 140, 50);
+        continueBtn = createImageButton(
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
+                994, 558, 154, 64, "Continue");
+        menuBtn = createImageButton(
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
+                1128, 560, 148, 58, "Menu");
+        backBtn = createImageButton(
+                "/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png",
+                1000, 613, 140, 50, "Back");
+        exitBtn = createImageButton(
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
+                1133, 613, 140, 50, "Exit");
 
         exitBtn.addActionListener(e -> System.exit(0));
         continueBtn.addActionListener(e -> continueDialogue());
+        // continueBtn starts ENABLED — it gets disabled only at step 3 (sign-in prompt)
 
-        // Login popup — preserved from original
-        loginPopup = buildLoginPopup();
-
-        // Exam popup — preserved from original
-        examPopup  = buildExamPopup();
-
-        // Battle choice popup — preserved from original, but Fight now goes to selection
+        loginPopup        = buildLoginPopup();
+        examPopup         = buildExamPopup();
         battleChoicePopup = buildBattleChoicePopup();
 
         layeredPane.setBounds(0, 0, 1280, 720);
-        layeredPane.add(sceneBg,           JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(sceneBgLabel,      JLayeredPane.DEFAULT_LAYER);
         layeredPane.add(dialogueBox,       JLayeredPane.PALETTE_LAYER);
         layeredPane.add(continueBtn,       JLayeredPane.PALETTE_LAYER);
         layeredPane.add(menuBtn,           JLayeredPane.PALETTE_LAYER);
@@ -276,94 +235,243 @@ public class GameScreen extends JPanel {
         return wrapper;
     }
 
-    // ─── Login popup — preserved from original GameScreen.java ───────────────
+    // ─── Login popup ──────────────────────────────────────────────────────────
 
     private JPanel buildLoginPopup() {
         JPanel popup = new JPanel(null);
-        popup.setBounds(200, 367, 667, 147);
-        popup.setBackground(new Color(80, 80, 120));
-        popup.setBorder(BorderFactory.createLineBorder(Color.WHITE, 3));
+        popup.setBounds(535, 163, 260, 95);
+        popup.setOpaque(false);
         popup.setVisible(false);
 
-        JLabel title = new JLabel("CodeChum Login");
-        title.setBounds(200, 10, 250, 25);
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Arial", Font.BOLD, 16));
-        popup.add(title);
-
-        JLabel user = new JLabel("Username:");
-        user.setBounds(100, 53, 100, 20);
-        user.setForeground(Color.WHITE);
-        popup.add(user);
-
-        usernameField = new JTextField();
-        usernameField.setBounds(207, 53, 267, 25);
+        usernameField = new JTextField("username@email.edu");
+        usernameField.setBounds(27, 17, 232, 14);
+        usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        usernameField.setForeground(Color.WHITE);
+        usernameField.setBackground(Color.WHITE);
+        usernameField.setOpaque(true);
+        usernameField.setCaretColor(Color.DARK_GRAY);
+        usernameField.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        usernameField.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent e) {
+                if (usernameField.getText().equals("username@email.edu")) {
+                    usernameField.setText("");
+                    usernameField.setForeground(Color.DARK_GRAY);
+                }
+            }
+            @Override public void focusLost(FocusEvent e) {
+                if (usernameField.getText().isBlank()) {
+                    usernameField.setText("username@email.edu");
+                    usernameField.setForeground(Color.WHITE);
+                }
+            }
+        });
         popup.add(usernameField);
 
-        JLabel pass = new JLabel("Password:");
-        pass.setBounds(100, 87, 100, 20);
-        pass.setForeground(Color.WHITE);
-        popup.add(pass);
-
         passwordField = new JPasswordField();
-        passwordField.setBounds(207, 87, 267, 25);
+        passwordField.setBounds(25, 37, 232, 14);
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        passwordField.setForeground(Color.DARK_GRAY);
+        passwordField.setBackground(Color.WHITE);
+        passwordField.setOpaque(true);
+        passwordField.setCaretColor(Color.DARK_GRAY);
+        passwordField.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
         popup.add(passwordField);
 
-        loginStartBtn = new JButton("Start");
-        loginStartBtn.setBounds(500, 53, 80, 25);
+        loginStartBtn = new JButton();
+        loginStartBtn.setBounds(24, 63, 235, 23);
+        loginStartBtn.setOpaque(false);
+        loginStartBtn.setContentAreaFilled(false);
+        loginStartBtn.setBorderPainted(false);
+        loginStartBtn.setFocusPainted(false);
+        loginStartBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        java.net.URL signInUrl = getClass().getResource("/assets/GUIButtons/NGESignUPButton.png");
+        if (signInUrl != null) {
+            ImageIcon raw    = new ImageIcon(signInUrl);
+            Image     scaled = raw.getImage().getScaledInstance(235, 23, Image.SCALE_SMOOTH);
+            loginStartBtn.setIcon(new ImageIcon(scaled));
+        } else {
+            loginStartBtn.setText("Sign In");
+            loginStartBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            loginStartBtn.setForeground(Color.WHITE);
+            loginStartBtn.setBackground(new Color(60, 100, 200));
+            loginStartBtn.setContentAreaFilled(true);
+            loginStartBtn.setBorderPainted(false);
+            System.out.println("[GameScreen] Missing: /assets/GUIButtons/NGESignUPButton.png");
+        }
         popup.add(loginStartBtn);
 
-        loginExitBtn = new JButton("Exit");
-        loginExitBtn.setBounds(500, 87, 80, 25);
-        loginExitBtn.addActionListener(e -> System.exit(0));
+        loginExitBtn = new JButton();
+        loginExitBtn.setVisible(false);
         popup.add(loginExitBtn);
 
-        // Mirrors original: hide login → show exam popup
+        // ── Sign In action ────────────────────────────────────────────────────
+        // CHANGED: type "Logging in..." → wait 1s → NGEBatch1 + examPopup + "Press Start..."
         loginStartBtn.addActionListener(e -> {
-            if (!usernameField.getText().isEmpty() && passwordField.getPassword().length > 0) {
-                loginPopup.setVisible(false);
-                startTyping("Logging in...", () -> examPopup.setVisible(true));
-            }
+            String user = usernameField.getText().trim();
+            String pass = new String(passwordField.getPassword()).trim();
+            boolean emptyUser = user.isBlank() || user.equals("username@email.edu");
+            if (emptyUser || pass.isBlank()) return;
+            loginPopup.setVisible(false);
+            startTyping("Logging in...", () -> {
+                Timer logDelay = new Timer(1000, ev -> {
+                    setSceneBackground("assets/Backgrounds/NGEBatch1.png");
+                    examPopup.setVisible(true);
+                    startTyping("Press Start to start the exam.", null);
+                });
+                logDelay.setRepeats(false);
+                logDelay.start();
+            });
         });
 
         return popup;
     }
 
-    // ─── Exam popup — preserved from original GameScreen.java ────────────────
+    // ─── Exam popup — transparent, image Start button only ───────────────────
 
     private JPanel buildExamPopup() {
         JPanel popup = new JPanel(null);
-        popup.setBounds(133, 400, 800, 100);
-        popup.setBackground(new Color(50, 50, 90));
-        popup.setBorder(BorderFactory.createLineBorder(Color.WHITE, 3));
+        // CHANGED: x moved left by 2px, width increased by 2px
+        popup.setBounds(908, 199, 182, 59);
+        popup.setOpaque(false);
         popup.setVisible(false);
 
-        JLabel examLabel = new JLabel("OOP1 Final Exam Batch 1 - G1");
-        examLabel.setBounds(200, 10, 400, 25);
-        examLabel.setForeground(Color.WHITE);
-        popup.add(examLabel);
-
-        examStartBtn = new JButton("Start");
-        examStartBtn.setBounds(267, 53, 80, 25);
-        popup.add(examStartBtn);
-
-        examExitBtn = new JButton("Exit");
-        examExitBtn.setBounds(360, 53, 80, 25);
-        examExitBtn.addActionListener(e -> System.exit(0));
+        examExitBtn = new JButton();
+        examExitBtn.setVisible(false);
         popup.add(examExitBtn);
 
-        // Mirrors original: hide exam → advance dialogue to index 1
+        examStartBtn = new JButton();
+        examStartBtn.setBounds(0, 0, 182, 59);
+        examStartBtn.setOpaque(false);
+        examStartBtn.setContentAreaFilled(false);
+        examStartBtn.setBorderPainted(false);
+        examStartBtn.setFocusPainted(false);
+        examStartBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        java.net.URL startUrl = getClass().getResource("/assets/GUIButtons/NGEStartButton.png");
+        if (startUrl != null) {
+            ImageIcon raw    = new ImageIcon(startUrl);
+            Image     scaled = raw.getImage().getScaledInstance(182, 59, Image.SCALE_SMOOTH);
+            examStartBtn.setIcon(new ImageIcon(scaled));
+        } else {
+            examStartBtn.setText("Start");
+            examStartBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            examStartBtn.setForeground(Color.WHITE);
+            examStartBtn.setBackground(new Color(60, 160, 80));
+            examStartBtn.setContentAreaFilled(true);
+            System.out.println("[GameScreen] Missing: /assets/GUIButtons/NGEStartButton.png");
+        }
+        popup.add(examStartBtn);
+
         examStartBtn.addActionListener(e -> {
             examPopup.setVisible(false);
-            dialogueIndex = 1;
             continueBtn.setEnabled(true);
-            startTyping(dialogues[dialogueIndex], null);
+            runLightsSequence();
         });
 
         return popup;
     }
 
-    // ─── Battle choice popup — preserved from original GameScreen.java ────────
+    // ─── Lights-out cinematic sequence ───────────────────────────────────────
+    //
+    //  1. NGEBeforeLights.png (1s)
+    //  2. Screen shakes for 1.5s
+    //  3. Dialogue: "Screen flickers..."
+    //  4. NGEBeforeLights2.png
+    //  5. Dialogue: "Everything goes silent."
+    //  6. NGEBeforeLights3.jpg (1s) → NGEBeforeLights4.jpg (1s) → NGEBeforeLights5.jpg (1s)
+    //  7. Dialogue: "The screen glitches... ⚡\nAnd the world turns to black..."
+    //  8. NGEBeforeLights6.png
+    //  9. Dialogue: "When you come to your senses..." → after typing → goToSelection()
+    //
+    private void runLightsSequence() {
+        // Step 1: NGEBeforeLights.png for 1s
+        setSceneBackground("assets/Backgrounds/NGEBeforeLights.png");
+        delay(1000, () -> {
+
+            // Step 2: Screen shake for 1.5s
+            Point origin = getLocation();
+            int[] shakeTick = {0};
+            Timer shakeTimer = new Timer(50, null);
+            shakeTimer.addActionListener(ev -> {
+                int dx = (shakeTick[0] % 2 == 0) ? 5 : -5;
+                int dy = (shakeTick[0] % 4 < 2) ? 3 : -3;
+                setLocation(origin.x + dx, origin.y + dy);
+                shakeTick[0]++;
+            });
+            shakeTimer.setRepeats(true);
+            shakeTimer.start();
+
+            delay(1500, () -> {
+                shakeTimer.stop();
+                setLocation(origin);
+
+                // Step 2b: pause 1s after shake
+                delay(1000, () -> {
+
+                    // Step 3: "Screen flickers..."
+                    startTyping("Screen flickers...", () -> {
+
+                        // Step 3b: wait 1s after dialogue
+                        delay(1000, () -> {
+
+                            // Step 4: NGEBeforeLights2.png
+                            setSceneBackground("assets/Backgrounds/NGEBeforeLights2.png");
+
+                            // Step 5: "Everything goes silent."
+                            startTyping("Everything goes silent.", () -> {
+
+                                // Step 6: Frames 3→4→5 each 1s
+                                String[] midFrames = {
+                                        "assets/Backgrounds/NGEBeforeLights3.jpg",
+                                        "assets/Backgrounds/NGEBeforeLights4.jpg",
+                                        "assets/Backgrounds/NGEBeforeLights5.jpg",
+                                };
+                                int[] fi = {0};
+                                Timer midTimer = new Timer(1000, null);
+                                midTimer.addActionListener(em -> {
+                                    if (fi[0] < midFrames.length) {
+                                        setSceneBackground(midFrames[fi[0]++]);
+                                    } else {
+                                        midTimer.stop();
+
+                                        // Step 7: Glitch dialogue
+                                        startTyping(
+                                                "The screen glitches... ⚡\n" +
+                                                        "And the world turns to black as the room seems to wrap around you. 🕳️",
+                                                () -> {
+                                                    // Step 8: NGEBeforeLights6.png
+                                                    setSceneBackground("assets/Backgrounds/NGEBeforeLights6.png");
+
+                                                    // Step 9: Final dialogue → goToSelection
+                                                    startTyping(
+                                                            "When you come to your senses, you're no longer in the lab.\n" +
+                                                                    "You wake up in an unfamiliar place. 👁️",
+                                                            () -> goToSelection()
+                                                    );
+                                                }
+                                        );
+                                    }
+                                });
+                                midTimer.setRepeats(true);
+                                midTimer.start();
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+
+    /** Fire {@code action} once after {@code ms} milliseconds on the EDT. */
+    private void delay(int ms, Runnable action) {
+        Timer t = new Timer(ms, null);
+        t.setRepeats(false);
+        t.addActionListener(e -> { t.stop(); action.run(); });
+        t.start();
+    }
+
+    // ─── Battle choice popup ──────────────────────────────────────────────────
 
     private JPanel buildBattleChoicePopup() {
         JPanel popup = new JPanel(null);
@@ -385,7 +493,6 @@ public class GameScreen extends JPanel {
         runBtn.setBounds(187, 47, 100, 33);
         popup.add(runBtn);
 
-        // Fight → start the battle with the already-confirmed hero
         fightBtn.addActionListener(e -> {
             battleChoicePopup.setVisible(false);
             goToBattle();
@@ -399,12 +506,15 @@ public class GameScreen extends JPanel {
         return popup;
     }
 
-    // ─── Dialogue system — preserved from original GameScreen.java ────────────
-
-    /**
-     * Mirrors original continueDialogue() — handles intro flow and transitions.
-     * Extended: after dialogues finish, shows battleChoicePopup (not characterPopup directly).
-     */
+    // ─── Dialogue system ─────────────────────────────────────────────────────
+    //
+    //  Step 0  → NGEBackground, type dialogue[0]                   → Continue
+    //  Step 1  → type dialogue[1] first, THEN Khai2(1s)→Khai(1.5s)→Khai2 → Continue
+    //  Step 2  → NGELoginUser(1s)→NGELoginUser2, type dialogue[2]  → Continue
+    //  Step 3  → CHANGED: NGELogin2 + loginPopup shown simultaneously, type dialogue[3]
+    //            continueBtn DISABLED — user must Sign In
+    //  Sign In → CHANGED: "Logging in..."(1s) → NGEBatch1 + examPopup + "Press Start..."
+    //
     private void continueDialogue() {
         if (typingTimer != null && typingTimer.isRunning()) {
             typingTimer.stop();
@@ -414,25 +524,59 @@ public class GameScreen extends JPanel {
 
         dialogueIndex++;
 
+        // ── Step 1: type dialogue first, then do Khai background animation ────
         if (dialogueIndex == 1) {
-            loginPopup.setVisible(true);
             continueBtn.setEnabled(false);
-            dialogueBox.setText("");
+
+            startTyping(dialogues[1], () -> {
+                setSceneBackground("assets/Backgrounds/NGESirKhai2.png");
+
+                Timer khaiPhase2 = new Timer(1000, e -> {
+                    setSceneBackground("assets/Backgrounds/NGESirKhai.png");
+
+                    Timer khaiPhase3 = new Timer(1500, e2 -> {
+                        setSceneBackground("assets/Backgrounds/NGESirKhai2.png");
+                        continueBtn.setEnabled(true);
+                    });
+                    khaiPhase3.setRepeats(false);
+                    khaiPhase3.start();
+                });
+                khaiPhase2.setRepeats(false);
+                khaiPhase2.start();
+            });
+            return;
+        }
+
+        // ── Step 2: NGELoginUser(1s) → NGELoginUser2, then type dialogue[2] ──
+        if (dialogueIndex == 2) {
+            continueBtn.setEnabled(false);
+
+            setSceneBackground("assets/Backgrounds/NGELoginUser.png");
+
+            Timer loginUserTimer = new Timer(1000, e -> {
+                setSceneBackground("assets/Backgrounds/NGELoginUser2.png");
+                startTyping(dialogues[2], () -> continueBtn.setEnabled(true));
+            });
+            loginUserTimer.setRepeats(false);
+            loginUserTimer.start();
+            return;
+        }
+
+        // ── Step 3: CHANGED — NGELogin2 + loginPopup at same time, type dialogue[3]
+        if (dialogueIndex == 3) {
+            continueBtn.setEnabled(false);
+            setSceneBackground("assets/Backgrounds/NGELogin2.png");
+            loginPopup.setVisible(true);          // shown simultaneously with bg swap
+            startTyping(dialogues[3], null);      // continueBtn stays locked
             return;
         }
 
         if (dialogueIndex >= dialogues.length) {
             continueBtn.setEnabled(false);
-            goToSelection(); // Player picks hero first; battleChoicePopup shown after
-            return;
+            goToSelection();
         }
-
-        startTyping(dialogues[dialogueIndex], null);
     }
 
-    /**
-     * Typing animation — preserved exactly from original GameScreen.java.
-     */
     private void startTyping(String text, Runnable callback) {
         dialogueBox.setText("");
         charIndex = 0;
@@ -449,24 +593,52 @@ public class GameScreen extends JPanel {
         typingTimer.start();
     }
 
-    /**
-     * createButton helper — preserved from original GameScreen.java.
-     */
     private JButton createButton(String text, int x, int y, int w, int h) {
         JButton btn = new JButton(text);
         btn.setBounds(x, y, w, h);
         return btn;
     }
 
+    /**
+     * Image button with normal/hover swap. Falls back to text if assets missing.
+     */
+    private JButton createImageButton(String normalPath, String hoverPath,
+                                      int x, int y, int w, int h, String fallbackText) {
+        JButton btn = new JButton();
+        btn.setBounds(x, y, w, h);
+        btn.setOpaque(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        java.net.URL normalUrl = getClass().getResource(normalPath);
+        java.net.URL hoverUrl  = getClass().getResource(hoverPath);
+
+        if (normalUrl != null) {
+            ImageIcon normalIcon = new ImageIcon(
+                    new ImageIcon(normalUrl).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
+            ImageIcon hoverIcon = hoverUrl != null
+                    ? new ImageIcon(new ImageIcon(hoverUrl).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH))
+                    : normalIcon;
+            btn.setIcon(normalIcon);
+            btn.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon);  }
+                @Override public void mouseExited (java.awt.event.MouseEvent e) { btn.setIcon(normalIcon); }
+            });
+        } else {
+            btn.setText(fallbackText);
+            btn.setForeground(Color.WHITE);
+            btn.setContentAreaFilled(true);
+            System.out.println("[GameScreen] Missing button asset: " + normalPath);
+        }
+        return btn;
+    }
+
     // ─── Post-selection dialogue screen ──────────────────────────────────────
 
-    /** Lines of dialogue shown after a hero is confirmed, before World 1 begins. */
     private String[] postDialogues;
 
-    /**
-     * Populates postDialogues based on the chosen hero — mirrors StoryEngine's
-     * chooseCharacter() backstory + weapon-gift text for each character.
-     */
     private void buildPostSelectDialogues(HeroDefinition hero) {
         String heroLine;
         String weaponLine;
@@ -474,8 +646,7 @@ public class GameScreen extends JPanel {
 
         switch (hero.name) {
             case "Kael Saint Laurent" -> {
-                heroLine  = "⚔️ You have chosen KAEL SAINT LAURENT, the valiant Swordsman!\n\n" +
-                        hero.backstory;
+                heroLine   = "⚔️ You have chosen KAEL SAINT LAURENT, the valiant Swordsman!\n\n" + hero.backstory;
                 weaponLine = "🗡️ The gods bestow upon you your starting gear...\n\n" +
                         "The Old Broadsword rests firmly in your grasp, its blade marked\n" +
                         "by the scars of past battles.";
@@ -483,8 +654,7 @@ public class GameScreen extends JPanel {
                         "You are ready. The forest of World 1 awaits.";
             }
             case "Karl Clover Dior IV" -> {
-                heroLine  = "🏹 You have chosen KARL CLOVER DIOR IV, the swift Archer!\n\n" +
-                        hero.backstory;
+                heroLine   = "🏹 You have chosen KARL CLOVER DIOR IV, the swift Archer!\n\n" + hero.backstory;
                 weaponLine = "🏹 The gods bestow upon you your starting gear...\n\n" +
                         "The Shortbow hums softly — each arrow you notch feels like an\n" +
                         "extension of your will.";
@@ -492,8 +662,7 @@ public class GameScreen extends JPanel {
                         "You are ready. The forest of World 1 awaits.";
             }
             case "Simon Versace" -> {
-                heroLine  = "🌟 You have chosen SIMON VERSACE, the arcane Mage!\n\n" +
-                        hero.backstory;
+                heroLine   = "🌟 You have chosen SIMON VERSACE, the arcane Mage!\n\n" + hero.backstory;
                 weaponLine = "🔮 The gods bestow upon you your starting gear...\n\n" +
                         "The Wooden Staff pulses faintly, whispering secrets\n" +
                         "of forgotten spells.";
@@ -508,25 +677,19 @@ public class GameScreen extends JPanel {
             }
         }
 
-        postDialogues = new String[] { heroLine, weaponLine, armorLine };
+        postDialogues = new String[]{ heroLine, weaponLine, armorLine };
     }
 
-    /**
-     * Builds the post-selection card — a full-screen dialogue panel styled like
-     * the intro screen, used for backstory + weapon-gift sequence.
-     */
     private JPanel buildPostSelectScreen() {
         JPanel screen = new JPanel(null);
         screen.setBackground(new Color(28, 26, 44));
         screen.setPreferredSize(new Dimension(1280, 720));
 
-        // Dark scenic background
         JPanel bg = new JPanel();
         bg.setBounds(0, 0, 1280, 520);
         bg.setBackground(new Color(20, 18, 35));
         screen.add(bg);
 
-        // Dialogue box — same style as intro
         postDialogueBox = new JTextArea();
         postDialogueBox.setBounds(60, 530, 1000, 140);
         postDialogueBox.setBackground(new Color(30, 28, 50));
@@ -538,7 +701,6 @@ public class GameScreen extends JPanel {
         postDialogueBox.setBorder(BorderFactory.createLineBorder(new Color(100, 80, 180), 2));
         screen.add(postDialogueBox);
 
-        // Continue button
         postContinueBtn = new JButton("▶  Continue");
         postContinueBtn.setBounds(1100, 610, 140, 40);
         postContinueBtn.setBackground(new Color(70, 50, 120));
@@ -550,17 +712,11 @@ public class GameScreen extends JPanel {
         return screen;
     }
 
-    /** Tracks the currently running post-selection typing timer so it can be stopped. */
     private Timer postTypingTimer;
 
-    /** Kicks off typing animation for the current postDialogueIndex line. */
     private void startPostTyping() {
         if (postDialogues == null || postDialogueIndex >= postDialogues.length) return;
-
-        // Stop any previously running timer before starting a new one
-        if (postTypingTimer != null && postTypingTimer.isRunning()) {
-            postTypingTimer.stop();
-        }
+        if (postTypingTimer != null && postTypingTimer.isRunning()) postTypingTimer.stop();
 
         String text = postDialogues[postDialogueIndex];
         postDialogueBox.setText("");
@@ -577,26 +733,18 @@ public class GameScreen extends JPanel {
         postTypingTimer.start();
     }
 
-    /**
-     * Advances through post-selection dialogues.
-     * If still typing, first click skips to end of current line.
-     * After the last line, transitions to World 1 (SCREEN_BATTLE).
-     */
     private void continuePostDialogue() {
-        // If still typing, skip to end of current line instead of advancing
         if (postTypingTimer != null && postTypingTimer.isRunning()) {
             postTypingTimer.stop();
             postDialogueBox.setText(postDialogues[postDialogueIndex]);
             return;
         }
-
         postDialogueIndex++;
         if (postDialogueIndex < postDialogues.length) {
             startPostTyping();
         } else {
-            // All backstory + weapon-gift lines shown — enter World 1 intro dialogue
             postDialogueIndex = 0;
-            w1DialogueIndex = 0;
+            w1DialogueIndex   = 0;
             goToWorld1Intro();
             startW1Typing();
         }
@@ -604,15 +752,13 @@ public class GameScreen extends JPanel {
 
     // ─── World 1 intro dialogue screen ───────────────────────────────────────
 
-    /** Dialogue lines from World1.java's opening story sequence, before combat begins. */
     private static final String[] WORLD1_DIALOGUES = {
             "You wake up gasping for air. The world is drained of color.\n\n" +
                     "You are lying on a bed of gray moss in a dead forest. The trees are skeletal\n" +
                     "giants, stripped to bone-white wood. A cold mist coils around your ankles,\n" +
                     "and silence presses from every side — watching, waiting.",
 
-            "A heavy bell tolls in the distance...\n" +
-                    "\"Dong... Dong...\"",
+            "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",
 
             "From the mist steps a figure cloaked in tattered robes.\n" +
                     "He leans heavily on a staff. As he lifts his hood, you jolt back —\n" +
@@ -628,10 +774,6 @@ public class GameScreen extends JPanel {
                     "fixate on you. They do not hunt for food — they hunt to kill."
     };
 
-    /**
-     * Builds the World 1 intro card — same style as the post-select screen.
-     * Shows the opening story sequence from World1.java before the first battle.
-     */
     private JPanel buildWorld1IntroScreen() {
         JPanel screen = new JPanel(null);
         screen.setBackground(new Color(15, 12, 28));
@@ -670,10 +812,8 @@ public class GameScreen extends JPanel {
         return screen;
     }
 
-    /** Kicks off typing animation for the current w1DialogueIndex line. */
     private void startW1Typing() {
         if (w1DialogueIndex >= WORLD1_DIALOGUES.length) return;
-
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
 
         String text = WORLD1_DIALOGUES[w1DialogueIndex];
@@ -691,23 +831,16 @@ public class GameScreen extends JPanel {
         w1TypingTimer.start();
     }
 
-    /**
-     * Advances through World 1 intro dialogues.
-     * First click while typing skips to end of current line.
-     * After the last line, transitions to the actual battle (SCREEN_BATTLE).
-     */
     private void continueW1Dialogue() {
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) {
             w1TypingTimer.stop();
             w1DialogueBox.setText(WORLD1_DIALOGUES[w1DialogueIndex]);
             return;
         }
-
         w1DialogueIndex++;
         if (w1DialogueIndex < WORLD1_DIALOGUES.length) {
             startW1Typing();
         } else {
-            // World 1 intro complete — now enter the actual battle
             w1DialogueIndex = 0;
             goToBattle();
         }
