@@ -10,60 +10,71 @@ import java.util.Random;
 
 public class GameScreen extends JPanel {
 
-    private static final String SCREEN_INTRO        = "intro";
-    private static final String SCREEN_SELECTION    = "selection";
-    private static final String SCREEN_POST_SELECT  = "postSelect";
-    private static final String SCREEN_WORLD1_INTRO = "world1Intro";
-    private static final String SCREEN_BATTLE       = "battle";
+    private static final String SCREEN_INTRO ="intro";
+    private static final String SCREEN_SELECTION ="selection";
+    private static final String SCREEN_POST_SELECT ="postSelect";
+    private static final String SCREEN_WORLD1_INTRO ="world1Intro";
+    private static final String SCREEN_BATTLE ="battle";
 
     private final CardLayout cardLayout = new CardLayout();
-    private final JPanel     cardPanel  = new JPanel(cardLayout);
+    private final JPanel cardPanel = new JPanel(cardLayout);
 
     private HeroSelectionPanel heroSelectionPanel;
-    private BattlePanel        battlePanel;
-    private JPanel             postSelectPanel;
-    private JPanel             world1IntroPanel;
+    private BattlePanel battlePanel;
+    private JPanel postSelectPanel;
+    private JPanel world1IntroPanel;
 
     private JTextArea postDialogueBox;
-    private JButton   postContinueBtn;
-    private int       postDialogueIndex = 0;
+    private JButton postContinueBtn;
+    private int postDialogueIndex = 0;
 
     private JTextArea w1DialogueBox;
-    private JButton   w1ContinueBtn;
-    private int       w1DialogueIndex  = 0;
-    private Timer     w1TypingTimer;
+    private JButton w1ContinueBtn;
+    private int w1DialogueIndex = 0;
+    private Timer w1TypingTimer;
 
     JTextArea dialogueBox;
-    JButton   continueBtn, menuBtn, backBtn, exitBtn;
+    JButton continueBtn, menuBtn, backBtn, exitBtn;
 
-    JPanel    loginPopup, examPopup;
-    JTextField    usernameField;
+    JPanel loginPopup, examPopup;
+    JTextField usernameField;
     JPasswordField passwordField;
-    JButton   loginStartBtn, loginExitBtn;
-    JButton   examStartBtn,  examExitBtn;
+    JButton loginStartBtn, loginExitBtn;
+    JButton examStartBtn, examExitBtn;
 
-    JPanel    battleChoicePopup;
-    JButton   fightBtn, runBtn;
+    JPanel battleChoicePopup;
+    JButton fightBtn, runBtn;
 
-    Timer     typingTimer;
-    int       dialogueIndex = 0;
-    int       charIndex     = 0;
+    Timer typingTimer;
+    int dialogueIndex = 0;
+    int charIndex = 0;
 
     private JLabel sceneBgLabel;
+    private JLabel postBgLabel;
+    private JLabel postWeaponLabel;
+    private JLabel postArmorLabel;
+    private JLabel w1WorldLabel;  // shown initially, hidden after dialogue 1
+    private Timer world1FadeTimer;
+    private int[] world1FadeAlpha;
+    private JPanel world1FadeOverlay;
+    private JPanel world1SceneBg;
+    private float[] world1SceneAlpha;
+    private float[] world1WorldAlpha;
+    private JLabel world1KhaiLabel;   // overlay for SilhouetteSirKhai crossfade
+    private float[] world1KhaiAlpha = {0f};
     private HeroDefinition confirmedHero = null;
+    private boolean pendingSelection = false;
 
     String[] dialogues = {
-            "💡 It's just another Tuesday, you come in for your Java examination.",
+            "It's just another Friday, you come in for your Java examination.",
 
-            "You walk in and Professor Khai greets you warmly as you sit before\n" +
+            "You walk in and Professor Khai greets you warmly as you sit before\n"+
                     "the CodeChum login screen.",
 
-            "You place your hands on the keyboard and login... L15Y07W.... ⌨️",
+            "You place your hands on the keyboard and login... L15Y07W....",
 
             "Enter your Username, password, and click Sign in.",
     };
-
-    // ─── Constructor ──────────────────────────────────────────────────────────
 
     public GameScreen() {
         setLayout(new BorderLayout());
@@ -94,12 +105,60 @@ public class GameScreen extends JPanel {
         startTyping(dialogues[dialogueIndex], null);
     }
 
-    // ─── Screen navigation ────────────────────────────────────────────────────
+    private void goToIntro() { cardLayout.show(cardPanel, SCREEN_INTRO); }
 
-    private void goToIntro()       { cardLayout.show(cardPanel, SCREEN_INTRO);        }
-    private void goToSelection()   { cardLayout.show(cardPanel, SCREEN_SELECTION);    }
-    private void goToPostSelect()  { cardLayout.show(cardPanel, SCREEN_POST_SELECT);  }
-    private void goToWorld1Intro() { cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO); }
+    /** Test helper — auto-selects hero and goes straight to World 1, bypassing intro and post-select. */
+    public void skipToWorld1(HeroData.HeroDefinition hero) {
+        this.confirmedHero = hero;
+        w1DialogueIndex = 0;
+        // Stop any intro typing
+        if (typingTimer != null) typingTimer.stop();
+        // Reset world label
+        if (w1WorldLabel != null) {
+            w1WorldLabel.setVisible(true);
+            w1WorldLabel.setForeground(Color.WHITE);
+        }
+        // Reset khai overlay
+        if (world1KhaiLabel != null) {
+            world1KhaiLabel.setIcon(null);
+            world1KhaiAlpha[0] = 0f;
+            world1KhaiLabel.putClientProperty("prevImage", null);
+            world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+        }
+        // Reset scene alphas
+        if (world1SceneAlpha != null) world1SceneAlpha[0] = 1.0f;
+        if (world1WorldAlpha != null) world1WorldAlpha[0] = 0.0f;
+        goToWorld1Intro();
+    }
+    private void goToSelection() { cardLayout.show(cardPanel, SCREEN_SELECTION); }
+    private void goToPostSelect() { cardLayout.show(cardPanel, SCREEN_POST_SELECT); }
+    private void goToWorld1Intro() {
+        cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
+
+        // Step 1: reset alphas — show NGEBeforeLights6 fully
+        if (world1SceneBg != null) {
+            world1SceneAlpha[0] = 1.0f;
+            world1WorldAlpha[0] = 0.0f;
+            world1SceneBg.repaint();
+        }
+
+        // Step 2: after 0.5s, fade out NGEBeforeLights6 while fading in World1Background
+        delay(1500, () -> {
+            Timer crossfade = new Timer(16, null);
+            crossfade.addActionListener(ev -> {
+                if (world1SceneBg == null) { crossfade.stop(); return; }
+                world1SceneAlpha[0] = Math.max(0f, world1SceneAlpha[0] - 0.02f);
+                world1WorldAlpha[0] = Math.min(1f, world1WorldAlpha[0] + 0.02f);
+                world1SceneBg.repaint();
+                if (world1SceneAlpha[0] <= 0f && world1WorldAlpha[0] >= 1f) {
+                    crossfade.stop();
+                    // Start typing after transition completes
+                    startW1Typing();
+                }
+            });
+            crossfade.start();
+        });
+    }
 
     private void goToBattle() {
         if (confirmedHero == null) return;
@@ -115,17 +174,39 @@ public class GameScreen extends JPanel {
         return enemies.get(new Random().nextInt(enemies.size()));
     }
 
-    // ─── Hero confirmed ───────────────────────────────────────────────────────
-
     private void onHeroConfirmed(HeroDefinition hero) {
         this.confirmedHero = hero;
         buildPostSelectDialogues(hero);
-        goToPostSelect();
+
+        if (postBgLabel != null) {
+            String imgPath = switch (hero.name) {
+                case"Kael Saint Laurent"->"/assets/KaelAssets/KaelIntro.png";
+                case"Karl Clover Dior IV"->"/assets/KarlAssets/KarlIntro.png";
+                case"Simon Versace"->"/assets/SimonAssets/SimonIntro.png";
+                default -> null;
+            };
+            if (imgPath != null) {
+                java.net.URL url = getClass().getResource(imgPath);
+                if (url != null) {
+                    ImageIcon raw = new ImageIcon(url);
+                    Image scaled = raw.getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
+                    postBgLabel.setIcon(new ImageIcon(scaled));
+                    postBgLabel.setText("");
+                } else {
+                    postBgLabel.setIcon(null);
+                    System.out.println("[GameScreen] Missing post-select bg:"+ imgPath);
+                }
+            } else {
+                postBgLabel.setIcon(null);
+            }
+        }
+
         postDialogueIndex = 0;
+        if (postWeaponLabel != null) { postWeaponLabel.setVisible(false); postWeaponLabel.setIcon(null); }
+        if (postArmorLabel != null) { postArmorLabel.setVisible(false); postArmorLabel.setIcon(null); }
+        goToPostSelect();
         startPostTyping();
     }
-
-    // ─── Result overlay ───────────────────────────────────────────────────────
 
     public void showResultOverlay(JPanel overlay) {
         battlePanel.add(overlay);
@@ -146,27 +227,23 @@ public class GameScreen extends JPanel {
         return lp;
     }
 
-    // ─── Background helper ────────────────────────────────────────────────────
-
     private void setSceneBackground(String resourcePath) {
         if (sceneBgLabel == null) return;
-        String absPath = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+        String absPath = resourcePath.startsWith("/") ? resourcePath :"/"+ resourcePath;
         java.net.URL url = getClass().getResource(absPath);
         if (url != null) {
-            ImageIcon raw    = new ImageIcon(url);
-            Image     scaled = raw.getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
+            ImageIcon raw = new ImageIcon(url);
+            Image scaled = raw.getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
             sceneBgLabel.setIcon(new ImageIcon(scaled));
             sceneBgLabel.setText("");
         } else {
             sceneBgLabel.setIcon(null);
-            sceneBgLabel.setText("<html><center><font color='#ff6666'>⚠ Missing:<br>"
+            sceneBgLabel.setText("<html><center><font color='#ff6666'> Missing:<br>"
                     + resourcePath + "</font></center></html>");
-            System.out.println("[GameScreen] Asset not found: " + absPath);
+            System.out.println("[GameScreen] Asset not found:"+ absPath);
         }
         sceneBgLabel.repaint();
     }
-
-    // ─── Intro screen ─────────────────────────────────────────────────────────
 
     private JPanel buildIntroScreen() {
         JLayeredPane layeredPane = new JLayeredPane();
@@ -182,47 +259,82 @@ public class GameScreen extends JPanel {
         wrapper.setLayout(null);
         wrapper.setPreferredSize(new Dimension(1280, 720));
 
+        // ── TheBackground.png fills the full 1280x720 behind everything ──
+        JLabel theBackground = new JLabel();
+        theBackground.setBounds(0, 0, 1280, 720);
+        theBackground.setOpaque(true);
+        theBackground.setBackground(new Color(40, 40, 60));
+        java.net.URL theBgUrl = getClass().getResource("/assets/Backgrounds/TheBackground.png");
+        if (theBgUrl != null) {
+            Image theBgScaled = new ImageIcon(theBgUrl).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH);
+            theBackground.setIcon(new ImageIcon(theBgScaled));
+        }
+
         sceneBgLabel = new JLabel();
         sceneBgLabel.setBounds(0, 0, 1280, 520);
         sceneBgLabel.setHorizontalAlignment(SwingConstants.CENTER);
         sceneBgLabel.setVerticalAlignment(SwingConstants.CENTER);
         sceneBgLabel.setBackground(new Color(30, 28, 50));
-        sceneBgLabel.setOpaque(true);
+        sceneBgLabel.setOpaque(false); // transparent so TheBackground shows in gap
+
+        // DialogueBox background image
+        JLabel dialogueBgLabel = new JLabel();
+        dialogueBgLabel.setBounds(-40, 453, 1053, 343);
+        java.net.URL dialogueBgUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
+        if (dialogueBgUrl != null) {
+            ImageIcon rawDb = new ImageIcon(dialogueBgUrl);
+            Image scaledDb = rawDb.getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH);
+            dialogueBgLabel.setIcon(new ImageIcon(scaledDb));
+        }
 
         dialogueBox = new JTextArea();
-        dialogueBox.setBounds(33, 533, 933, 153);
+        dialogueBox.setBounds(104, 541, 900, 100);
         dialogueBox.setEditable(false);
         dialogueBox.setLineWrap(true);
         dialogueBox.setWrapStyleWord(true);
-        dialogueBox.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        dialogueBox.setBackground(new Color(20, 18, 34));
-        dialogueBox.setForeground(new Color(220, 210, 180));
-        dialogueBox.setBorder(BorderFactory.createLineBorder(new Color(80, 70, 110), 2));
+        try {
+            java.io.InputStream fontStream = getClass().getResourceAsStream("/assets/AssetFont/Pixelari.ttf");
+            if (fontStream != null) {
+                Font pixelFont = Font.createFont(Font.TRUETYPE_FONT, fontStream).deriveFont(Font.BOLD, 16f);
+                dialogueBox.setFont(pixelFont);
+            } else {
+                System.out.println("[GameScreen] Missing font: /assets/AssetFont/Pixelari.ttf");
+                dialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+            }
+        } catch (Exception ex) {
+            System.out.println("[GameScreen] Font load error:"+ ex.getMessage());
+            dialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+        }
+        dialogueBox.setOpaque(false);
+        dialogueBox.setBackground(new Color(0, 0, 0, 0));
+        dialogueBox.setForeground(Color.BLACK);
+        dialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
         continueBtn = createImageButton(
-                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
-                994, 558, 154, 64, "Continue");
+                "/assets/GUIButtons/Continue.png","/assets/GUIButtons/ContinueHover.png",
+                964, 554, 154, 64,"Continue");
         menuBtn = createImageButton(
-                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
-                1128, 560, 148, 58, "Menu");
+                "/assets/GUIButtons/Menu.png","/assets/GUIButtons/MenuHover.png",
+                1103, 555, 148, 58,"Menu", 0);
         backBtn = createImageButton(
-                "/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png",
-                1000, 613, 140, 50, "Back");
+                "/assets/GUIButtons/Back.png","/assets/GUIButtons/BackHover.png",
+                970, 613, 140, 50,"Back", 20);
         exitBtn = createImageButton(
-                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
-                1133, 613, 140, 50, "Exit");
+                "/assets/GUIButtons/Exit.png","/assets/GUIButtons/ExitHover.png",
+                1108, 613, 140, 50,"Exit", 19);
 
         exitBtn.addActionListener(e -> System.exit(0));
         continueBtn.addActionListener(e -> continueDialogue());
-        // continueBtn starts ENABLED — it gets disabled only at step 3 (sign-in prompt)
 
-        loginPopup        = buildLoginPopup();
-        examPopup         = buildExamPopup();
+        loginPopup = buildLoginPopup();
+        examPopup = buildExamPopup();
         battleChoicePopup = buildBattleChoicePopup();
 
         layeredPane.setBounds(0, 0, 1280, 720);
-        layeredPane.add(sceneBgLabel,      JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(dialogueBox,       JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(theBackground,     JLayeredPane.FRAME_CONTENT_LAYER);  // bottom-most
+        layeredPane.add(sceneBgLabel,      JLayeredPane.DEFAULT_LAYER);  // NGE assets on top
+        layeredPane.add(dialogueBgLabel,   JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(dialogueBox,       JLayeredPane.MODAL_LAYER);
         layeredPane.add(continueBtn,       JLayeredPane.PALETTE_LAYER);
         layeredPane.add(menuBtn,           JLayeredPane.PALETTE_LAYER);
         layeredPane.add(backBtn,           JLayeredPane.PALETTE_LAYER);
@@ -234,8 +346,6 @@ public class GameScreen extends JPanel {
         wrapper.add(layeredPane);
         return wrapper;
     }
-
-    // ─── Login popup ──────────────────────────────────────────────────────────
 
     private JPanel buildLoginPopup() {
         JPanel popup = new JPanel(null);
@@ -287,8 +397,8 @@ public class GameScreen extends JPanel {
 
         java.net.URL signInUrl = getClass().getResource("/assets/GUIButtons/NGESignUPButton.png");
         if (signInUrl != null) {
-            ImageIcon raw    = new ImageIcon(signInUrl);
-            Image     scaled = raw.getImage().getScaledInstance(235, 23, Image.SCALE_SMOOTH);
+            ImageIcon raw = new ImageIcon(signInUrl);
+            Image scaled = raw.getImage().getScaledInstance(235, 23, Image.SCALE_SMOOTH);
             loginStartBtn.setIcon(new ImageIcon(scaled));
         } else {
             loginStartBtn.setText("Sign In");
@@ -305,8 +415,6 @@ public class GameScreen extends JPanel {
         loginExitBtn.setVisible(false);
         popup.add(loginExitBtn);
 
-        // ── Sign In action ────────────────────────────────────────────────────
-        // CHANGED: type "Logging in..." → wait 1s → NGEBatch1 + examPopup + "Press Start..."
         loginStartBtn.addActionListener(e -> {
             String user = usernameField.getText().trim();
             String pass = new String(passwordField.getPassword()).trim();
@@ -327,11 +435,8 @@ public class GameScreen extends JPanel {
         return popup;
     }
 
-    // ─── Exam popup — transparent, image Start button only ───────────────────
-
     private JPanel buildExamPopup() {
         JPanel popup = new JPanel(null);
-        // CHANGED: x moved left by 2px, width increased by 2px
         popup.setBounds(908, 199, 182, 59);
         popup.setOpaque(false);
         popup.setVisible(false);
@@ -350,8 +455,8 @@ public class GameScreen extends JPanel {
 
         java.net.URL startUrl = getClass().getResource("/assets/GUIButtons/NGEStartButton.png");
         if (startUrl != null) {
-            ImageIcon raw    = new ImageIcon(startUrl);
-            Image     scaled = raw.getImage().getScaledInstance(182, 59, Image.SCALE_SMOOTH);
+            ImageIcon raw = new ImageIcon(startUrl);
+            Image scaled = raw.getImage().getScaledInstance(182, 59, Image.SCALE_SMOOTH);
             examStartBtn.setIcon(new ImageIcon(scaled));
         } else {
             examStartBtn.setText("Start");
@@ -365,31 +470,16 @@ public class GameScreen extends JPanel {
 
         examStartBtn.addActionListener(e -> {
             examPopup.setVisible(false);
-            continueBtn.setEnabled(true);
+            continueBtn.setEnabled(false); // locked during lights sequence
             runLightsSequence();
         });
 
         return popup;
     }
 
-    // ─── Lights-out cinematic sequence ───────────────────────────────────────
-    //
-    //  1. NGEBeforeLights.png (1s)
-    //  2. Screen shakes for 1.5s
-    //  3. Dialogue: "Screen flickers..."
-    //  4. NGEBeforeLights2.png
-    //  5. Dialogue: "Everything goes silent."
-    //  6. NGEBeforeLights3.jpg (1s) → NGEBeforeLights4.jpg (1s) → NGEBeforeLights5.jpg (1s)
-    //  7. Dialogue: "The screen glitches... ⚡\nAnd the world turns to black..."
-    //  8. NGEBeforeLights6.png
-    //  9. Dialogue: "When you come to your senses..." → after typing → goToSelection()
-    //
     private void runLightsSequence() {
-        // Step 1: NGEBeforeLights.png for 1s
         setSceneBackground("assets/Backgrounds/NGEBeforeLights.png");
         delay(1000, () -> {
-
-            // Step 2: Screen shake for 1.5s
             Point origin = getLocation();
             int[] shakeTick = {0};
             Timer shakeTimer = new Timer(50, null);
@@ -405,23 +495,11 @@ public class GameScreen extends JPanel {
             delay(1500, () -> {
                 shakeTimer.stop();
                 setLocation(origin);
-
-                // Step 2b: pause 1s after shake
                 delay(1000, () -> {
-
-                    // Step 3: "Screen flickers..."
                     startTyping("Screen flickers...", () -> {
-
-                        // Step 3b: wait 1s after dialogue
                         delay(1000, () -> {
-
-                            // Step 4: NGEBeforeLights2.png
                             setSceneBackground("assets/Backgrounds/NGEBeforeLights2.png");
-
-                            // Step 5: "Everything goes silent."
                             startTyping("Everything goes silent.", () -> {
-
-                                // Step 6: Frames 3→4→5 each 1s
                                 String[] midFrames = {
                                         "assets/Backgrounds/NGEBeforeLights3.jpg",
                                         "assets/Backgrounds/NGEBeforeLights4.jpg",
@@ -434,20 +512,19 @@ public class GameScreen extends JPanel {
                                         setSceneBackground(midFrames[fi[0]++]);
                                     } else {
                                         midTimer.stop();
-
-                                        // Step 7: Glitch dialogue
                                         startTyping(
-                                                "The screen glitches... ⚡\n" +
-                                                        "And the world turns to black as the room seems to wrap around you. 🕳️",
+                                                "The screen glitches... \n"+
+                                                        "And the world turns to black as the room seems to wrap around you.",
                                                 () -> {
-                                                    // Step 8: NGEBeforeLights6.png
                                                     setSceneBackground("assets/Backgrounds/NGEBeforeLights6.png");
-
-                                                    // Step 9: Final dialogue → goToSelection
                                                     startTyping(
-                                                            "When you come to your senses, you're no longer in the lab.\n" +
-                                                                    "You wake up in an unfamiliar place. 👁️",
-                                                            () -> goToSelection()
+                                                            "When you come to your senses, you're no longer in the lab.\n"+
+                                                                    "You wake up in an unfamiliar place.",
+                                                            () -> {
+                                                                // Re-enable Continue — next press goes to hero selection
+                                                                pendingSelection = true;
+                                                                continueBtn.setEnabled(true);
+                                                            }
                                                     );
                                                 }
                                         );
@@ -463,15 +540,12 @@ public class GameScreen extends JPanel {
         });
     }
 
-    /** Fire {@code action} once after {@code ms} milliseconds on the EDT. */
     private void delay(int ms, Runnable action) {
         Timer t = new Timer(ms, null);
         t.setRepeats(false);
         t.addActionListener(e -> { t.stop(); action.run(); });
         t.start();
     }
-
-    // ─── Battle choice popup ──────────────────────────────────────────────────
 
     private JPanel buildBattleChoicePopup() {
         JPanel popup = new JPanel(null);
@@ -506,16 +580,15 @@ public class GameScreen extends JPanel {
         return popup;
     }
 
-    // ─── Dialogue system ─────────────────────────────────────────────────────
-    //
-    //  Step 0  → NGEBackground, type dialogue[0]                   → Continue
-    //  Step 1  → type dialogue[1] first, THEN Khai2(1s)→Khai(1.5s)→Khai2 → Continue
-    //  Step 2  → NGELoginUser(1s)→NGELoginUser2, type dialogue[2]  → Continue
-    //  Step 3  → CHANGED: NGELogin2 + loginPopup shown simultaneously, type dialogue[3]
-    //            continueBtn DISABLED — user must Sign In
-    //  Sign In → CHANGED: "Logging in..."(1s) → NGEBatch1 + examPopup + "Press Start..."
-    //
     private void continueDialogue() {
+        // If lights sequence finished, go to hero selection
+        if (pendingSelection) {
+            pendingSelection = false;
+            continueBtn.setEnabled(false);
+            goToSelection();
+            return;
+        }
+
         if (typingTimer != null && typingTimer.isRunning()) {
             typingTimer.stop();
             dialogueBox.setText(dialogues[Math.min(dialogueIndex, dialogues.length - 1)]);
@@ -524,16 +597,12 @@ public class GameScreen extends JPanel {
 
         dialogueIndex++;
 
-        // ── Step 1: type dialogue first, then do Khai background animation ────
         if (dialogueIndex == 1) {
             continueBtn.setEnabled(false);
-
             startTyping(dialogues[1], () -> {
                 setSceneBackground("assets/Backgrounds/NGESirKhai2.png");
-
                 Timer khaiPhase2 = new Timer(1000, e -> {
                     setSceneBackground("assets/Backgrounds/NGESirKhai.png");
-
                     Timer khaiPhase3 = new Timer(1500, e2 -> {
                         setSceneBackground("assets/Backgrounds/NGESirKhai2.png");
                         continueBtn.setEnabled(true);
@@ -547,12 +616,9 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // ── Step 2: NGELoginUser(1s) → NGELoginUser2, then type dialogue[2] ──
         if (dialogueIndex == 2) {
             continueBtn.setEnabled(false);
-
             setSceneBackground("assets/Backgrounds/NGELoginUser.png");
-
             Timer loginUserTimer = new Timer(1000, e -> {
                 setSceneBackground("assets/Backgrounds/NGELoginUser2.png");
                 startTyping(dialogues[2], () -> continueBtn.setEnabled(true));
@@ -562,12 +628,11 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // ── Step 3: CHANGED — NGELogin2 + loginPopup at same time, type dialogue[3]
         if (dialogueIndex == 3) {
             continueBtn.setEnabled(false);
             setSceneBackground("assets/Backgrounds/NGELogin2.png");
-            loginPopup.setVisible(true);          // shown simultaneously with bg swap
-            startTyping(dialogues[3], null);      // continueBtn stays locked
+            loginPopup.setVisible(true);
+            startTyping(dialogues[3], null);
             return;
         }
 
@@ -580,7 +645,6 @@ public class GameScreen extends JPanel {
     private void startTyping(String text, Runnable callback) {
         dialogueBox.setText("");
         charIndex = 0;
-
         typingTimer = new Timer(30, e -> {
             if (charIndex < text.length()) {
                 dialogueBox.append(String.valueOf(text.charAt(charIndex)));
@@ -599,11 +663,13 @@ public class GameScreen extends JPanel {
         return btn;
     }
 
-    /**
-     * Image button with normal/hover swap. Falls back to text if assets missing.
-     */
     private JButton createImageButton(String normalPath, String hoverPath,
                                       int x, int y, int w, int h, String fallbackText) {
+        return createImageButton(normalPath, hoverPath, x, y, w, h, fallbackText, 10);
+    }
+
+    private JButton createImageButton(String normalPath, String hoverPath,
+                                      int x, int y, int w, int h, String fallbackText, int hoverOffset) {
         JButton btn = new JButton();
         btn.setBounds(x, y, w, h);
         btn.setOpaque(false);
@@ -613,29 +679,27 @@ public class GameScreen extends JPanel {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         java.net.URL normalUrl = getClass().getResource(normalPath);
-        java.net.URL hoverUrl  = getClass().getResource(hoverPath);
+        java.net.URL hoverUrl = getClass().getResource(hoverPath);
 
         if (normalUrl != null) {
             ImageIcon normalIcon = new ImageIcon(
                     new ImageIcon(normalUrl).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
             ImageIcon hoverIcon = hoverUrl != null
-                    ? new ImageIcon(new ImageIcon(hoverUrl).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH))
+                    ? new ImageIcon(new ImageIcon(hoverUrl).getImage().getScaledInstance(w + hoverOffset, h + hoverOffset, Image.SCALE_SMOOTH))
                     : normalIcon;
             btn.setIcon(normalIcon);
             btn.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon);  }
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon); }
                 @Override public void mouseExited (java.awt.event.MouseEvent e) { btn.setIcon(normalIcon); }
             });
         } else {
             btn.setText(fallbackText);
             btn.setForeground(Color.WHITE);
             btn.setContentAreaFilled(true);
-            System.out.println("[GameScreen] Missing button asset: " + normalPath);
+            System.out.println("[GameScreen] Missing button asset:"+ normalPath);
         }
         return btn;
     }
-
-    // ─── Post-selection dialogue screen ──────────────────────────────────────
 
     private String[] postDialogues;
 
@@ -645,35 +709,35 @@ public class GameScreen extends JPanel {
         String armorLine;
 
         switch (hero.name) {
-            case "Kael Saint Laurent" -> {
-                heroLine   = "⚔️ You have chosen KAEL SAINT LAURENT, the valiant Swordsman!\n\n" + hero.backstory;
-                weaponLine = "🗡️ The gods bestow upon you your starting gear...\n\n" +
-                        "The Old Broadsword rests firmly in your grasp, its blade marked\n" +
+            case"Kael Saint Laurent"-> {
+                heroLine ="You have chosen KAEL SAINT LAURENT, the valiant Swordsman!\n\n"+ hero.backstory;
+                weaponLine ="The gods bestow upon you your starting gear...\n\n"+
+                        "The Old Broadsword rests firmly in your grasp, its blade marked\n"+
                         "by the scars of past battles.";
-                armorLine  = "🛡️ The Leather Guard settles on your shoulders — worn, but reliable.\n\n" +
+                armorLine ="The Leather Guard settles on your shoulders worn, but reliable.\n\n"+
                         "You are ready. The forest of World 1 awaits.";
             }
-            case "Karl Clover Dior IV" -> {
-                heroLine   = "🏹 You have chosen KARL CLOVER DIOR IV, the swift Archer!\n\n" + hero.backstory;
-                weaponLine = "🏹 The gods bestow upon you your starting gear...\n\n" +
-                        "The Shortbow hums softly — each arrow you notch feels like an\n" +
+            case"Karl Clover Dior IV"-> {
+                heroLine ="You have chosen KARL CLOVER DIOR IV, the swift Archer!\n\n"+ hero.backstory;
+                weaponLine ="The gods bestow upon you your starting gear...\n\n"+
+                        "The Shortbow hums softly each arrow you notch feels like an\n"+
                         "extension of your will.";
-                armorLine  = "🛡️ The Leather Guard settles on your shoulders — worn, but reliable.\n\n" +
+                armorLine ="The Leather Guard settles on your shoulders worn, but reliable.\n\n"+
                         "You are ready. The forest of World 1 awaits.";
             }
-            case "Simon Versace" -> {
-                heroLine   = "🌟 You have chosen SIMON VERSACE, the arcane Mage!\n\n" + hero.backstory;
-                weaponLine = "🔮 The gods bestow upon you your starting gear...\n\n" +
-                        "The Wooden Staff pulses faintly, whispering secrets\n" +
+            case"Simon Versace"-> {
+                heroLine ="You have chosen SIMON VERSACE, the arcane Mage!\n\n"+ hero.backstory;
+                weaponLine ="The gods bestow upon you your starting gear...\n\n"+
+                        "The Wooden Staff pulses faintly, whispering secrets\n"+
                         "of forgotten spells.";
-                armorLine  = "🛡️ The Leather Guard shimmers with faint runes — fragile,\n" +
-                        "yet brimming with arcane energy.\n\n" +
+                armorLine ="The Leather Guard shimmers with faint runes fragile,\n"+
+                        "yet brimming with arcane energy.\n\n"+
                         "You are ready. The forest of World 1 awaits.";
             }
             default -> {
-                heroLine   = "You have chosen: " + hero.name + ".\n\n" + hero.backstory;
-                weaponLine = "✨ The gods bestow upon you your starting gear...";
-                armorLine  = "You are ready. The forest of World 1 awaits.";
+                heroLine ="You have chosen:"+ hero.name + ".\n\n"+ hero.backstory;
+                weaponLine ="The gods bestow upon you your starting gear...";
+                armorLine ="You are ready. The forest of World 1 awaits.";
             }
         }
 
@@ -681,44 +745,153 @@ public class GameScreen extends JPanel {
     }
 
     private JPanel buildPostSelectScreen() {
-        JPanel screen = new JPanel(null);
-        screen.setBackground(new Color(28, 26, 44));
-        screen.setPreferredSize(new Dimension(1280, 720));
+        JLayeredPane layeredPane = new JLayeredPane();
 
-        JPanel bg = new JPanel();
-        bg.setBounds(0, 0, 1280, 520);
-        bg.setBackground(new Color(20, 18, 35));
-        screen.add(bg);
+        JPanel wrapper = new JPanel(null) {
+            @Override public void doLayout() {
+                super.doLayout();
+                layeredPane.setBounds(0, 0, getWidth(), getHeight());
+            }
+        };
+        wrapper.setBackground(new Color(40, 40, 60));
+        wrapper.setLayout(null);
+        wrapper.setPreferredSize(new Dimension(1280, 720));
 
+        // TheBackground — full screen bottom layer
+        JLabel theBackground = new JLabel();
+        theBackground.setBounds(0, 0, 1280, 720);
+        theBackground.setOpaque(true);
+        theBackground.setBackground(new Color(40, 40, 60));
+        java.net.URL theBgUrl2 = getClass().getResource("/assets/Backgrounds/TheBackground.png");
+        if (theBgUrl2 != null) {
+            Image theBgScaled2 = new ImageIcon(theBgUrl2).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH);
+            theBackground.setIcon(new ImageIcon(theBgScaled2));
+        }
+
+        // Hero intro background image (swapped per hero)
+        postBgLabel = new JLabel();
+        postBgLabel.setBounds(0, 0, 1280, 520);
+        postBgLabel.setOpaque(false);
+        postBgLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        postBgLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+
+        // Weapon label — left side
+        postWeaponLabel = new JLabel();
+        postWeaponLabel.setBounds(30, 60, 300, 420);
+        postWeaponLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        postWeaponLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+        postWeaponLabel.setVisible(false);
+
+        // Armor label — right side
+        postArmorLabel = new JLabel();
+        postArmorLabel.setBounds(950, 60, 300, 420);
+        postArmorLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        postArmorLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+        postArmorLabel.setVisible(false);
+
+        // DialogueBox image — same as intro screen
+        JLabel postDialogueBgLabel = new JLabel();
+        postDialogueBgLabel.setBounds(-40, 453, 1053, 343);
+        java.net.URL postDbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
+        if (postDbUrl != null) {
+            Image postDbScaled = new ImageIcon(postDbUrl).getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH);
+            postDialogueBgLabel.setIcon(new ImageIcon(postDbScaled));
+        }
+
+        // Dialogue textarea — same position/font as intro
         postDialogueBox = new JTextArea();
-        postDialogueBox.setBounds(60, 530, 1000, 140);
-        postDialogueBox.setBackground(new Color(30, 28, 50));
-        postDialogueBox.setForeground(Color.WHITE);
-        postDialogueBox.setFont(new Font("Serif", Font.PLAIN, 16));
+        postDialogueBox.setBounds(104, 541, 900, 100);
         postDialogueBox.setEditable(false);
         postDialogueBox.setLineWrap(true);
         postDialogueBox.setWrapStyleWord(true);
-        postDialogueBox.setBorder(BorderFactory.createLineBorder(new Color(100, 80, 180), 2));
-        screen.add(postDialogueBox);
+        try {
+            java.io.InputStream fs = getClass().getResourceAsStream("/assets/AssetFont/Pixelari.ttf");
+            if (fs != null) {
+                Font pf = Font.createFont(Font.TRUETYPE_FONT, fs).deriveFont(Font.BOLD, 16f);
+                postDialogueBox.setFont(pf);
+            } else {
+                postDialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+            }
+        } catch (Exception ex) {
+            postDialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+        }
+        postDialogueBox.setOpaque(false);
+        postDialogueBox.setBackground(new Color(0, 0, 0, 0));
+        postDialogueBox.setForeground(Color.BLACK);
+        postDialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
-        postContinueBtn = new JButton("▶  Continue");
-        postContinueBtn.setBounds(1100, 610, 140, 40);
-        postContinueBtn.setBackground(new Color(70, 50, 120));
-        postContinueBtn.setForeground(Color.WHITE);
-        postContinueBtn.setFocusPainted(false);
+        // Buttons — same as intro screen
+        postContinueBtn = createImageButton(
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
+                964, 554, 154, 64, "Continue");
         postContinueBtn.addActionListener(e -> continuePostDialogue());
-        screen.add(postContinueBtn);
 
-        return screen;
+        JButton postMenuBtn = createImageButton(
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
+                1103, 555, 148, 58, "Menu", 0);
+        JButton postBackBtn = createImageButton(
+                "/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png",
+                970, 613, 140, 50, "Back", 20);
+        JButton postExitBtn = createImageButton(
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
+                1108, 613, 140, 50, "Exit", 19);
+        postExitBtn.addActionListener(e -> System.exit(0));
+
+        layeredPane.setBounds(0, 0, 1280, 720);
+        layeredPane.add(theBackground,       JLayeredPane.FRAME_CONTENT_LAYER);
+        layeredPane.add(postBgLabel,         JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(postWeaponLabel,     JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(postArmorLabel,      JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(postDialogueBgLabel, JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(postDialogueBox,     JLayeredPane.MODAL_LAYER);
+        layeredPane.add(postContinueBtn,     JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(postMenuBtn,         JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(postBackBtn,         JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(postExitBtn,         JLayeredPane.PALETTE_LAYER);
+
+        wrapper.add(layeredPane);
+        return wrapper;
     }
 
     private Timer postTypingTimer;
+    private String[] postChunks;    // sentences of current dialogue split into 2-sentence chunks
+    private int postChunkIndex = 0; // which chunk we're on
+
+    /** Split a dialogue string into chunks of 2 sentences each. */
+    private String[] splitIntoChunks(String text) {
+        String[] lines = text.split("\n");
+        java.util.List<String> chunks = new java.util.ArrayList<>();
+        StringBuilder chunk = new StringBuilder();
+        int count = 0;
+        for (String line : lines) {
+            if (chunk.length() > 0) chunk.append("\n");
+            chunk.append(line);
+            count++;
+            if (count >= 2) {
+                chunks.add(chunk.toString());
+                chunk = new StringBuilder();
+                count = 0;
+            }
+        }
+        if (chunk.length() > 0) chunks.add(chunk.toString());
+        return chunks.toArray(new String[0]);
+    }
 
     private void startPostTyping() {
         if (postDialogues == null || postDialogueIndex >= postDialogues.length) return;
         if (postTypingTimer != null && postTypingTimer.isRunning()) postTypingTimer.stop();
 
-        String text = postDialogues[postDialogueIndex];
+        // Build chunks for current dialogue
+        postChunks = splitIntoChunks(postDialogues[postDialogueIndex]);
+        postChunkIndex = 0;
+        typePostChunk();
+    }
+
+    private void typePostChunk() {
+        if (postChunks == null || postChunkIndex >= postChunks.length) return;
+        if (postTypingTimer != null && postTypingTimer.isRunning()) postTypingTimer.stop();
+
+        String text = postChunks[postChunkIndex];
         postDialogueBox.setText("");
         int[] ci = {0};
 
@@ -728,95 +901,310 @@ public class GameScreen extends JPanel {
                 postDialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
             } else {
                 postTypingTimer.stop();
+                // If more chunks remain, wait 1s then auto-advance to next chunk
+                if (postChunkIndex < postChunks.length - 1) {
+                    postContinueBtn.setEnabled(false);
+                    delay(1000, () -> {
+                        postChunkIndex++;
+                        postContinueBtn.setEnabled(true);
+                        typePostChunk();
+                    });
+                }
+                // Last chunk — wait for user to press Continue
             }
         });
         postTypingTimer.start();
     }
 
     private void continuePostDialogue() {
+        // If still typing current chunk — skip to end of chunk
         if (postTypingTimer != null && postTypingTimer.isRunning()) {
             postTypingTimer.stop();
-            postDialogueBox.setText(postDialogues[postDialogueIndex]);
+            if (postChunks != null && postChunkIndex < postChunks.length) {
+                postDialogueBox.setText(postChunks[postChunkIndex]);
+            }
             return;
         }
         postDialogueIndex++;
         if (postDialogueIndex < postDialogues.length) {
+            if (postDialogueIndex == 1) showPostWeapon();
+            if (postDialogueIndex == 2) showPostArmor();
             startPostTyping();
         } else {
+            postWeaponLabel.setVisible(false);
+            postArmorLabel.setVisible(false);
+            postWeaponLabel.setIcon(null);
+            postArmorLabel.setIcon(null);
             postDialogueIndex = 0;
-            w1DialogueIndex   = 0;
+            w1DialogueIndex = 0;
             goToWorld1Intro();
-            startW1Typing();
         }
     }
 
-    // ─── World 1 intro dialogue screen ───────────────────────────────────────
+    private void showPostWeapon() {
+        if (confirmedHero == null || postWeaponLabel == null) return;
+        String path = switch (confirmedHero.name) {
+            case"Kael Saint Laurent"->"/assets/SwordAssets/OldBroadSword.png";
+            case"Karl Clover Dior IV"->"/assets/BowAssets/WoodenBow.png";
+            case"Simon Versace"->"/assets/StaffAssets/WoodenStaff.png";
+            default -> null;
+        };
+        loadPostItemImage(postWeaponLabel, path);
+    }
+
+    private void showPostArmor() {
+        if (postArmorLabel == null) return;
+        loadPostItemImage(postArmorLabel,"/assets/ArmorAssets/LeatherGuard.png");
+    }
+
+    private void loadPostItemImage(JLabel label, String path) {
+        if (path == null) { label.setVisible(false); return; }
+        java.net.URL url = getClass().getResource(path);
+        if (url != null) {
+            ImageIcon raw = new ImageIcon(url);
+            int origW = raw.getIconWidth();
+            int origH = raw.getIconHeight();
+            int targetH = 380;
+            int targetW = (origH > 0) ? (origW * targetH / origH) : 200;
+            Image scaled = raw.getImage().getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH);
+            label.setIcon(new ImageIcon(scaled));
+            label.setVisible(true);
+            Container parent = label.getParent();
+            if (parent != null) {
+                parent.setComponentZOrder(label, 0);
+                parent.repaint();
+            }
+        } else {
+            System.out.println("[GameScreen] Missing post-select item:"+ path);
+            label.setVisible(false);
+        }
+    }
 
     private static final String[] WORLD1_DIALOGUES = {
-            "You wake up gasping for air. The world is drained of color.\n\n" +
-                    "You are lying on a bed of gray moss in a dead forest. The trees are skeletal\n" +
-                    "giants, stripped to bone-white wood. A cold mist coils around your ankles,\n" +
-                    "and silence presses from every side — watching, waiting.",
-
+            // [0] Opening
+            "You wake up gasping for air. The world is drained of color.",
+            // [1] Moss/forest — after this: label fades, World1Bg->SirKhai transition
+            "You are lying on a bed of gray moss in a dead forest. The trees are skeletal\n"+
+                    "giants, stripped to bone-white wood. A cold mist coils around your ankles,\n"+
+                    "and silence presses from every side watching, waiting.",
+            // [2] Dong Dong — after this: SirKhai->SirKhai2 transition
             "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",
-
-            "From the mist steps a figure cloaked in tattered robes.\n" +
-                    "He leans heavily on a staff. As he lifts his hood, you jolt back —\n" +
-                    "the face is familiar. It looks exactly like your professor, Khai.\n" +
+            // [3] Figure/Khai reveal — after this: SirKhai3.png (no transition, instant)
+            "From the mist steps a figure cloaked in tattered robes.\n"+
+                    "He leans heavily on a staff. As he lifts his hood, you jolt back \n"+
+                    "the face is familiar. It looks exactly like your professor, Khai.\n"+
                     "But his eyes are weary, holding the weight of centuries.",
-
-            "🟢 \"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n\n" +
-                    "\"We suffer because an evil Necromancer has corrupted these lands.\n" +
-                    "He has drained the nature itself. We must find the Three Stones of Life\n" +
-                    "that hold this reality together. Only then will your path home reveal itself.\"\n\n" +
-                    "🟢 Khai fades back into the mist. A low growl vibrates through the ground...\n\n" +
-                    "⚔️  Three Rotfang Wolves emerge from the tree line. Their glowing red eyes\n" +
-                    "fixate on you. They do not hunt for food — they hunt to kill."
+            // [4] Khai speaks — after this: SirKhai2->SirKhai transition, then World1Bg, then typing resumes
+            "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n\n"+
+                    "\"We suffer because an evil Necromancer has corrupted these lands.\n"+
+                    "He has drained the nature itself. We must find the Three Stones of Life\n"+
+                    "that hold this reality together. Only then will your path home reveal itself.\"",
+            // [5] Khai fades
+            "Khai fades back into the mist.",
+            // [6] Wolves appear — after this: Wolf1(1s)->Wolf2(1s) transition
+            "Three Rotfang Wolves emerge from the tree line.",
+            // [7] Glowing eyes — after this: instant Wolf3
+            "Their glowing red eyes",
+            // [8] Final
+            "fixate on you. They do not hunt for food they hunt to kill."
     };
 
     private JPanel buildWorld1IntroScreen() {
-        JPanel screen = new JPanel(null);
-        screen.setBackground(new Color(15, 12, 28));
-        screen.setPreferredSize(new Dimension(1280, 720));
+        JLayeredPane layeredPane = new JLayeredPane();
 
-        JPanel bg = new JPanel(null);
-        bg.setBounds(0, 0, 1280, 520);
-        bg.setBackground(new Color(10, 8, 22));
-        screen.add(bg);
+        JPanel wrapper = new JPanel(null) {
+            @Override public void doLayout() {
+                super.doLayout();
+                layeredPane.setBounds(0, 0, getWidth(), getHeight());
+            }
+        };
+        wrapper.setBackground(new Color(40, 40, 60));
+        wrapper.setLayout(null);
+        wrapper.setPreferredSize(new Dimension(1280, 720));
 
-        JLabel worldLabel = new JLabel("— WORLD 1 : THE FOREST OF ENDINGS —", SwingConstants.CENTER);
-        worldLabel.setBounds(0, 220, 1280, 50);
-        worldLabel.setForeground(new Color(140, 110, 220));
-        worldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
-        bg.add(worldLabel);
+        // TheBackground — full screen bottom layer
+        JLabel w1TheBg = new JLabel();
+        w1TheBg.setBounds(0, 0, 1280, 720);
+        w1TheBg.setOpaque(true);
+        w1TheBg.setBackground(new Color(40, 40, 60));
+        java.net.URL w1BgUrl = getClass().getResource("/assets/Backgrounds/TheBackground.png");
+        if (w1BgUrl != null) {
+            Image w1BgScaled = new ImageIcon(w1BgUrl).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH);
+            w1TheBg.setIcon(new ImageIcon(w1BgScaled));
+        }
 
+        // Scene background — crossfade from NGEBeforeLights6 to World1Background
+        final float[] sceneAlpha = {1.0f};
+        final float[] worldAlpha = {0.0f};
+
+        java.awt.image.BufferedImage lights6Img = null;
+        java.awt.image.BufferedImage world1Img  = null;
+        try {
+            java.net.URL l6url = getClass().getResource("/assets/Backgrounds/NGEBeforeLights6.png");
+            java.net.URL w1url = getClass().getResource("/assets/Backgrounds/World1Background.png");
+            if (l6url != null) lights6Img = javax.imageio.ImageIO.read(l6url);
+            if (w1url  != null) world1Img  = javax.imageio.ImageIO.read(w1url);
+        } catch (Exception ex) { System.out.println("[W1] Image load error: " + ex.getMessage()); }
+
+        final java.awt.image.BufferedImage fLights6 = lights6Img;
+        final java.awt.image.BufferedImage fWorld1  = world1Img;
+
+        JPanel w1SceneBg = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                if (fLights6 != null && sceneAlpha[0] > 0) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sceneAlpha[0]));
+                    g2.drawImage(fLights6, 0, 0, getWidth(), getHeight(), null);
+                }
+                if (fWorld1 != null && worldAlpha[0] > 0) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, worldAlpha[0]));
+                    g2.drawImage(fWorld1, 0, 0, getWidth(), getHeight(), null);
+                }
+                g2.dispose();
+            }
+        };
+        w1SceneBg.setBounds(0, 0, 1280, 520);
+        w1SceneBg.setOpaque(false);
+
+        world1SceneBg    = w1SceneBg;
+        world1SceneAlpha = sceneAlpha;
+        world1WorldAlpha = worldAlpha;
+
+        // World label — all caps, white
+        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF SILENCE", SwingConstants.CENTER);
+        w1WorldLabel.setBounds(0, 220, 1280, 50);
+        w1WorldLabel.setForeground(Color.WHITE);
+        w1WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
+
+        // DialogueBox image
+        JLabel w1DialogueBgLabel = new JLabel();
+        w1DialogueBgLabel.setBounds(-40, 453, 1053, 343);
+        java.net.URL w1DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
+        if (w1DbUrl != null) {
+            Image w1DbScaled = new ImageIcon(w1DbUrl).getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH);
+            w1DialogueBgLabel.setIcon(new ImageIcon(w1DbScaled));
+        }
+
+        // Dialogue textarea — same as intro screen
         w1DialogueBox = new JTextArea();
-        w1DialogueBox.setBounds(60, 530, 1000, 150);
-        w1DialogueBox.setBackground(new Color(20, 16, 38));
-        w1DialogueBox.setForeground(Color.WHITE);
-        w1DialogueBox.setFont(new Font("Serif", Font.PLAIN, 16));
+        w1DialogueBox.setBounds(104, 541, 900, 100);
         w1DialogueBox.setEditable(false);
         w1DialogueBox.setLineWrap(true);
         w1DialogueBox.setWrapStyleWord(true);
-        w1DialogueBox.setBorder(BorderFactory.createLineBorder(new Color(80, 55, 160), 2));
-        screen.add(w1DialogueBox);
+        try {
+            java.io.InputStream w1fs = getClass().getResourceAsStream("/assets/AssetFont/Pixelari.ttf");
+            if (w1fs != null) {
+                Font w1pf = Font.createFont(Font.TRUETYPE_FONT, w1fs).deriveFont(Font.BOLD, 19f);
+                w1DialogueBox.setFont(w1pf);
+            } else {
+                w1DialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+            }
+        } catch (Exception ex) {
+            w1DialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+        }
+        w1DialogueBox.setOpaque(false);
+        w1DialogueBox.setBackground(new Color(0, 0, 0, 0));
+        w1DialogueBox.setForeground(Color.BLACK);
+        w1DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
-        w1ContinueBtn = new JButton("▶  Continue");
-        w1ContinueBtn.setBounds(1100, 650, 140, 40);
-        w1ContinueBtn.setBackground(new Color(60, 40, 110));
-        w1ContinueBtn.setForeground(Color.WHITE);
-        w1ContinueBtn.setFocusPainted(false);
+        // Buttons — same as intro screen
+        w1ContinueBtn = createImageButton(
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
+                964, 554, 154, 64, "Continue");
         w1ContinueBtn.addActionListener(e -> continueW1Dialogue());
-        screen.add(w1ContinueBtn);
 
-        return screen;
+        JButton w1MenuBtn = createImageButton(
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
+                1103, 555, 148, 58, "Menu", 0);
+        JButton w1BackBtn = createImageButton(
+                "/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png",
+                970, 613, 140, 50, "Back", 20);
+        JButton w1ExitBtn = createImageButton(
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
+                1108, 613, 140, 50, "Exit", 19);
+        w1ExitBtn.addActionListener(e -> System.exit(0));
+
+
+
+        // Khai silhouette overlay label — supports two-image crossfade via client properties
+        JLabel w1KhaiPanel = new JLabel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                // Draw previous image fading out
+                Object prevImg = getClientProperty("prevImage");
+                Object prevA   = getClientProperty("prevAlpha");
+                if (prevImg instanceof Image && prevA instanceof Float && (Float)prevA > 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (Float)prevA));
+                    g2.drawImage((Image)prevImg, 0, 0, getWidth(), getHeight(), null);
+                }
+                // Draw new image fading in
+                if (getIcon() != null && world1KhaiAlpha[0] > 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, world1KhaiAlpha[0])));
+                    g2.drawImage(((ImageIcon)getIcon()).getImage(), 0, 0, getWidth(), getHeight(), null);
+                }
+                g2.dispose();
+            }
+        };
+        w1KhaiPanel.setBounds(0, 0, 1280, 520);
+        w1KhaiPanel.setOpaque(false);
+        world1KhaiLabel = w1KhaiPanel;
+
+        layeredPane.setBounds(0, 0, 1280, 720);
+        layeredPane.add(w1TheBg,          JLayeredPane.FRAME_CONTENT_LAYER);
+        layeredPane.add(w1SceneBg,        JLayeredPane.DEFAULT_LAYER); // custom crossfade panel
+        layeredPane.add(w1KhaiPanel,      JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w1WorldLabel,     JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w1DialogueBgLabel,JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w1DialogueBox,    JLayeredPane.MODAL_LAYER);
+        layeredPane.add(w1ContinueBtn,    JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w1MenuBtn,        JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w1BackBtn,        JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w1ExitBtn,        JLayeredPane.PALETTE_LAYER);
+
+
+
+        wrapper.add(layeredPane);
+        return wrapper;
     }
+
+    private String[] w1Chunks;
+    private int w1ChunkIndex = 0;
 
     private void startW1Typing() {
         if (w1DialogueIndex >= WORLD1_DIALOGUES.length) return;
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
 
-        String text = WORLD1_DIALOGUES[w1DialogueIndex];
+        w1Chunks = splitIntoChunks3(WORLD1_DIALOGUES[w1DialogueIndex]);
+        w1ChunkIndex = 0;
+        typeW1Chunk();
+    }
+
+    /** Split into chunks of 3 lines. */
+    private String[] splitIntoChunks3(String text) {
+        String[] lines = text.split("\n");
+        java.util.List<String> chunks = new java.util.ArrayList<>();
+        StringBuilder chunk = new StringBuilder();
+        int count = 0;
+        for (String line : lines) {
+            if (chunk.length() > 0) chunk.append("\n");
+            chunk.append(line);
+            count++;
+            if (count >= 3) {
+                chunks.add(chunk.toString());
+                chunk = new StringBuilder();
+                count = 0;
+            }
+        }
+        if (chunk.length() > 0) chunks.add(chunk.toString());
+        return chunks.toArray(new String[0]);
+    }
+
+    private void typeW1Chunk() {
+        if (w1Chunks == null || w1ChunkIndex >= w1Chunks.length) return;
+        if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+
+        String text = w1Chunks[w1ChunkIndex];
         w1DialogueBox.setText("");
         int[] ci = {0};
 
@@ -826,17 +1214,118 @@ public class GameScreen extends JPanel {
                 w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
             } else {
                 w1TypingTimer.stop();
+                if (w1ChunkIndex < w1Chunks.length - 1) {
+                    w1ContinueBtn.setEnabled(false);
+                    delay(1000, () -> {
+                        w1ChunkIndex++;
+                        w1ContinueBtn.setEnabled(true);
+                        typeW1Chunk();
+                    });
+                }
             }
         });
         w1TypingTimer.start();
     }
 
     private void continueW1Dialogue() {
+        // If still typing — skip to end of chunk
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) {
             w1TypingTimer.stop();
-            w1DialogueBox.setText(WORLD1_DIALOGUES[w1DialogueIndex]);
+            if (w1Chunks != null && w1ChunkIndex < w1Chunks.length) {
+                w1DialogueBox.setText(w1Chunks[w1ChunkIndex]);
+            }
             return;
         }
+
+        // ── After dialogue 1 (moss/forest): fade label + World1Bg->SirKhai ──
+        if (w1DialogueIndex == 1 && w1WorldLabel != null) {
+            fadeW1Label();
+            delay(1000, () -> crossfadeW1ToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {}));
+        }
+
+        // ── After dialogue 2 (Dong Dong): SirKhai->SirKhai2 ──
+        if (w1DialogueIndex == 2) {
+            transitionW1Scene("/assets/Backgrounds/SilhouetteSirKhai2.jpg");
+        }
+
+        // ── After dialogue 3 (his eyes weary, SirKhai2): instant switch to SirKhai3 ──
+        if (w1DialogueIndex == 3) {
+            try {
+                java.net.URL u = getClass().getResource("/assets/Backgrounds/SilhouetteSirKhai3.png");
+                if (u != null) {
+                    world1KhaiLabel.putClientProperty("prevImage", null);
+                    world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+                    world1KhaiLabel.setIcon(new ImageIcon(new ImageIcon(u).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+                    world1KhaiAlpha[0] = 1.0f;
+                    world1KhaiLabel.repaint();
+                }
+            } catch (Exception ex) { System.out.println("[W1] SirKhai3 error: " + ex.getMessage()); }
+        }
+
+        // ── After dialogue 4 (Be calm, SirKhai3): SirKhai3->SirKhai2->SirKhai->World1Bg, all slow fades ──
+        if (w1DialogueIndex == 4) {
+            w1ContinueBtn.setEnabled(false);
+            // Slow fade: SirKhai3 -> SirKhai2
+            crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai2.jpg", () -> {
+                // Slow fade: SirKhai2 -> SirKhai
+                crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {
+                    // Fade out khai, restore World1Bg, advance to [5]
+                    delay(1000, () -> {
+                        world1KhaiAlpha[0] = 0f;
+                        world1KhaiLabel.repaint();
+                        world1WorldAlpha[0] = 1.0f;
+                        world1SceneBg.repaint();
+                        w1DialogueIndex = 5;
+                        w1ContinueBtn.setEnabled(true);
+                        startW1Typing();
+                    });
+                });
+            });
+            return;
+        }
+
+        // ── After dialogue 6 (Wolves emerge): Wolf1(1s) -> Wolf2(1s), then play [7] ──
+        if (w1DialogueIndex == 6) {
+            w1ContinueBtn.setEnabled(false);
+            // Show Wolf1 via crossfade
+            crossfadeKhaiToKhai("/assets/Backgrounds/World1RodtfangWolf1.png", () -> {
+                // Hold Wolf1 for 1s, then snap to Wolf2
+                delay(1000, () -> {
+                    try {
+                        java.net.URL u = getClass().getResource("/assets/Backgrounds/World1RodtfangWolf2.png");
+                        if (u != null) {
+                            world1KhaiLabel.putClientProperty("prevImage", null);
+                            world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+                            world1KhaiLabel.setIcon(new ImageIcon(new ImageIcon(u).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+                            world1KhaiAlpha[0] = 1.0f;
+                            world1KhaiLabel.repaint();
+                        }
+                    } catch (Exception ex) { System.out.println("[W1] Wolf2 error: " + ex.getMessage()); }
+                    // Hold Wolf2 for 1s, then advance to [7]
+                    delay(1000, () -> {
+                        w1DialogueIndex = 7;
+                        w1ContinueBtn.setEnabled(true);
+                        startW1Typing();
+                    });
+                });
+            });
+            return;
+        }
+
+        // ── After dialogue 7 (glowing red eyes): instant Wolf3 ──
+        if (w1DialogueIndex == 7) {
+            try {
+                java.net.URL u = getClass().getResource("/assets/Backgrounds/World1RodtfangWolf3.png");
+                if (u != null) {
+                    world1KhaiLabel.putClientProperty("prevImage", null);
+                    world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+                    world1KhaiLabel.setIcon(new ImageIcon(new ImageIcon(u).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+                    world1KhaiAlpha[0] = 1.0f;
+                    world1KhaiLabel.repaint();
+                }
+            } catch (Exception ex) { System.out.println("[W1] Wolf3 error: " + ex.getMessage()); }
+        }
+
         w1DialogueIndex++;
         if (w1DialogueIndex < WORLD1_DIALOGUES.length) {
             startW1Typing();
@@ -844,5 +1333,127 @@ public class GameScreen extends JPanel {
             w1DialogueIndex = 0;
             goToBattle();
         }
+    }
+
+    /** Fade the world label out over ~1.5s. */
+    private void fadeW1Label() {
+        if (w1WorldLabel == null) return;
+        final float[] a = {1.0f};
+        JLabel lbl = w1WorldLabel;
+        Timer t = new Timer(16, null);
+        t.addActionListener(e -> {
+            a[0] = Math.max(0f, a[0] - 0.011f);
+            lbl.setForeground(new Color(1f, 1f, 1f, a[0]));
+            if (a[0] <= 0f) { ((Timer)e.getSource()).stop(); lbl.setVisible(false); }
+        });
+        t.start();
+    }
+
+    /** Crossfade current khai label image to a new image at same 0.02f speed. */
+    private void crossfadeKhaiToKhai(String path, Runnable onDone) {
+        try {
+            java.net.URL url = getClass().getResource(path);
+            if (url == null) { System.out.println("[W1] Missing: " + path); if (onDone != null) onDone.run(); return; }
+            java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
+            final Image nextImage = newImg.getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
+            final Image prevImage = world1KhaiLabel.getIcon() != null
+                    ? ((ImageIcon) world1KhaiLabel.getIcon()).getImage() : null;
+            final float[] prevAlpha = {world1KhaiAlpha[0]};
+            final float[] newAlpha  = {0f};
+            world1KhaiLabel.setIcon(new ImageIcon(nextImage));
+            world1KhaiLabel.putClientProperty("prevImage", prevImage);
+            world1KhaiLabel.putClientProperty("prevAlpha", prevAlpha[0]);
+            world1KhaiAlpha[0] = 0f;
+            Timer fade = new Timer(16, null);
+            fade.addActionListener(ev -> {
+                prevAlpha[0] = Math.max(0f, prevAlpha[0] - 0.02f);
+                newAlpha[0]  = Math.min(1f, newAlpha[0]  + 0.02f);
+                world1KhaiLabel.putClientProperty("prevAlpha", prevAlpha[0]);
+                world1KhaiAlpha[0] = newAlpha[0];
+                world1KhaiLabel.repaint();
+                if (prevAlpha[0] <= 0f && newAlpha[0] >= 1f) {
+                    ((Timer)ev.getSource()).stop();
+                    world1KhaiLabel.putClientProperty("prevImage", null);
+                    world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+                    if (onDone != null) onDone.run();
+                }
+            });
+            fade.start();
+        } catch (Exception ex) { System.out.println("[W1] crossfadeKhaiToKhai error: " + ex.getMessage()); if (onDone != null) onDone.run(); }
+    }
+
+    /** Crossfade World1Bg panel to khai image, call onDone when complete. */
+    private void crossfadeW1ToKhai(String path, Runnable onDone) {
+        if (world1SceneBg == null) return;
+        try {
+            java.net.URL khaiUrl = getClass().getResource(path);
+            if (khaiUrl == null) { System.out.println("[W1] Missing: " + path); return; }
+            java.awt.image.BufferedImage khaiImg = javax.imageio.ImageIO.read(khaiUrl);
+            final java.awt.image.BufferedImage fKhai = khaiImg;
+            final float[] khaiAlpha = {0f};
+            final float[] currentAlpha = {1.0f};
+            Timer fade = new Timer(16, null);
+            fade.addActionListener(kev -> {
+                currentAlpha[0] = Math.max(0f, currentAlpha[0] - 0.02f);
+                khaiAlpha[0]    = Math.min(1f, khaiAlpha[0]    + 0.02f);
+                world1SceneAlpha[0] = 0f;
+                world1WorldAlpha[0] = currentAlpha[0];
+                if (world1KhaiLabel != null) {
+                    world1KhaiLabel.setIcon(new ImageIcon(fKhai.getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+                    world1KhaiLabel.putClientProperty("prevImage", null);
+                    world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+                    world1KhaiAlpha[0] = khaiAlpha[0];
+                    world1KhaiLabel.repaint();
+                }
+                world1SceneBg.repaint();
+                if (currentAlpha[0] <= 0f && khaiAlpha[0] >= 1f) {
+                    ((Timer)kev.getSource()).stop();
+                    world1WorldAlpha[0] = 0f;
+                    world1SceneBg.repaint();
+                    if (onDone != null) onDone.run();
+                }
+            });
+            fade.start();
+        } catch (Exception ex) { System.out.println("[W1] crossfadeW1ToKhai error: " + ex.getMessage()); }
+    }
+
+    /** Crossfade the World1 scene to a new image — same style as NGEBeforeLights6 -> SilhouetteSirKhai. */
+    private void transitionW1Scene(String path) {
+        delay(1000, () -> {
+            if (world1KhaiLabel == null) return;
+            try {
+                java.net.URL url = getClass().getResource(path);
+                if (url == null) { System.out.println("[W1] Missing: " + path); return; }
+                java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
+                final Image nextImage = newImg.getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
+                // Store current image as prev before switching
+                final Image prevImage = world1KhaiLabel.getIcon() != null
+                        ? ((ImageIcon) world1KhaiLabel.getIcon()).getImage() : null;
+                final float[] prevAlpha = {1.0f};
+                final float[] newAlpha  = {0f};
+                // Set next image on label, paintComponent will blend prev+next
+                world1KhaiLabel.setIcon(new ImageIcon(nextImage));
+                world1KhaiLabel.putClientProperty("prevImage", prevImage);
+                world1KhaiLabel.putClientProperty("prevAlpha", 1.0f);
+                world1KhaiAlpha[0] = 0f;
+                // Same 0.02f speed as World1Bg->SirKhai transition
+                Timer fade = new Timer(16, null);
+                fade.addActionListener(ev -> {
+                    prevAlpha[0] = Math.max(0f, prevAlpha[0] - 0.02f);
+                    newAlpha[0]  = Math.min(1f, newAlpha[0]  + 0.02f);
+                    world1KhaiLabel.putClientProperty("prevAlpha", prevAlpha[0]);
+                    world1KhaiAlpha[0] = newAlpha[0];
+                    world1KhaiLabel.repaint();
+                    if (prevAlpha[0] <= 0f && newAlpha[0] >= 1f) {
+                        ((Timer)ev.getSource()).stop();
+                        world1KhaiLabel.putClientProperty("prevImage", null);
+                        world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+                    }
+                });
+                fade.start();
+            } catch (Exception ex) {
+                System.out.println("[W1] Scene transition error: " + ex.getMessage());
+            }
+        });
     }
 }
