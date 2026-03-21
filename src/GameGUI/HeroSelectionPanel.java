@@ -167,7 +167,7 @@ public class HeroSelectionPanel extends JPanel {
             c.setHover(false);
         }
         storyPreview.setForeground(TEXT_BRIGHT);
-        storyPreview.setText(def.story.length > 0 ? def.story[0] : "");
+        storyPreview.setText(def.backstory != null ? def.backstory : "");
         confirmBtn.setEnabled(true);
         confirmBtn.setBackground(new Color(120, 92, 24));
         confirmBtn.setForeground(new Color(10, 8, 2));
@@ -472,7 +472,7 @@ public class HeroSelectionPanel extends JPanel {
             roleLabel.setAlignmentX(LEFT_ALIGNMENT);
             roleLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-            StatBar hpBar  = new StatBar("HP",  def.hp,     150, HP_GREEN);
+            StatBar hpBar  = new StatBar("HP",  def.maxHp,  150, HP_GREEN);
             StatBar atkBar = new StatBar("ATK", def.attack,  40, ATK_RED);
             StatBar defBar = new StatBar("DEF", def.defense, 20, DEF_BLUE);
 
