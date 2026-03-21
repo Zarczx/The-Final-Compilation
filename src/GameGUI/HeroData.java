@@ -1,287 +1,281 @@
 package GameGUI;
 
-import GameGUI.BattleLogic.Combatant;
-import GameGUI.BattleLogic.Special;
-
+import GameGUI.BattleLogic.*;
 import java.util.List;
 
-/**
- * HeroData.java
- *
- * All hero definitions built directly from your actual character files:
- *
- *   Kael.java  → Kael Saint Laurent  (Swordsman, hp:100, def:5,  energy:100, atk:12)
- *   Karl.java  → Karl Clover Dior IV (Archer,    hp:80,  def:3,  energy:24,  atk:14)
- *   Simon.java → Simon Versace       (Mage,      hp:60,  def:2,  energy:120, atk:18)
- *   Null.java  → Null                (Mage,      hp:99999,def:1, energy:9999,atk:9999)
- *
- * Energy names/emojis mirror Character.getEnergyName() and getEnergyEmoji():
- *   Swordsman → "Stamina" / "🔋"
- *   Archer    → "Arrows"  / "➶"
- *   Mage      → "Mana"    / "💧"
- *
- * Skill data (name, icon, cost, multipliers, hits) taken directly from each
- * character's displaySkills() and skill method implementations.
- */
 public class HeroData {
 
-    // ─── Playable Heroes ─────────────────────────────────────────────────────
+    // ─── Skill definition ────────────────────────────────────────────────────
+    public static class SkillDef {
+        public final String icon, name, description;
+        public final double multiplier;
+        public final boolean pierceArmor;
+        public final int cooldown;
+        public final int energyCost;
 
+        public SkillDef(String icon, String name, String description,
+                        double multiplier, boolean pierceArmor, int cooldown, int energyCost) {
+            this.icon = icon; this.name = name; this.description = description;
+            this.multiplier = multiplier; this.pierceArmor = pierceArmor;
+            this.cooldown = cooldown; this.energyCost = energyCost;
+        }
+    }
+
+    // ─── Weapon definition ───────────────────────────────────────────────────
+    // Mirrors console Staff/Sword/Bow stats — applied when buildHero is called
+    public static class WeaponDef {
+        public final String name, rarity;
+        public final int atkBuff;           // flat ATK added to hero base
+        public final int confuseChance;     // % chance to confuse enemy on hit
+        public final int lifestealPercent;  // % of damage restored as HP
+        public final int poisonChance;      // % chance to apply poison DoT
+        public final int energyPerAttack;   // energy restored after each attack
+
+        public WeaponDef(String name, String rarity, int atkBuff,
+                         int confuseChance, int lifestealPercent,
+                         int poisonChance, int energyPerAttack) {
+            this.name = name; this.rarity = rarity; this.atkBuff = atkBuff;
+            this.confuseChance = confuseChance; this.lifestealPercent = lifestealPercent;
+            this.poisonChance = poisonChance; this.energyPerAttack = energyPerAttack;
+        }
+    }
+
+    // ─── Armor definition ────────────────────────────────────────────────────
+    public static class ArmorDef {
+        public final String name, rarity;
+        public final int hpBuff;    // flat HP added to hero maxHp
+        public final int defBuff;   // flat DEF added to hero base defense
+
+        public ArmorDef(String name, String rarity, int hpBuff, int defBuff) {
+            this.name = name; this.rarity = rarity;
+            this.hpBuff = hpBuff; this.defBuff = defBuff;
+        }
+    }
+
+    // ─── Starting weapons (World 1) ──────────────────────────────────────────
+    // All match console atkBuff=5 exactly
+    public static final WeaponDef OLD_BROADSWORD =
+            new WeaponDef("Old Broadsword", "White", 5, 0, 0, 0, 0);
+    public static final WeaponDef WOODEN_BOW =
+            new WeaponDef("Wooden Bow", "White", 5, 0, 0, 0, 0);
+    public static final WeaponDef WOODEN_STAFF =
+            new WeaponDef("Wooden Staff", "White", 5, 0, 0, 0, 0);
+
+    // ─── Starting armor (World 1, shared) ────────────────────────────────────
+    // Leather Guard: +5 DEF only — matches console Armor.LEATHER_GUARD defBuff=5
+    public static final ArmorDef LEATHER_GUARD =
+            new ArmorDef("Leather Guard", "White", 0, 5);
+
+    // ─── Hero definition ─────────────────────────────────────────────────────
+    public static class HeroDefinition {
+        public final String name, role, emoji, backstory, passive;
+        public final int maxHp, attack, defense, maxEnergy;
+        public final SkillDef[] skills;
+        public final WeaponDef startingWeapon;
+        public final ArmorDef  startingArmor;
+
+        public HeroDefinition(String name, String role, String emoji, String backstory, String passive,
+                              int maxHp, int attack, int defense, int maxEnergy,
+                              SkillDef[] skills, WeaponDef startingWeapon, ArmorDef startingArmor) {
+            this.name = name; this.role = role; this.emoji = emoji;
+            this.backstory = backstory; this.passive = passive;
+            this.maxHp = maxHp; this.attack = attack; this.defense = defense;
+            this.maxEnergy = maxEnergy; this.skills = skills;
+            this.startingWeapon = startingWeapon;
+            this.startingArmor  = startingArmor;
+        }
+    }
+
+    // ─── Enemy definition ────────────────────────────────────────────────────
+    public static class EnemyDefinition {
+        public final String name, role, emoji;
+        public final int maxHp, attack, defense;
+        public final int worldLevel;
+        public final int count;
+        public final int xpReward; // XP given per individual kill (matches console rewardExp())
+        public final String encounterDialogue;
+        public final String defeatDialogue;
+
+        public EnemyDefinition(String name, String role, String emoji,
+                               int maxHp, int attack, int defense,
+                               int worldLevel, int count, int xpReward,
+                               String encounterDialogue, String defeatDialogue) {
+            this.name = name; this.role = role; this.emoji = emoji;
+            this.maxHp = maxHp; this.attack = attack; this.defense = defense;
+            this.worldLevel = worldLevel; this.count = count; this.xpReward = xpReward;
+            this.encounterDialogue = encounterDialogue;
+            this.defeatDialogue = defeatDialogue;
+        }
+    }
+
+    // ─── Hero roster ─────────────────────────────────────────────────────────
     public static final List<HeroDefinition> HEROES = List.of(
 
-            // ── Kael Saint Laurent — Swordsman ───────────────────────────────────
-            // Source: super("Kael Saint Laurent", "Swordsman", 100, 5, 100, 12)
             new HeroDefinition(
                     "Kael Saint Laurent", "Swordsman", "⚔️",
-                    100, 5, 100, 100, 12,
-                    "Stamina", "🔋",
-                    new SkillDefinition[]{
-                            new SkillDefinition("Blade Rush",          "🗡️",
-                                    "A quick slash that catches the opponent off guard.\n" +
-                                            "30% chance to apply Strengthen (+20% ATK for 2 turns)",
-                                    5,  1.15, 1.35, false, 1),
-                            new SkillDefinition("Piercing Slash",      "⚔️",
-                                    "A focused strike that pierces enemy armor. Ignores Defense.\n" +
-                                            "30% chance to Stun for 1 turn",
-                                    10, 1.35, 1.55, true,  1),
-                            new SkillDefinition("Eternal Cross Slash", "✝️",
-                                    "3 crossing strikes with unyielding determination.\n" +
-                                            "Applies Bleed (2 turns) + Fortified (+20% DEF for 2 turns)",
-                                    20, 1.00, 1.80, false, 3)
+                    "Kael Saint Laurent was born in the shadow of the Black Castle...\n" +
+                            "He spent hours watching soldiers train, turning mimicry into skill.\n" +
+                            "In a place where hope was rare, Kael became a quiet anchor.",
+                    "Blade Swift — Critical hits restore +5% Stamina",
+                    100, 12, 5, 100,
+                    new SkillDef[]{
+                            new SkillDef("⚔", "Blade Rush",
+                                    "A quick slash. 30% chance to Strengthen (+20% ATK 2 turns).",
+                                    1.15, false, 0, 5),
+                            new SkillDef("X", "Piercing Slash",
+                                    "Armor-piercing strike. 30% chance to Stun.",
+                                    1.35, true, 0, 10),
+                            new SkillDef("+", "Eternal Cross Slash",
+                                    "3-hit combo. Applies Bleed 2 turns. Grants +20% DEF 2 turns.",
+                                    1.40, false, 3, 20)
                     },
-                    "Kael Saint Laurent was born in the shadow of the Black Castle, in a family\n" +
-                            "that lived modestly within the crumbling Town of Decay. His childhood was\n" +
-                            "marked by sickness in the streets and guards demanding bribes, yet Kael\n" +
-                            "never let the rot of the world steal his spirit.\n\n" +
-                            "Even as a child, he carried himself with the bearing of a leader —\n" +
-                            "always playing the protector, never the aggressor.",
-                    "Blade Swift — On Critical Hit: gain +5% max Stamina"
+                    OLD_BROADSWORD, LEATHER_GUARD
             ),
 
-            // ── Karl Clover Dior IV — Archer ─────────────────────────────────────
-            // Source: super("Karl Clover Dior IV", "Archer", 80, 3, 24, 14)
             new HeroDefinition(
-                    "Karl Clover Dior IV", "Archer", "🏹",
-                    80, 3, 24, 24, 14,
-                    "Arrows", "➶",
-                    new SkillDefinition[]{
-                            new SkillDefinition("Piercing Arrow",           "🏹",
-                                    "An arrow that slices through armor and flesh. Ignores Defense.\n" +
-                                            "30% chance to inflict Bleed (2 turns)",
-                                    1,  1.00, 1.25, true,  1),
-                            new SkillDefinition("Bullseye",                 "🎯",
-                                    "A deadly precise shot. Guaranteed Critical Hit (×1.5).\n" +
-                                            "30% chance to apply Weakness (-30% DEF for 2 turns)",
-                                    3,  1.10, 1.30, false, 1),
-                            new SkillDefinition("Rain of a Thousand Arrows","🌩️",
-                                    "5 rapid arrows overwhelming the opponent.\n" +
-                                            "Grants Nimble + Strengthen (+20% ATK for 2 turns)",
-                                    5,  0.70, 0.80, false, 5)
+                    "Karl Clover Dior IV", "Archer", "O",
+                    "Karl was born in the Forest of Silence, raised by an archer father.\n" +
+                            "His instincts are quiet, patient, always watching.\n" +
+                            "He hunts to restore balance to his corrupted homeland.",
+                    "Hunter's Instinct — Deal +20% damage to enemies below 30% HP",
+                    80, 14, 3, 24,
+                    new SkillDef[]{
+                            new SkillDef(">", "Piercing Arrow",
+                                    "Armor-piercing. 30% chance to Bleed (2 turns).",
+                                    1.00, true, 0, 1),
+                            new SkillDef("*", "Bullseye",
+                                    "Guaranteed critical hit x1.5. 30% chance to Weaken DEF -30%.",
+                                    1.10, false, 0, 3),
+                            new SkillDef("~", "Rain of a Thousand Arrows",
+                                    "5-hit combo. Grants Nimble & Strengthen +20% ATK 2 turns.",
+                                    0.75, false, 3, 5)
                     },
-                    "Karl Clover Dior IV was born and raised in the Forest of Silence, where\n" +
-                            "danger lurks in every shadow. His father taught him the bow not as a\n" +
-                            "weapon of glory, but as a means of survival against Rotfang Wolves\n" +
-                            "and the twisted creatures that haunted their home.\n\n" +
-                            "Now he hunts not just for survival, but to restore the balance of\n" +
-                            "the place he calls home.",
-                    "Hunter's Instinct — Deal +20% damage to enemies below 30% HP"
+                    WOODEN_BOW, LEATHER_GUARD
             ),
 
-            // ── Simon Versace — Mage ─────────────────────────────────────────────
-            // Source: super("Simon Versace", "Mage", 60, 2, 120, 18)
             new HeroDefinition(
-                    "Simon Versace", "Mage", "🔮",
-                    60, 2, 120, 120, 18,
-                    "Mana", "💧",
-                    new SkillDefinition[]{
-                            new SkillDefinition("Fireball",     "🔥",
-                                    "A blazing orb hurled at the enemy. Applies Burn (1 turn).\n" +
-                                            "30% chance to Weaken target (-15% ATK for 2 turns)",
-                                    15, 1.25, 1.55, false, 1),
-                            new SkillDefinition("Ice Prison",   "❄️",
-                                    "Encases the target in solid ice. 30% chance to Freeze (skip 1 turn).\n" +
-                                            "If frozen: apply Fragile (-15% DEF for 1 turn)",
-                                    25, 1.00, 1.25, false, 1),
-                            new SkillDefinition("Meteor Storm", "☄️",
-                                    "5 blazing meteors strike the opponent.\n" +
-                                            "Grants Strengthen (+20% ATK for 2 turns), 50% chance to Burn (2 turns)",
-                                    40, 0.60, 0.90, false, 5)
+                    "Simon Versace", "Mage", "O",
+                    "Simon Versace — a mage with an unshakable dream of greatest power.\n" +
+                            "Mana coursed naturally through his veins from childhood.\n" +
+                            "He seeks experience beyond the confines of books.",
+                    "Arcane Flow — Restore +5% Mana each turn",
+                    60, 18, 2, 120,
+                    new SkillDef[]{
+                            new SkillDef("F", "Fireball",
+                                    "Applies Burn 1 turn. 30% chance to Weaken ATK -15% 2 turns.",
+                                    1.25, false, 0, 15),
+                            new SkillDef("I", "Ice Prison",
+                                    "50% chance to Freeze (skip turn) + Fragile DEF -15% 1 turn.",
+                                    1.00, false, 0, 25),
+                            new SkillDef("M", "Meteor Storm",
+                                    "5-hit combo. 50% chance Burn 2 turns. Strengthen +20% ATK 2 turns.",
+                                    0.75, false, 3, 40)
                     },
-                    "Simon Versace — a mage with an unshakable dream of becoming the most\n" +
-                            "powerful sorcerer alive. From childhood, mana coursed naturally through\n" +
-                            "his veins, earning him the title of prodigy in the whispers of others.\n\n" +
-                            "He hails from the Forest of Silence. If he truly wished to claim power,\n" +
-                            "he would need more than learning — he would need experience.",
-                    "Arcane Flow — Restore +5% of total Mana each turn"
+                    WOODEN_STAFF, LEATHER_GUARD
             ),
 
-            // ── Null — Mage (debug/secret) ────────────────────────────────────────
-            // Source: super("Null", "Mage", 99999, 1, 9999, 9999)
             new HeroDefinition(
-                    "Null", "Mage", "🌌",
-                    99999, 1, 9999, 9999, 9999,
-                    "Mana", "💧",
-                    new SkillDefinition[]{
-                            new SkillDefinition("Direct Hit",  "💥",
-                                    "A direct, overwhelming strike. Pure power with no finesse.",
-                                    5,  2.0, 2.0, false, 1),
-                            new SkillDefinition("Obliterate",  "🔥",
-                                    "A catastrophic blast that reduces the target to ash.",
-                                    10, 4.0, 4.0, false, 1),
-                            new SkillDefinition("World End",   "🌌",
-                                    "Reality-shattering devastation. No defense can withstand this.",
-                                    20, 10.0, 10.0, true, 1)
+                    "???", "Unknown", "?",
+                    "A mysterious entity whose origin remains unknown.",
+                    null,
+                    50, 10, 2, 50,
+                    new SkillDef[]{
+                            new SkillDef("?", "Unknown Skill 1", "???", 1.0, false, 0, 5),
+                            new SkillDef("?", "Unknown Skill 2", "???", 1.2, false, 0, 10),
+                            new SkillDef("?", "Unknown Ultimate", "???", 1.5, false, 3, 20)
                     },
-                    "Null is not a name — it is an absence.\n\n" +
-                            "Where other warriors carry histories and scars, Null carries only\n" +
-                            "a singular, terrible purpose. The universe did not create Null.\n" +
-                            "Null simply... appeared.",
-                    "Void Presence — Immune to all status effects"
+                    null, null
             )
     );
 
-    // ─── Enemy Definitions ────────────────────────────────────────────────────
+    // ─── World 1 enemies — stats match console World1Enemy classes exactly ───
+    public static final List<EnemyDefinition> WORLD1_ENEMIES = List.of(
 
-    public static final List<EnemyDefinition> ENEMIES = List.of(
+            new EnemyDefinition(
+                    "Rotfang Wolf", "Undead Beast", "W",
+                    40, 14, 3,
+                    1, 3, 34,
+                    "Three Rotfang Wolves emerge from the tree line!\nTheir glowing red eyes fixate on you.",
+                    "The last wolf collapses. The adrenaline cools, but the forest feels no safer."
+            ),
 
-            new EnemyDefinition("Rotfang Wolf",       "Forest Predator",             "🐺",
-                    60,  10, 3,  1),
-            new EnemyDefinition("Dreadlord Malachar", "Undead Warlord",              "💀",
-                    120, 20, 12, 2),
-            new EnemyDefinition("Ignaroth the Burnt", "Ancient Drake",               "🐉",
-                    150, 25, 18, 2),
-            new EnemyDefinition("Gorethak",           "Chaos Berserker",             "👹",
-                    110, 28, 6,  3),
-            new EnemyDefinition("The Lich Varos",     "Necrotic Sorcerer — Final Boss","🧿",
-                    200, 30, 14, 3)
+            new EnemyDefinition(
+                    "Shade Sprite", "Lost Soul", "S",
+                    80, 24, 4,
+                    1, 2, 170,
+                    "Shadows twist into vague human shapes that flicker in and out of existence.\nShade Sprites — the jealous souls of fallen travelers.",
+                    "With a final shriek, the sprites disperse like fog in the wind."
+            ),
+
+            new EnemyDefinition(
+                    "Dreadbark Treant", "Corrupted Ancient", "T",
+                    200, 46, 5,
+                    1, 2, 164,
+                    "The earth heaves! Two Dreadbark Treants pull themselves from the ground.\nTheir hollow eyes burn with green necrotic fire.",
+                    "The massive Treants freeze and collapse. Small green sprouts rise from the ash."
+            ),
+
+            new EnemyDefinition(
+                    "Carrion Bat", "Winged Predator", "B",
+                    260, 64, 6,
+                    1, 4, 108,
+                    "A shrill screech pierces the silence! Four Carrion Bats dive from the branches.\nTheir fangs drip with venom. They circle, sensing your fatigue.",
+                    "The last bat crashes down. The stench of decay lifts into the cold wind."
+            ),
+
+            new EnemyDefinition(
+                    "The Hollow Stag", "Corrupted Guardian", "H",
+                    450, 100, 21,
+                    1, 1, 926,
+                    "From behind a blackened oak steps a massive stag, twelve feet tall.\nIts antlers glow with white fire. Its eyes burn with ancient, crushing sadness.",
+                    "The Hollow Stag staggers. The white fire in its antlers flickers and dies.\nIt dissolves into particles of pure light."
+            )
     );
 
-    // ─── Factory methods ──────────────────────────────────────────────────────
+    public static final List<EnemyDefinition> ENEMIES = WORLD1_ENEMIES;
 
-    /**
-     * Builds a BattleLogic.Combatant from a HeroDefinition.
-     * The ultimate (skills[2]) becomes the Special used in BattlePanel.
-     */
-
+    // ─── Build Combatant from HeroDefinition (applies weapon + armor bonuses) ─
     public static Combatant buildHero(HeroDefinition def) {
-        SkillDefinition ult = def.skills[2];
-        Special special = new Special(
-                ult.name, ult.icon, ult.description,
-                (ult.minMult + ult.maxMult) / 2.0,
-                ult.piercesArmor,
-                3   // ultimateCounter = 3 from Character.java
-        );
+        BattleLogic.Special special = null;
+        if (def.skills != null && def.skills.length >= 3) {
+            SkillDef ult = def.skills[2];
+            special = new BattleLogic.Special(
+                    ult.name, ult.icon, ult.description,
+                    ult.multiplier, ult.pierceArmor, ult.cooldown
+            );
+        }
+
+        // Base stats
+        int hp     = def.maxHp;
+        int atk    = def.attack;
+        int def_   = def.defense;
+
+        // Apply starting armor bonus
+        if (def.startingArmor != null) {
+            hp  += def.startingArmor.hpBuff;
+            def_ += def.startingArmor.defBuff;
+        }
+        // Apply starting weapon ATK bonus
+        if (def.startingWeapon != null) {
+            atk += def.startingWeapon.atkBuff;
+        }
+
         return new Combatant(
-                def.name, def.classType, def.emoji,
-                def.hp, def.attack, def.defense,
-                def.energy, def.maxEnergy,
+                def.name, def.role, def.emoji,
+                hp, atk, def_,
+                def.maxEnergy, def.maxEnergy,
                 special
-        );
+        ) {{
+            specialCooldown = 3; // Ultimate locked for first 3 turns (matches console ultimateCounter=3)
+        }};
     }
 
-    /** Builds a BattleLogic.Combatant from an EnemyDefinition. */
+    // ─── Build Combatant from EnemyDefinition ────────────────────────────────
     public static Combatant buildEnemy(EnemyDefinition def) {
         return new Combatant(
                 def.name, def.role, def.emoji,
-                def.hp, def.attack, def.defense,
+                def.maxHp, def.attack, def.defense,
                 0, 0, null
         );
-    }
-
-    // ─── Data classes ─────────────────────────────────────────────────────────
-
-    public static class HeroDefinition {
-        public final String name;
-        public final String classType;    // mirrors Character.classType
-        public final String emoji;
-        public final int hp;
-        public final int defense;
-        public final int energy;
-        public final int maxEnergy;
-        public final int attack;
-        public final String energyName;   // mirrors Character.getEnergyName()
-        public final String energyEmoji;  // mirrors Character.getEnergyEmoji()
-        public final SkillDefinition[] skills;       // [0]=skill1, [1]=skill2, [2]=ultimate
-        public final String backstory;    // mirrors showBackstory()
-        public final String passive;
-        public Special special;
-        public String[] story;
-        public String role;
-
-
-        public HeroDefinition(String name, String classType, String emoji,
-                              int hp, int defense, int energy, int maxEnergy, int attack,
-                              String energyName, String energyEmoji,
-                              SkillDefinition[] skills,
-                              String backstory, String passive) {
-            this.name        = name;
-            this.classType   = classType;
-            this.emoji       = emoji;
-            this.hp          = hp;
-            this.defense     = defense;
-            this.energy      = energy;
-            this.maxEnergy   = maxEnergy;
-            this.attack      = attack;
-            this.energyName  = energyName;
-            this.energyEmoji = energyEmoji;
-            this.skills      = skills;
-            this.backstory   = backstory;
-            this.passive     = passive;
-            this.role = classType;
-            this.story = backstory.split("\n\n");
-        }
-    }
-
-    public static class SkillDefinition {
-        public final String  name;
-        public final String  icon;
-        public final String  description;
-        public final int     energyCost;   // stamina/mana/arrows cost from each skill method
-        public final double  minMult;      // RandomUtil.range(atk * minMult, atk * maxMult)
-        public final double  maxMult;
-        public final boolean piercesArmor; // true = ignores defense (Piercing Slash, etc.)
-        public final int     hits;         // number of hits (3 for CrossSlash, 5 for multi-hits)
-
-        public SkillDefinition(String name, String icon, String description,
-                               int energyCost, double minMult, double maxMult,
-                               boolean piercesArmor, int hits) {
-            this.name         = name;
-            this.icon         = icon;
-            this.description  = description;
-            this.energyCost   = energyCost;
-            this.minMult      = minMult;
-            this.maxMult      = maxMult;
-            this.piercesArmor = piercesArmor;
-            this.hits         = hits;
-        }
-
-        /** e.g. "🗡️ Blade Rush (🔋 5 Stamina)" — for display in selection screen */
-        public String displayLabel(String energyEmoji, String energyName) {
-            return icon + " " + name + " (" + energyEmoji + " " + energyCost + " " + energyName + ")";
-        }
-
-        /** Average multiplier for stat tooltips */
-        public double avgMult() { return (minMult + maxMult) / 2.0; }
-    }
-
-    public static class EnemyDefinition {
-        public final String name;
-        public final String role;
-        public final String emoji;
-        public final int    hp;
-        public final int    attack;
-        public final int    defense;
-        public final int    worldLevel;
-
-        public EnemyDefinition(String name, String role, String emoji,
-                               int hp, int attack, int defense, int worldLevel) {
-            this.name       = name;
-            this.role       = role;
-            this.emoji      = emoji;
-            this.hp         = hp;
-            this.attack     = attack;
-            this.defense    = defense;
-            this.worldLevel = worldLevel;
-        }
     }
 }

@@ -66,7 +66,7 @@ public class GameScreen extends JPanel {
     private boolean pendingSelection = false;
 
     String[] dialogues = {
-            "It's just another Friday, you come in for your Java examination.",
+            "It's just another Tuesday, you come in for your Java examination.",
 
             "You walk in and Professor Khai greets you warmly as you sit before\n"+
                     "the CodeChum login screen.",
@@ -162,14 +162,79 @@ public class GameScreen extends JPanel {
 
     private void goToBattle() {
         if (confirmedHero == null) return;
-        EnemyDefinition enemy = pickEnemy();
-        battlePanel.startBattle(confirmedHero, enemy);
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
+            showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+        });
+        battlePanel.startEnemySequence(
+                confirmedHero,
+                HeroData.WORLD1_ENEMIES,
+                () -> goToSelection()
+        );
+    }
+
+    /** Show dialogue between enemy groups on World1 screen, then resume fight. */
+    private void showInterEnemyDialogue(int interIndex, Runnable resumeFight) {
+        if (interIndex < 0 || interIndex >= WORLD1_INTER_DIALOGUES.length) {
+            resumeFight.run(); return;
+        }
+        w1ResumeAfterDialogue = resumeFight;
+        w1InInterDialogue = true;
+        w1InterChunks = WORLD1_INTER_DIALOGUES[interIndex];
+        w1InterChunkIndex = 0;
+
+        // Show World1Background only, no khai/wolf overlays
+        if (world1KhaiLabel != null) {
+            world1KhaiLabel.setIcon(null);
+            world1KhaiAlpha[0] = 0f;
+            world1KhaiLabel.putClientProperty("prevImage", null);
+            world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+            world1KhaiLabel.repaint();
+        }
+        if (world1SceneAlpha != null) world1SceneAlpha[0] = 0f;
+        if (world1WorldAlpha != null) world1WorldAlpha[0] = 1.0f;
+        if (world1SceneBg != null) world1SceneBg.repaint();
+        if (w1WorldLabel != null) w1WorldLabel.setVisible(false);
+
+        cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
+        w1ContinueBtn.setEnabled(true);
+        typeInterChunk();
+    }
+
+    private void typeInterChunk() {
+        if (w1InterChunks == null || w1InterChunkIndex >= w1InterChunks.length) {
+            finishInterDialogue(); return;
+        }
+        if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+        String text = w1InterChunks[w1InterChunkIndex];
+        w1DialogueBox.setText("");
+        w1ContinueBtn.setEnabled(false);
+        int[] ci = {0};
+        w1TypingTimer = new Timer(25, null);
+        w1TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w1TypingTimer.stop();
+                // Always wait for Continue press — no auto-advance
+                w1ContinueBtn.setEnabled(true);
+            }
+        });
+        w1TypingTimer.start();
+    }
+
+    private void finishInterDialogue() {
+        w1InInterDialogue = false;
+        w1DialogueBox.setText("");
+        Runnable resume = w1ResumeAfterDialogue;
+        w1ResumeAfterDialogue = null;
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        if (resume != null) resume.run();
     }
 
     private void restartBattle() { goToBattle(); }
 
-    private EnemyDefinition pickEnemy() {
+    private HeroData.EnemyDefinition pickEnemy() {
         var enemies = HeroData.ENEMIES;
         return enemies.get(new Random().nextInt(enemies.size()));
     }
@@ -980,6 +1045,33 @@ public class GameScreen extends JPanel {
         }
     }
 
+    // Dialogues shown BETWEEN enemy groups (after group N is defeated, before group N+1 starts)
+    // Each string is one chunk (shown separately, player presses Continue between each)
+    private static final String[][] WORLD1_INTER_DIALOGUES = {
+            // After Rodtfang Wolves (index 0) → before Shade Sprites
+            {
+                    "The path narrows. The mist becomes so thick\nyou can barely see your hand in front of your face.",
+                    "The air grows icy. The silence is broken by a sound like static,\nor perhaps whispering voices overlapping until they become noise.",
+                    "Shadows detach themselves from the trees.\nThey twist and contort, forming vague human-like shapes.",
+                    "SHADE SPRITES.\nThey are the lost souls of travelers who died in this woods, now jealous of your life."
+            },
+            // After Shade Sprites (index 1) → before Dreadbark Treants
+            {
+                    "The whispering finally stops.\nThe mist recedes, revealing faint lights hovering among the dead trees.",
+                    "The ground shudders beneath your feet.\nAncient roots crack through the soil."
+            },
+            // After Dreadbark Treants (index 2) → before Carrion Bats
+            {
+                    "The Treants collapse in a shower of rotting bark.\nWhere they fall, small green sprouts push through the ash.",
+                    "A foul stench drifts down from above.\nSomething vast circles in the dead canopy overhead."
+            },
+            // After Carrion Bats (index 3) → before Hollow Stag
+            {
+                    "The last bat crashes into the earth.\nThe forest holds its breath.",
+                    "Ahead, pale moonlight breaks through the canopy.\nA clearing opens — and within it, something stirs."
+            }
+    };
+
     private static final String[] WORLD1_DIALOGUES = {
             // [0] Opening
             "You wake up gasping for air. The world is drained of color.",
@@ -1002,7 +1094,7 @@ public class GameScreen extends JPanel {
             // [5] Khai fades
             "Khai fades back into the mist.",
             // [6] Wolves appear — after this: Wolf1(1s)->Wolf2(1s) transition
-            "Three Rotfang Wolves emerge from the tree line.",
+            "Three Rodtfang Wolves emerge from the tree line.",
             // [7] Glowing eyes — after this: instant Wolf3
             "Their glowing red eyes",
             // [8] Final
@@ -1072,7 +1164,7 @@ public class GameScreen extends JPanel {
         world1WorldAlpha = worldAlpha;
 
         // World label — all caps, white
-        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF SILENCE", SwingConstants.CENTER);
+        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF ENDINGS", SwingConstants.CENTER);
         w1WorldLabel.setBounds(0, 220, 1280, 50);
         w1WorldLabel.setForeground(Color.WHITE);
         w1WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
@@ -1170,6 +1262,11 @@ public class GameScreen extends JPanel {
 
     private String[] w1Chunks;
     private int w1ChunkIndex = 0;
+    private Runnable w1ResumeAfterDialogue = null; // called after inter-enemy dialogue finishes
+    private boolean w1InInterDialogue = false;
+    private int w1InterDialogueIndex = 0;
+    private String[] w1InterChunks;
+    private int w1InterChunkIndex = 0;
 
     private void startW1Typing() {
         if (w1DialogueIndex >= WORLD1_DIALOGUES.length) return;
@@ -1228,11 +1325,26 @@ public class GameScreen extends JPanel {
     }
 
     private void continueW1Dialogue() {
-        // If still typing — skip to end of chunk
+        // If still typing — skip to end of current chunk
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) {
             w1TypingTimer.stop();
-            if (w1Chunks != null && w1ChunkIndex < w1Chunks.length) {
+            if (w1InInterDialogue && w1InterChunks != null && w1InterChunkIndex < w1InterChunks.length) {
+                w1DialogueBox.setText(w1InterChunks[w1InterChunkIndex]);
+            } else if (w1Chunks != null && w1ChunkIndex < w1Chunks.length) {
                 w1DialogueBox.setText(w1Chunks[w1ChunkIndex]);
+            }
+            return;
+        }
+
+        // Inter-enemy dialogue mode
+        if (w1InInterDialogue) {
+            // If still typing — skip to end
+            // (handled above in the typing check)
+            w1InterChunkIndex++;
+            if (w1InterChunkIndex < w1InterChunks.length) {
+                typeInterChunk();
+            } else {
+                finishInterDialogue();
             }
             return;
         }
