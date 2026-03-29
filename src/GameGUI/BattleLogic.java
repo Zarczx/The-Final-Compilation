@@ -91,7 +91,7 @@ public class BattleLogic {
     }
 
     /** Mirrors Battle.java's pre-battle option: QUIT */
-    public enum BattleAction { ATTACK, DEFEND, SPECIAL }
+    public enum BattleAction { ATTACK, DEFEND, SPECIAL, SKIP }
 
     public enum TurnOwner { PLAYER, ENEMY }
 

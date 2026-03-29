@@ -6,7 +6,6 @@ import GameGUI.HeroData.EnemyDefinition;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Random;
 
 /**
  * GameScreen.java  — REFACTORED
@@ -66,6 +65,8 @@ public class GameScreen extends JPanel {
     private JButton   postContinueBtn;
     private int       postDialogueIndex = 0;
 
+    private boolean inPendingDialogue = false;
+
     // ─── World 1 intro dialogue widgets ──────────────────────────────────────
     private JTextArea w1DialogueBox;
     private JButton   w1ContinueBtn;
@@ -91,6 +92,155 @@ public class GameScreen extends JPanel {
 
     // ─── State ────────────────────────────────────────────────────────────────
     private HeroDefinition confirmedHero = null;
+
+    // ─── World 1 Spawn Sequence ───────────────────────────────────────────────
+
+    /** One "wave" of enemies — mirrors a for-loop group in World1.java. */
+    private record EnemyWave(String enemyKey, int count, String encounterEmoji,
+                             String betweenMsg, String[] groupClearDialogue) {}
+
+    // ─── World wave tables ────────────────────────────────────────────────────
+    // Each world's enemy groups, mirroring the for-loops in World1/2/3.java.
+    // Add World 2 & 3 enemies to HeroData.ENEMIES when those worlds are ready.
+
+    private static final EnemyWave[] WORLD1_WAVES = {
+            new EnemyWave("Rotfang Wolf", 3, "🐺",
+                    "Another wolf snarls and steps forward!",
+                    new String[]{
+                            "🎉 The last of the Rotfang Wolves collapses.\n\n" +
+                                    "The adrenaline cools, but the forest feels no safer.\n" +
+                                    "You bandage your wounds and collect what little the wolves carried.",
+                            "The path narrows. The mist becomes thick — the air grows icy.\n\n" +
+                                    "Shadows detach from the trees, twisting into vague human-like shapes\n" +
+                                    "that flicker in and out of existence.\n\n" +
+                                    "👻  SHADE SPRITES — lost souls, now jealous of your life.\n\n" +
+                                    "🎯 Objective: Defeat 2 Shade Sprites!"
+                    }),
+            new EnemyWave("Shade Sprite", 2, "👻",
+                    "The mist swirls — another soul screams into existence!",
+                    new String[]{
+                            "🌌 With a final shriek, the sprites disperse like fog in the wind.\n\n" +
+                                    "The whispering in your mind finally stops.\n" +
+                                    "You feel your strength returning.",
+                            "You step over a massive tree root. Suddenly... the root moves.\n\n" +
+                                    "🌲 Two DREADBARK TREANTS pull free from the soil.\n" +
+                                    "Corrupted by decay, their hollow eyes burn with green necrotic fire.\n\n" +
+                                    "🎯 Objective: Defeat 2 Dreadbark Treants!"
+                    }),
+            new EnemyWave("Dreadbark Treant", 2, "🌳",
+                    "The ground quakes — the second ancient giant lumbers forward!",
+                    new String[]{
+                            "🍃 The Treants collapse. Where they fall, small green sprouts rise from the ash.\n\n" +
+                                    "You emerge covered in dust, but victorious.",
+                            "The canopy darkens. A stench of rotting meat washes over you.\n\n" +
+                                    "🦇 Four CARRION BATS, each the size of a man, dive-bomb from above.\n" +
+                                    "Their fangs drip with venom.\n\n" +
+                                    "🎯 Objective: Defeat 4 Carrion Bats!"
+                    }),
+            new EnemyWave("Carrion Bat", 4, "🦇",
+                    "Another screech echoes above — the swarm continues!",
+                    new String[]{
+                            "💨 The last bat crashes down. The forest grows quiet.\n\n" +
+                                    "The stench of decay lifts. The path ahead is clear.",
+                            "The mist thins, revealing a clearing in pale ghostly moonlight.\n\n" +
+                                    "🌕 From behind a great blackened oak steps a massive stag —\n" +
+                                    "twelve feet tall. Its antlers glow with white fire.\n\n" +
+                                    "🟢 \"Free him,\" Khai's voice echoes. \"Break the Necromancer's chains.\"\n\n" +
+                                    "⚠️  MINI-BOSS: THE HOLLOW STAG\n🎯 Objective: Defeat The Hollow Stag!"
+                    }),
+            new EnemyWave("The Hollow Stag", 1, "🦌", "",
+                    new String[]{
+                            "✅ 🏆  MINI-BOSS DEFEATED!\n\n" +
+                                    "🌟 The Hollow Stag staggers. The white fire in its antlers flickers and dies.\n" +
+                                    "It dissolves into particles of pure light.",
+                            "You reach out and grasp the light. It solidifies into the FIRST STONE.\n\n" +
+                                    "It pulses with quiet power, driving away the chill of the dead forest.\n\n" +
+                                    "✨  You have cleansed the forest.\n\n— WORLD 1 COMPLETE —"
+                    })
+    };
+
+    private int      currentWaveIndex      = 0;
+    private int      currentEnemyInWave    = 0;
+    private String[] pendingDialogues      = null;
+    private int      pendingDialogueIdx    = 0;
+    private Runnable afterPendingDialogue  = null;
+
+    // ─── World 2 waves ────────────────────────────────────────────────────────
+    // Fill in enemyKey names once you have World2Enemy files.
+    // Add matching EnemyDefinition entries to HeroData.ENEMIES.
+    private static final EnemyWave[] WORLD2_WAVES = {
+            new EnemyWave("Storm Hawk", 3, "🦅",
+                    "Another hawk dives from the clouds!",
+                    new String[]{
+                            "⚡ The last Storm Hawk plummets into the valley floor.\n\n" +
+                                    "The thunder overhead seems to ease slightly,\n" +
+                                    "as if the sky itself is catching its breath.",
+                            "The fog thickens. From within the clouds, a low roar reverberates.\n\n" +
+                                    "🐉 A RIDGE WYVERN descends, its wings crackling with lightning.\n\n" +
+                                    "🎯 Objective: Defeat 2 Ridge Wyverns!"
+                    }),
+            new EnemyWave("Ridge Wyvern", 2, "🐉",
+                    "The second Wyvern crashes down from above!",
+                    new String[]{
+                            "⚡ The Wyverns collapse, their lightning fading.\n\n" +
+                                    "The storm above begins to thin — but the air still crackles\n" +
+                                    "with dangerous energy.",
+                            "The valley narrows into a canyon. Deep within, a massive silhouette\n" +
+                                    "stirs behind a veil of storm clouds.\n\n" +
+                                    "🌩️ MINI-BOSS: THE TEMPEST COLOSSUS\n🎯 Objective: Defeat The Tempest Colossus!"
+                    }),
+            new EnemyWave("The Tempest Colossus", 1, "🌩️", "",
+                    new String[]{
+                            "✅ 🏆  MINI-BOSS DEFEATED!\n\n" +
+                                    "🌟 The Tempest Colossus staggers and dissolves into a cascade\n" +
+                                    "of crackling lightning bolts that fade into sparks.",
+                            "The sparks coalesce into the SECOND STONE.\n\n" +
+                                    "It hums with electric energy, warm against your palm.\n\n" +
+                                    "✨  The storm valley is calmed.\n\n— WORLD 2 COMPLETE —"
+                    })
+    };
+
+    // ─── World 3 waves ────────────────────────────────────────────────────────
+    // Fill in enemyKey names once you have World3Enemy files.
+    private static final EnemyWave[] WORLD3_WAVES = {
+            new EnemyWave("Bone Archer", 4, "💀",
+                    "Another skeletal archer rises from the shadows!",
+                    new String[]{
+                            "💀 The last Bone Archer crumbles to dust.\n\n" +
+                                    "The silence of the Necromancer's realm is suffocating.\n" +
+                                    "Every shadow feels alive.",
+                            "The ground cracks open. Black smoke pours from the fissures,\n" +
+                                    "taking the shape of towering figures.\n\n" +
+                                    "👹 SHADOW GOLEMS — animated by the Necromancer's will.\n\n" +
+                                    "🎯 Objective: Defeat 2 Shadow Golems!"
+                    }),
+            new EnemyWave("Shadow Golem", 2, "👹",
+                    "The second Shadow Golem lumbers forward from the darkness!",
+                    new String[]{
+                            "👹 The Golems shatter. The black smoke dissipates\n" +
+                                    "but the air still reeks of necrotic energy.",
+                            "A throne room materialises from the void ahead.\n" +
+                                    "On it sits a robed figure — skeletal hands curled around a staff\n" +
+                                    "of pure darkness.\n\n" +
+                                    "🟢 \"So you made it,\" Khai whispers behind you.\n" +
+                                    "\"This is it. The Necromancer himself.\"\n\n" +
+                                    "💀 FINAL BOSS: THE LICH VAROS\n🎯 Objective: Defeat The Lich Varos!"
+                    }),
+            new EnemyWave("The Lich Varos", 1, "🧿", "",
+                    new String[]{
+                            "✅ 🏆  FINAL BOSS DEFEATED!\n\n" +
+                                    "🌟 The Lich Varos screams — a sound that tears through\n" +
+                                    "every dimension at once. His form collapses inward\n" +
+                                    "and implodes into nothing.",
+                            "The Third Stone falls from where his heart was.\n\n" +
+                                    "All three Stones pulse together, reweaving the fabric of reality.\n\n" +
+                                    "✨  The Necromancer is gone. The realm begins to heal.\n\n— WORLD 3 COMPLETE —"
+                    })
+    };
+
+    // ─── Active world tracking ────────────────────────────────────────────────
+    private EnemyWave[] currentWaves    = WORLD1_WAVES;
+    private int         currWorldLevel  = 1;
 
     // ─── Preserved dialogue strings (from original GameScreen.java) ──────────
     String[] dialogues = {
@@ -148,21 +298,197 @@ public class GameScreen extends JPanel {
 
     private void goToBattle() {
         if (confirmedHero == null) return;
-        EnemyDefinition enemy = pickEnemy();
+        EnemyDefinition enemy = getCurrentWaveEnemy();
+        if (enemy == null) return;
+
+        EnemyWave wave  = currentWaves[currentWaveIndex];
+        int enemyNum    = currentEnemyInWave + 1;
+
         battlePanel.startBattle(confirmedHero, enemy);
+        battlePanel.setBattleAnnouncement(
+                wave.encounterEmoji() + "  " + enemy.name
+                        + "  (" + enemyNum + " / " + wave.count() + ")"
+        );
         cardLayout.show(cardPanel, SCREEN_BATTLE);
     }
 
+    /**
+     * Called by BattlePanel when the player wins a fight.
+     * Mirrors the post-battle flow in World1/2/3.java's for-loop body.
+     */
+    public void onEnemyDefeated() {
+        EnemyWave wave = currentWaves[currentWaveIndex];
+        currentEnemyInWave++;
+
+        if (currentEnemyInWave < wave.count()) {
+            // More enemies in this wave — show "next enemy" message then fight
+            showPendingDialogue(
+                    new String[]{ wave.encounterEmoji() + "  " + wave.betweenMsg() },
+                    this::goToBattle
+            );
+        } else {
+            // Wave cleared — show group-clear dialogue then advance
+            currentEnemyInWave = 0;
+            currentWaveIndex++;
+            if (currentWaveIndex < currentWaves.length) {
+                // Next wave in the same world
+                showPendingDialogue(wave.groupClearDialogue(), this::goToBattle);
+            } else {
+                // All waves in this world cleared — transition to next world
+                showPendingDialogue(wave.groupClearDialogue(), this::onWorldComplete);
+            }
+        }
+    }
+
+    /** Returns the EnemyDefinition for the current wave enemy. */
+    private EnemyDefinition getCurrentWaveEnemy() {
+        if (currentWaveIndex >= currentWaves.length) return null;
+        String key = currentWaves[currentWaveIndex].enemyKey();
+        return HeroData.ENEMIES.stream()
+                .filter(e -> e.name.equals(key))
+                .findFirst()
+                .orElse(null); // fallback
+    }
+
     private void restartBattle() {
-        // Same hero, new enemy
+        // Reset to beginning of World 1
+        currentWaves       = WORLD1_WAVES;
+        currWorldLevel     = 1;
+        currentWaveIndex   = 0;
+        currentEnemyInWave = 0;
         goToBattle();
     }
 
-    /** Picks an enemy matching the current world level (mirrors StoryEngine world flow). */
-    private EnemyDefinition pickEnemy() {
-        // For now picks a random enemy — extend to use StoryEngine.getCurrWorldLevel()
-        var enemies = HeroData.ENEMIES;
-        return enemies.get(new Random().nextInt(enemies.size()));
+    /**
+     * Called after all waves in the current world are cleared.
+     * Mirrors StoryEngine's transitionToWorld2() / transitionToWorld3() pattern.
+     */
+    private void onWorldComplete() {
+        if (currWorldLevel == 1) {
+            currWorldLevel = 2;
+            currentWaves       = WORLD2_WAVES;
+            currentWaveIndex   = 0;
+            currentEnemyInWave = 0;
+
+            // Mirrors StoryEngine.transitionToWorld2() dialogue
+            showPendingDialogue(new String[]{
+                    "The forest around you shudders — not in pain, but in relief.\n\n" +
+                            "Gray bark cracks to reveal rich brown wood. The ash on the ground\n" +
+                            "blooms into lush green moss. The corruption fades, leaving behind\n" +
+                            "faint sparks of life glowing in the air.",
+
+                    "🟢 \"This forest is saved. Life is beautiful,\" Sir Khai murmurs,\n" +
+                            "watching a small flower bloom.\n\n" +
+                            "\"But our journey is far from over. Two more Stones remain…\n" +
+                            "and darkness gathers ahead.\"\n\n" +
+                            "A path parts through the trees, winding toward a valley\n" +
+                            "shrouded in thick fog and the sound of distant thunder.\n\n" +
+                            "⚡ — WORLD 2 : THE STORMING VALLEY — ⚡"
+            }, this::goToBattle);
+
+        } else if (currWorldLevel == 2) {
+            currWorldLevel = 3;
+            currentWaves       = WORLD3_WAVES;
+            currentWaveIndex   = 0;
+            currentEnemyInWave = 0;
+
+            // Mirrors StoryEngine.transitionToWorld3() dialogue
+            showPendingDialogue(new String[]{
+                    "The Second Stone vibrates violently in your grasp,\n" +
+                            "reacting to Khai's presence.\n\n" +
+                            "Sir Khai's staff ignites with a brilliant SILVER FLAME,\n" +
+                            "cutting through the castle's gloom.\n" +
+                            "Outside, the sky begins to twist unnaturally.",
+
+                    "🟢 \"The final trial awaits,\" Khai says quietly,\n" +
+                            "looking toward the dark peaks.\n\n" +
+                            "\"Beyond that storm lies a realm where even light cannot survive...\n" +
+                            "That is where the Last Stone is kept.\n" +
+                            "And where the Necromancer waits.\"\n\n" +
+                            "💀 — WORLD 3 : THE NECROMANCER'S REALM — 💀"
+            }, this::goToBattle);
+
+        } else {
+            // All three worlds complete — epilogue
+            showPendingDialogue(new String[]{
+                    "🌟 THE FINAL COMPILATION — COMPLETE.\n\n" +
+                            "The Necromancer's power crumbles. The three Stones of Life\n" +
+                            "pulse together, reweaving the fabric of reality.\n\n" +
+                            "A rift tears open before you — on the other side,\n" +
+                            "the warm light of a classroom flickers into view.",
+
+                    "You step through.\n\n" +
+                            "The monitor reads:   100 / 100.\n\n" +
+                            "Professor Khai looks up from his desk and smiles.\n\n" +
+                            "✨ Thank you for playing — The Final Compilation."
+            }, this::goToSelection);
+        }
+    }
+
+    // ─── Pending dialogue queue (reuses world1IntroPanel) ────────────────────
+
+    /**
+     * Shows a sequence of dialogue lines on the world1IntroPanel,
+     * then runs the callback when all lines are acknowledged.
+     * Reuses the existing w1DialogueBox / w1ContinueBtn / typing system.
+     */
+    private void showPendingDialogue(String[] lines, Runnable onFinished) {
+        inPendingDialogue = true;
+        pendingDialogues     = lines;
+        pendingDialogueIdx   = 0;
+        afterPendingDialogue = onFinished;
+        cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
+        startPendingTyping();
+    }
+
+    private Timer pendingTypingTimer;
+
+    private void startPendingTyping() {
+        if (pendingDialogues == null || pendingDialogueIdx >= pendingDialogues.length) return;
+        if (pendingTypingTimer != null && pendingTypingTimer.isRunning()) pendingTypingTimer.stop();
+
+        String text = pendingDialogues[pendingDialogueIdx];
+        w1DialogueBox.setText("");
+        int[] ci = {0};
+
+        pendingTypingTimer = new Timer(22, null);
+        pendingTypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                pendingTypingTimer.stop();
+            }
+        });
+        pendingTypingTimer.start();
+
+        // Redirect the continue button to advance pending dialogues
+        for (var l : w1ContinueBtn.getActionListeners()) w1ContinueBtn.removeActionListener(l);
+        w1ContinueBtn.addActionListener(e -> advancePendingDialogue());
+    }
+
+    private void advancePendingDialogue() {
+        // First click while typing → skip to end
+        if (pendingTypingTimer != null && pendingTypingTimer.isRunning()) {
+            pendingTypingTimer.stop();
+            w1DialogueBox.setText(pendingDialogues[pendingDialogueIdx]);
+            return;
+        }
+
+        pendingDialogueIdx++;
+        if (pendingDialogueIdx < pendingDialogues.length) {
+            startPendingTyping();
+        } else {
+            // All pending lines done — restore normal w1 listener and run callback
+            for (var l : w1ContinueBtn.getActionListeners()) w1ContinueBtn.removeActionListener(l);
+            w1ContinueBtn.addActionListener(e2 -> continueW1Dialogue());
+            pendingDialogues = null;
+            inPendingDialogue = false;
+            if (afterPendingDialogue != null) {
+                Runnable cb = afterPendingDialogue;
+                afterPendingDialogue = null;
+                cb.run();
+            }
+        }
     }
 
     // ─── Hero confirmed callback ──────────────────────────────────────────────
@@ -173,6 +499,12 @@ public class GameScreen extends JPanel {
      */
     private void onHeroConfirmed(HeroDefinition hero) {
         this.confirmedHero = hero;
+        // Reset all world tracking for a fresh run
+        currentWaves       = WORLD1_WAVES;
+        currWorldLevel     = 1;
+        currentWaveIndex   = 0;
+        currentEnemyInWave = 0;
+        pendingDialogues   = null;
 
         // Build the post-selection dialogues for this specific hero
         buildPostSelectDialogues(hero);
@@ -697,6 +1029,7 @@ public class GameScreen extends JPanel {
      * After the last line, transitions to the actual battle (SCREEN_BATTLE).
      */
     private void continueW1Dialogue() {
+        if(inPendingDialogue)return;
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) {
             w1TypingTimer.stop();
             w1DialogueBox.setText(WORLD1_DIALOGUES[w1DialogueIndex]);

@@ -144,17 +144,29 @@ public class HeroData {
 
     public static final List<EnemyDefinition> ENEMIES = List.of(
 
-            new EnemyDefinition("Rotfang Wolf",       "Forest Predator",             "🐺",
-                    60,  10, 3,  1),
-            new EnemyDefinition("Dreadlord Malachar", "Undead Warlord",              "💀",
-                    120, 20, 12, 2),
-            new EnemyDefinition("Ignaroth the Burnt", "Ancient Drake",               "🐉",
-                    150, 25, 18, 2),
-            new EnemyDefinition("Gorethak",           "Chaos Berserker",             "👹",
-                    110, 28, 6,  3),
-            new EnemyDefinition("The Lich Varos",     "Necrotic Sorcerer — Final Boss","🧿",
-                    200, 30, 14, 3)
-    );
+            // ── World 1 Enemies ──────────────────────────────────────────────────────
+
+            // super("Rotfang Wolf", 40, 3, 14)  → hp=40, def=3, atk=14
+            new EnemyDefinition("Rotfang Wolf",      "Forest Predator",      "🐺",
+                    40,  14, 3,  1),
+
+            // super("Shade Sprites", 80, 4, 24) → hp=80, def=4, atk=24
+            // Note: name in WORLD1_WAVES is "Shade Sprite" (singular) — keep consistent
+            new EnemyDefinition("Shade Sprite",      "Lost Soul",            "👻",
+                    80,  24, 4,  1),
+
+            // super("Dreadbark Treants", 200, 5, 46) → hp=200, def=5, atk=46
+            new EnemyDefinition("Dreadbark Treant",  "Corrupted Ancient",    "🌳",
+                    200, 46, 5,  1),
+
+            // super("Carrion Bats", 260, 6, 64) → hp=260, def=6, atk=64
+            new EnemyDefinition("Carrion Bat",       "Venomous Swarm",       "🦇",
+                    260, 64, 6,  1),
+
+            // Miniboss — share when you have the file
+            new EnemyDefinition("The Hollow Stag",   "Corrupted Guardian",   "🦌",
+                    450, 100, 21, 1)
+            );
 
     // ─── Factory methods ──────────────────────────────────────────────────────
 

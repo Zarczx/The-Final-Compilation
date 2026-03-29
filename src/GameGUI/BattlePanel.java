@@ -96,8 +96,16 @@ public class BattlePanel extends JPanel {
     private JTextArea logArea;
 
     // Action buttons
-    private JButton attackBtn, defendBtn, specialBtn;
-    private JLabel specialCdLabel;
+    private JButton skill1Btn, skill2Btn, ultimateBtn, skipBtn;
+    private JLabel ultimateCdLabel;
+
+    // ─── Skill Definition ─────────────────────────────────────────────────────
+
+    /** Holds display data for one hero skill button. */
+    private record SkillDef(String icon, String name, String costLabel, int energyCost,
+                            BattleLogic.BattleAction action, boolean isUltimate) {}
+
+    private SkillDef[] heroSkills; // [0]=skill1, [1]=skill2, [2]=ultimate, [3]=skip
 
     // Result overlay
     private JPanel resultOverlay;
@@ -137,6 +145,7 @@ public class BattlePanel extends JPanel {
         Combatant enemyC = HeroData.buildEnemy(enemy);
         this.engine = new BattleLogic(heroC, enemyC, false); // no soulstone by default
 
+        populateSkillButtons();
         populateCombatantUI();
         refreshBattleUI();
         clearLog();
@@ -145,6 +154,12 @@ public class BattlePanel extends JPanel {
         addLog("════════════════════════════════════════", GOLD_DIM);
 
         resultOverlay.setVisible(false);
+        // Remove from layered pane if it was added there previously
+        JRootPane root = SwingUtilities.getRootPane(this);
+        if (root != null) {
+            root.getLayeredPane().remove(resultOverlay);
+            root.getLayeredPane().repaint();
+        }
         setActionsEnabled(true);
         animating = false;
     }
@@ -458,26 +473,95 @@ public class BattlePanel extends JPanel {
     }
 
     private JPanel buildActionBar() {
-        JPanel bar = new JPanel(new GridLayout(1, 3, 12, 0));
+        JPanel bar = new JPanel(new GridLayout(1, 4, 10, 0));
         bar.setBackground(BG_DARK);
         bar.setBorder(new EmptyBorder(4, 0, 0, 0));
 
-        attackBtn = buildActionButton("⚔  Attack",  "Deal physical damage",      RED_DARK,   RED);
-        defendBtn = buildActionButton("🛡  Defend",  "Halve incoming damage",      new Color(20, 30, 80), BLUE);
-        specialBtn= buildActionButton("✨ Special",  "Unleash special ability",    new Color(40, 10, 70), PURPLE);
+        // Buttons are created empty here; populateSkillButtons() fills them after hero is known
+        skill1Btn   = buildActionButton("Skill 1",   "", RED_DARK,              RED);
+        skill2Btn   = buildActionButton("Skill 2",   "", new Color(20, 30, 80), BLUE);
+        ultimateBtn = buildActionButton("Ultimate",  "", new Color(40, 10, 70), PURPLE);
+        skipBtn     = buildActionButton("🛡 Skip",   "Restore HP & Energy",
+                new Color(20, 40, 20), GREEN_DARK);
 
-        specialCdLabel = new JLabel("", SwingConstants.CENTER);
-        specialCdLabel.setFont(new Font("Monospaced", Font.PLAIN, 9));
-        specialCdLabel.setForeground(TEXT_DIM);
+        ultimateCdLabel = new JLabel("", SwingConstants.CENTER);
+        ultimateCdLabel.setFont(new Font("Monospaced", Font.PLAIN, 9));
+        ultimateCdLabel.setForeground(TEXT_DIM);
 
-        attackBtn.addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.ATTACK));
-        defendBtn.addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.DEFEND));
-        specialBtn.addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.SPECIAL));
+        skill1Btn  .addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.ATTACK));
+        skill2Btn  .addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.DEFEND));
+        ultimateBtn.addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.SPECIAL));
+        skipBtn    .addActionListener(e -> onPlayerAction(BattleLogic.BattleAction.SKIP));
 
-        bar.add(attackBtn);
-        bar.add(defendBtn);
-        bar.add(specialBtn);
+        bar.add(skill1Btn);
+        bar.add(skill2Btn);
+        bar.add(ultimateBtn);
+        bar.add(skipBtn);
         return bar;
+    }
+
+    /**
+     * Builds the SkillDef array from the selected HeroDefinition and
+     * updates all four button labels to match the hero's actual skills.
+     */
+    private void populateSkillButtons() {
+        heroSkills = buildSkillDefs(heroDef);
+
+        // Skill 1
+        SkillDef s1 = heroSkills[0];
+        skill1Btn.setText("<html><center>" + s1.icon() + " " + s1.name()
+                + "<br><small style='color:#aaa'>" + s1.costLabel() + "</small></center></html>");
+
+        // Skill 2
+        SkillDef s2 = heroSkills[1];
+        skill2Btn.setText("<html><center>" + s2.icon() + " " + s2.name()
+                + "<br><small style='color:#aaa'>" + s2.costLabel() + "</small></center></html>");
+
+        // Ultimate
+        SkillDef ult = heroSkills[2];
+        ultimateBtn.setText("<html><center>" + ult.icon() + " " + ult.name()
+                + "<br><small style='color:#aaa'>" + ult.costLabel() + "</small></center></html>");
+
+        // Skip is always the same label but energy label varies by class
+        SkillDef skip = heroSkills[3];
+        skipBtn.setText("<html><center>" + skip.icon() + " " + skip.name()
+                + "<br><small style='color:#aaa'>" + skip.costLabel() + "</small></center></html>");
+    }
+
+    /** Maps each HeroDefinition name to its four SkillDefs. */
+    private SkillDef[] buildSkillDefs(HeroDefinition hero) {
+        return switch (hero.name) {
+            case "Kael Saint Laurent" -> new SkillDef[]{
+                    new SkillDef("🗡️",  "Blade Rush",          "🔋 5 Stamina",  5,  BattleLogic.BattleAction.ATTACK,  false),
+                    new SkillDef("⚔️",  "Piercing Slash",       "🔋 10 Stamina", 10, BattleLogic.BattleAction.DEFEND,  false),
+                    new SkillDef("✝️",  "Eternal Cross Slash",  "🔋 20 Stamina", 20, BattleLogic.BattleAction.SPECIAL, true),
+                    new SkillDef("🛡️", "Skip Turn",             "Restore HP + Stamina", 0, BattleLogic.BattleAction.SKIP, false),
+            };
+            case "Karl Clover Dior IV" -> new SkillDef[]{
+                    new SkillDef("🏹",  "Piercing Arrow",              "➶ 1 Arrow",  1, BattleLogic.BattleAction.ATTACK,  false),
+                    new SkillDef("🎯",  "Bullseye",                    "➶ 3 Arrows", 3, BattleLogic.BattleAction.DEFEND,  false),
+                    new SkillDef("🌩️", "Rain of a Thousand Arrows",   "➶ 5 Arrows", 5, BattleLogic.BattleAction.SPECIAL, true),
+                    new SkillDef("🛡️", "Skip Turn",                   "Restore HP + Arrows", 0, BattleLogic.BattleAction.SKIP, false),
+            };
+            case "Simon Versace" -> new SkillDef[]{
+                    new SkillDef("🔥",  "Fireball",      "💧 15 Mana", 15, BattleLogic.BattleAction.ATTACK,  false),
+                    new SkillDef("❄️",  "Ice Prison",    "💧 25 Mana", 25, BattleLogic.BattleAction.DEFEND,  false),
+                    new SkillDef("☄️",  "Meteor Storm",  "💧 40 Mana", 40, BattleLogic.BattleAction.SPECIAL, true),
+                    new SkillDef("🛡️", "Skip Turn",     "Restore HP + Mana", 0, BattleLogic.BattleAction.SKIP, false),
+            };
+            case "Null" -> new SkillDef[]{
+                    new SkillDef("💥",  "Direct Hit",  "💧 5 Mana",  5,  BattleLogic.BattleAction.ATTACK,  false),
+                    new SkillDef("🔥",  "Obliterate",  "💧 10 Mana", 10, BattleLogic.BattleAction.DEFEND,  false),
+                    new SkillDef("🌌",  "World End",   "💧 20 Mana", 20, BattleLogic.BattleAction.SPECIAL, true),
+                    new SkillDef("🛡️", "Skip Turn",   "Restore HP + Mana", 0, BattleLogic.BattleAction.SKIP, false),
+            };
+            default -> new SkillDef[]{
+                    new SkillDef("⚔️",  "Attack",   "Basic attack", 0, BattleLogic.BattleAction.ATTACK,  false),
+                    new SkillDef("🛡️", "Defend",   "Halve damage", 0, BattleLogic.BattleAction.DEFEND,  false),
+                    new SkillDef("✨",  "Special",  "Special move", 0, BattleLogic.BattleAction.SPECIAL, true),
+                    new SkillDef("⏭️",  "Skip",     "Restore HP",   0, BattleLogic.BattleAction.SKIP,    false),
+            };
+        };
     }
 
     private JButton buildActionButton(String text, String tooltip, Color bg, Color border) {
@@ -505,73 +589,114 @@ public class BattlePanel extends JPanel {
     }
 
     private JPanel buildResultOverlay() {
-        JPanel overlay = new JPanel(new GridBagLayout());
-        overlay.setBackground(OVERLAY_BG);
-        overlay.setOpaque(true);
+        // Full-screen backdrop using GridBagLayout to center the card
+        JPanel overlay = new JPanel(new GridBagLayout()) {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(new Color(0, 0, 0, 180));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        overlay.setOpaque(false);
 
-        JPanel card = new JPanel();
+        // Card panel — custom painted background, BoxLayout for content
+        JPanel card = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(14, 12, 26, 245));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                Color accent = (resultTitle != null && "DEFEAT".equals(resultTitle.getText()))
+                        ? RED : GOLD;
+                g2.setColor(accent);
+                g2.fillRoundRect(0, 0, getWidth(), 5, 4, 4);
+                g2.setColor(accent.darker());
+                g2.setStroke(new java.awt.BasicStroke(1.5f));
+                g2.drawRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 12, 12);
+                g2.dispose();
+            }
+        };
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(new Color(20, 18, 36));
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(GOLD_DIM, 1),
-                new EmptyBorder(36, 50, 36, 50)
-        ));
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(40, 60, 40, 60));
+        card.setPreferredSize(new Dimension(440, 360));
 
-        resultIcon  = new JLabel("🏆", SwingConstants.CENTER);
-        resultIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 64));
+        // ── Big emoji icon ──
+        resultIcon = new JLabel("🏆", SwingConstants.CENTER);
+        resultIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 72));
         resultIcon.setAlignmentX(CENTER_ALIGNMENT);
 
+        // ── Separator ──
+        JSeparator sep = new JSeparator();
+        sep.setForeground(GOLD_DIM);
+        sep.setMaximumSize(new Dimension(320, 2));
+        sep.setAlignmentX(CENTER_ALIGNMENT);
+
+        // ── VICTORY / DEFEAT title ──
         resultTitle = new JLabel("VICTORY", SwingConstants.CENTER);
-        resultTitle.setFont(FONT_RESULT);
+        resultTitle.setFont(new Font("Monospaced", Font.BOLD, 36));
         resultTitle.setForeground(GOLD);
         resultTitle.setAlignmentX(CENTER_ALIGNMENT);
 
+        // ── Subtitle ──
         resultSub = new JLabel(" ", SwingConstants.CENTER);
         resultSub.setFont(new Font("Monospaced", Font.ITALIC, 13));
         resultSub.setForeground(TEXT_DIM);
         resultSub.setAlignmentX(CENTER_ALIGNMENT);
-        resultSub.setBorder(new EmptyBorder(4, 0, 24, 0));
+        resultSub.setBorder(new EmptyBorder(6, 0, 6, 0));
 
-        JButton restartBtn = new JButton("⚔  Fight Again");
-        restartBtn.setFont(FONT_BTN);
-        restartBtn.setForeground(new Color(20, 15, 5));
-        restartBtn.setBackground(new Color(120, 92, 24));
-        restartBtn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(GOLD, 1),
-                new EmptyBorder(10, 24, 10, 24)
-        ));
-        restartBtn.setFocusPainted(false);
-        restartBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        restartBtn.setAlignmentX(CENTER_ALIGNMENT);
+        // ── Divider ──
+        JSeparator sep2 = new JSeparator();
+        sep2.setForeground(new Color(50, 45, 75));
+        sep2.setMaximumSize(new Dimension(360, 1));
+        sep2.setAlignmentX(CENTER_ALIGNMENT);
+
+        // ── Buttons ──
+        JButton restartBtn = buildResultButton("⚔  Fight Again", new Color(100, 70, 10), GOLD);
         restartBtn.addActionListener(e -> { if (onRestartBattle != null) onRestartBattle.run(); });
 
-        JButton backBtn = new JButton("↩  New Champion");
-        backBtn.setFont(FONT_BTN);
-        backBtn.setForeground(GOLD);
-        backBtn.setBackground(new Color(22, 20, 38));
-        backBtn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(GOLD_DIM, 1),
-                new EmptyBorder(10, 24, 10, 24)
-        ));
-        backBtn.setFocusPainted(false);
-        backBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        backBtn.setAlignmentX(CENTER_ALIGNMENT);
+        JButton backBtn = buildResultButton("↩  New Champion", new Color(22, 20, 38), GOLD_DIM);
         backBtn.addActionListener(e -> { if (onReturnToSelection != null) onReturnToSelection.run(); });
 
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
-        btns.setBackground(new Color(20, 18, 36));
+        btns.setOpaque(false);
+        btns.setAlignmentX(CENTER_ALIGNMENT);
         btns.add(restartBtn);
         btns.add(backBtn);
-        btns.setAlignmentX(CENTER_ALIGNMENT);
 
         card.add(resultIcon);
-        card.add(Box.createVerticalStrut(8));
+        card.add(Box.createVerticalStrut(6));
+        card.add(sep);
+        card.add(Box.createVerticalStrut(14));
         card.add(resultTitle);
         card.add(resultSub);
+        card.add(Box.createVerticalStrut(10));
+        card.add(sep2);
+        card.add(Box.createVerticalStrut(22));
         card.add(btns);
 
-        overlay.add(card);
+        overlay.add(card); // GridBagLayout centers it automatically
         return overlay;
+    }
+
+    private JButton buildResultButton(String text, Color bg, Color border) {
+        JButton btn = new JButton(text);
+        btn.setFont(FONT_BTN);
+        btn.setForeground(border);
+        btn.setBackground(bg);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(border, 1),
+                new EmptyBorder(10, 28, 10, 28)
+        ));
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(bg.brighter()); }
+            @Override public void mouseExited(MouseEvent e)  { btn.setBackground(bg); }
+        });
+        return btn;
     }
 
     // ─── Populate UI from data ────────────────────────────────────────────────
@@ -591,13 +716,6 @@ public class BattlePanel extends JPanel {
         heroHpBar.setMaximum(h.maxHp);
         enemyHpBar.setMaximum(e.maxHp);
         if (heroEnergyBar != null) heroEnergyBar.setMaximum(h.maxEnergy);
-
-        // Special button label
-        if (h.special != null) {
-            specialBtn.setText("<html><center>" + h.special.icon + " " + h.special.name
-                    + "<br><small style='color:#888'>" + h.special.description
-                    + "</small></center></html>");
-        }
     }
 
     // ─── Refresh live stats ────────────────────────────────────────────────────
@@ -630,19 +748,39 @@ public class BattlePanel extends JPanel {
         turnLabel.setText(isPlayerTurn ? "Your Turn ▶" : "Enemy Turn ▶");
         turnLabel.setForeground(isPlayerTurn ? GREEN : RED);
 
-        // Special cooldown
+        // Ultimate cooldown
         int cd = h.specialCooldown;
         if (cd > 0) {
-            specialBtn.setEnabled(false);
-            specialCdLabel.setText("Cooldown: " + cd);
-        } else {
-            specialBtn.setEnabled(true);
-            specialCdLabel.setText("");
+            ultimateBtn.setEnabled(false);
+            String ultName = (heroSkills != null) ? heroSkills[2].name() : "Ultimate";
+            ultimateBtn.setText("<html><center>" + (heroSkills != null ? heroSkills[2].icon() : "✨") + " " + ultName
+                    + "<br><small style='color:#f88'>⏳ Cooldown: " + cd + " turn/s</small></center></html>");
+        } else if (heroSkills != null) {
+            ultimateBtn.setEnabled(true);
+            SkillDef ult = heroSkills[2];
+            ultimateBtn.setText("<html><center>" + ult.icon() + " " + ult.name()
+                    + "<br><small style='color:#aaa'>" + ult.costLabel() + "</small></center></html>");
+        }
+
+        // Dim skill buttons if not enough energy
+        if (heroSkills != null) {
+            skill1Btn.setEnabled(h.energy >= heroSkills[0].energyCost());
+            skill2Btn.setEnabled(h.energy >= heroSkills[1].energyCost());
         }
 
         // Status badges
         heroStatusLbl.setText(h.defending  ? "🛡 Defending" : " ");
         enemyStatusLbl.setText(e.defending ? "🛡 Defending" : " ");
+    }
+
+    private String getEnergyName() {
+        if (heroDef == null) return "Energy";
+        return switch (heroDef.classType) {
+            case "Swordsman" -> "Stamina";
+            case "Archer"    -> "Arrows";
+            case "Mage"      -> "Mana";
+            default          -> "Energy";
+        };
     }
 
     // ─── Action handling ──────────────────────────────────────────────────────
@@ -655,8 +793,67 @@ public class BattlePanel extends JPanel {
         if (animating) return;
         if (engine.getCurrentTurn() != TurnOwner.PLAYER) return;
 
+        // Energy validation before acting
+        if (heroSkills != null && action != BattleLogic.BattleAction.SKIP) {
+            int idx = switch (action) {
+                case ATTACK  -> 0;
+                case DEFEND  -> 1;
+                case SPECIAL -> 2;
+                default      -> -1;
+            };
+            if (idx >= 0) {
+                int cost = heroSkills[idx].energyCost();
+                if (engine.getHero().energy < cost) {
+                    addLog("❌ Not enough " + getEnergyName() + " for " + heroSkills[idx].name() + "!", RED);
+                    return;
+                }
+            }
+        }
+
+        // Ultimate cooldown check
+        if (action == BattleLogic.BattleAction.SPECIAL && engine.getHero().specialCooldown > 0) {
+            addLog("❌ Ultimate is on cooldown! (" + engine.getHero().specialCooldown + " turn/s remaining)", RED);
+            return;
+        }
+
         animating = true;
         setActionsEnabled(false);
+
+        // SKIP TURN — handled entirely in the panel (restores HP + energy, no engine call)
+        if (action == BattleLogic.BattleAction.SKIP) {
+            Combatant h = engine.getHero();
+            int hpRestored  = (int)(h.maxHp * 0.10);
+            int nrgRestored = switch (heroDef.classType) {
+                case "Swordsman" -> 10;
+                case "Archer"    -> 3;
+                default          -> 20; // Mage / Null
+            };
+            h.currentHp = Math.min(h.maxHp, h.currentHp + hpRestored);
+            h.energy    = Math.min(h.maxEnergy, h.energy + nrgRestored);
+            addLog("🛡 " + heroDef.name + " skips their turn! +" + hpRestored + " HP, +"
+                    + nrgRestored + " " + getEnergyName() + ".", GREEN);
+            refreshBattleUI();
+            // Still need to run the enemy turn
+            Timer enemyDelay = new Timer(900, e -> {
+                engine.advanceToEnemyTurn();
+                turnLabel.setText("Enemy Turn ▶");
+                turnLabel.setForeground(RED);
+                Timer enemyAct = new Timer(500, ev -> {
+                    ActionResult enemyResult = engine.enemyTurn();
+                    if (enemyResult != null) addLogFromResult(enemyResult, false);
+                    refreshBattleUI();
+                    BattleOutcome outcome2 = engine.checkOutcome();
+                    if (outcome2 == BattleOutcome.DEFEAT) handleDefeat();
+                    else setActionsEnabled(true);
+                    animating = false;
+                });
+                enemyAct.setRepeats(false);
+                enemyAct.start();
+            });
+            enemyDelay.setRepeats(false);
+            enemyDelay.start();
+            return;
+        }
 
         // Player acts
         ActionResult playerResult = engine.playerAction(action);
@@ -764,6 +961,12 @@ public class BattlePanel extends JPanel {
 
     // ─── Result screen ────────────────────────────────────────────────────────
 
+    /** Called by GameScreen before startBattle to show who's next. */
+    public void setBattleAnnouncement(String text) {
+        // Log the announcement at the start of the battle
+        SwingUtilities.invokeLater(() -> addLog("⚔  " + text, GOLD));
+    }
+
     private void showResult(boolean victory) {
         addLog(victory
                         ? "🏆 Victory! " + heroDef.name + " has triumphed!"
@@ -777,17 +980,47 @@ public class BattlePanel extends JPanel {
                 ? heroDef.name + " has vanquished " + enemyDef.name + "!"
                 : heroDef.name + " has fallen in battle...");
 
-        // Show the overlay on top of this panel via the parent GameScreen
-        if (getParent() instanceof GameScreen gs) {
-            gs.showResultOverlay(resultOverlay);
-        } else {
-            // Fallback: embed overlay directly
-            setLayout(new OverlayLayout(this));
-            add(resultOverlay);
-            resultOverlay.setVisible(true);
-            revalidate();
-            repaint();
+        resultOverlay.repaint();
+
+        // ── Notify GameScreen of victory so it can advance the spawn sequence ──
+        if (victory && getParent() != null) {
+            Container p = getParent();
+            while (p != null) {
+                if (p instanceof GameScreen gs) {
+                    // Small delay so the log message renders before transitioning
+                    Timer t = new Timer(600, e -> gs.onEnemyDefeated());
+                    t.setRepeats(false);
+                    t.start();
+                    return; // GameScreen handles what happens next — no overlay needed
+                }
+                p = p.getParent();
+            }
         }
+
+        // ── Fallback (defeat, or no GameScreen parent): show overlay ──
+        SwingUtilities.invokeLater(() -> {
+            JRootPane root = SwingUtilities.getRootPane(this);
+            if (root == null) {
+                setLayout(new OverlayLayout(this));
+                add(resultOverlay, 0);
+                resultOverlay.setVisible(true);
+                revalidate();
+                repaint();
+                return;
+            }
+            JLayeredPane layered = root.getLayeredPane();
+            resultOverlay.setBounds(0, 0, layered.getWidth(), layered.getHeight());
+            resultOverlay.setVisible(true);
+            layered.add(resultOverlay, JLayeredPane.POPUP_LAYER);
+            layered.revalidate();
+            layered.repaint();
+
+            layered.addComponentListener(new java.awt.event.ComponentAdapter() {
+                @Override public void componentResized(java.awt.event.ComponentEvent e) {
+                    resultOverlay.setBounds(0, 0, layered.getWidth(), layered.getHeight());
+                }
+            });
+        });
     }
 
     // ─── Battle log helpers ───────────────────────────────────────────────────
@@ -820,12 +1053,13 @@ public class BattlePanel extends JPanel {
     }
 
     private void setActionsEnabled(boolean enabled) {
-        attackBtn.setEnabled(enabled);
-        defendBtn.setEnabled(enabled);
+        skill1Btn.setEnabled(enabled);
+        skill2Btn.setEnabled(enabled);
+        skipBtn.setEnabled(enabled);
         if (enabled && engine != null) {
-            specialBtn.setEnabled(engine.getHero().specialCooldown == 0);
+            ultimateBtn.setEnabled(engine.getHero().specialCooldown == 0);
         } else {
-            specialBtn.setEnabled(false);
+            ultimateBtn.setEnabled(false);
         }
     }
 
