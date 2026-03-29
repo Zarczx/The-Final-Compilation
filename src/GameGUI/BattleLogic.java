@@ -4,380 +4,575 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * BattleLogic.java
- *
- * Pure battle engine — no UI, no Swing.
- * Ported from Battle.java (battle.Battle) and adapted for GUI use.
- *
- * Responsibilities:
- *  - Turn management (player turn / enemy turn)
- *  - Damage calculation with variance (mirrors Battle.java behavior)
- *  - Defense / buff / debuff modifiers
- *  - DoT (poison/burn) effects after each action
- *  - Special ability cooldown tracking
- *  - Revive / Phoenix Soulstone logic (flags only — UI handles display)
- *  - Battle-end detection (victory / defeat)
- *  - Battle log (plain strings, no color util — GUI applies its own styling)
- */
 public class BattleLogic {
 
-    // ─── Inner model classes ──────────────────────────────────────────────────
-
+    // ─── Combatant ────────────────────────────────────────────────────────────
     public static class Combatant {
-        public final String name;
-        public final String role;
-        public final String emoji;
-        public final int maxHp;
-        public final int attack;
-        public final int defense;
-        public final Special special;   // null for enemy
+        public final String name, role, emoji;
+        public final Special special;
 
-        public int currentHp;
-        public int energy;
-        public int maxEnergy;
+        // Mutable stats (leveling modifies these)
+        public int maxHp, attack, defense, maxEnergy;
+        public int baseAttack, baseDefense;
+
+        public int currentHp, energy;
         public boolean defending;
         public int specialCooldown;
-        public int attackModifier;      // mirrors getEffects().updateAttackModifiers()
-        public int defenseModifier;     // mirrors getEffects().updateDefenseModifiers()
-        public int dotDamage;           // mirrors updateDoTEffects() — damage per turn
-        public int dotTurnsLeft;
+        public int attackModifier, defenseModifier;
+        public int dotDamage, dotTurnsLeft;
+
+        // Leveling
+        public int level = 1;
+        public int exp   = 0;
+        public int nextLevelExp;
+        public String lastLevelUpMsg = null;
+
+        private static final int[] XP_TABLE = {
+                0, 100, 115, 130, 150, 175, 200, 230, 265, 305, 355,
+                405, 465, 535, 615, 720, 875, 1040, 1350, 1650, 2200,
+                2500, 2900, 3350, 3800, 4400, 5000, 5800, 6600, 7400
+        };
+
+        // Status effects
+        public boolean stunned, frozen, confused, nimble;
 
         public Combatant(String name, String role, String emoji,
                          int maxHp, int attack, int defense,
-                         int energy, int maxEnergy,
-                         Special special) {
-            this.name          = name;
-            this.role          = role;
-            this.emoji         = emoji;
-            this.maxHp         = maxHp;
-            this.attack        = attack;
-            this.defense       = defense;
-            this.special       = special;
-            this.currentHp     = maxHp;
-            this.energy        = energy;
-            this.maxEnergy     = maxEnergy;
-            this.defending     = false;
-            this.specialCooldown = 0;
-            this.attackModifier  = 0;
-            this.defenseModifier = 0;
-            this.dotDamage     = 0;
-            this.dotTurnsLeft  = 0;
+                         int energy, int maxEnergy, Special special) {
+            this.name = name; this.role = role; this.emoji = emoji;
+            this.maxHp = maxHp;
+            this.baseAttack  = attack; this.attack  = attack;
+            this.baseDefense = defense; this.defense = defense;
+            this.special = special;
+            this.currentHp = maxHp;
+            this.energy = energy; this.maxEnergy = maxEnergy;
+            this.nextLevelExp = XP_TABLE.length > 1 ? XP_TABLE[1] : 100;
         }
 
         public boolean isAlive() { return currentHp > 0; }
-
-        public int effectiveAttack()  { return Math.max(1, attack  + attackModifier);  }
+        public int effectiveAttack()  { return Math.max(1, attack  + attackModifier); }
         public int effectiveDefense() { return Math.max(0, defense + defenseModifier); }
+
+        /** Add XP and trigger level-ups. Returns true if leveled up. */
+        public boolean gainExp(int amount) {
+            if (level >= 30) return false;
+            exp += amount;
+            boolean leveled = false;
+            while (level < 30 && level < XP_TABLE.length - 1 && exp >= nextLevelExp) {
+                levelUp();
+                leveled = true;
+            }
+            return leveled;
+        }
+
+        private void levelUp() {
+            if (level >= 30) return;
+            level++;
+            int oldMaxHp  = maxHp;
+            int oldAtk    = baseAttack;
+            int oldDef    = baseDefense;
+            int w = 1; // World 1
+            switch (role) {
+                case "Swordsman" -> { maxHp += 60 + w*5; baseAttack += 7+w; baseDefense += 3+w; }
+                case "Archer"    -> { maxHp += 56 + w*5; baseAttack += 8+w; baseDefense += 2+w; }
+                case "Mage"      -> { maxHp += 50 + w*5; baseAttack += 9+w; baseDefense += 1+w; }
+                default          -> { maxHp += 55 + w*5; baseAttack += 7+w; baseDefense += 2+w; }
+            }
+            int weaponBonus = attack  - oldAtk  - attackModifier;
+            int armorBonus  = defense - oldDef  - defenseModifier;
+            attack  = baseAttack  + weaponBonus + attackModifier;
+            defense = baseDefense + armorBonus  + defenseModifier;
+            currentHp = Math.min(maxHp, currentHp + (int)(maxHp * 0.50));
+            energy    = Math.min(maxEnergy, energy + (int)(maxEnergy * 0.50));
+            exp -= nextLevelExp;
+            if (level < XP_TABLE.length) nextLevelExp = XP_TABLE[level];
+            // Store structured info for BattlePanel display
+            int hpGain  = maxHp - oldMaxHp;
+            int atkGain = baseAttack - oldAtk;
+            int defGain = baseDefense - oldDef;
+            lastLevelUpMsg = String.format(
+                    "LVL_UP|%d|%d|%d|%d|%d|%d|%d|%d",
+                    level, hpGain, maxHp, atkGain, attack, defGain, defense, maxEnergy
+            );
+        }
     }
 
+    // ─── Special ─────────────────────────────────────────────────────────────
     public static class Special {
-        public final String name;
-        public final String icon;
-        public final String description;
+        public final String name, icon, description;
         public final double multiplier;
-        public final boolean pierceArmor;  // rogue-style: ignores 70% of defense
+        public final boolean pierceArmor;
         public final int cooldown;
 
         public Special(String name, String icon, String description,
                        double multiplier, boolean pierceArmor, int cooldown) {
-            this.name        = name;
-            this.icon        = icon;
-            this.description = description;
-            this.multiplier  = multiplier;
-            this.pierceArmor = pierceArmor;
-            this.cooldown    = cooldown;
+            this.name = name; this.icon = icon; this.description = description;
+            this.multiplier = multiplier; this.pierceArmor = pierceArmor;
+            this.cooldown = cooldown;
         }
     }
 
-    /** Mirrors Battle.java's pre-battle option: QUIT */
-    public enum BattleAction { ATTACK, DEFEND, SPECIAL, SKIP }
+    public enum BattleAction { SKILL1, SKILL2, ULTIMATE, SKIP_TURN }
+    public enum TurnOwner    { PLAYER, ENEMY }
+    public enum BattleOutcome{ ONGOING, VICTORY, DEFEAT }
 
-    public enum TurnOwner { PLAYER, ENEMY }
-
-    /** Result returned after every action so the UI can react */
+    // ─── ActionResult ────────────────────────────────────────────────────────
     public static class ActionResult {
         public final String logMessage;
-        public final boolean wasDefend;
-        public final int damageDealt;       // 0 if defend
-        public final int dotDamageApplied;  // after-action DoT tick
-        public final String target;         // "hero" or "enemy"
-        public final boolean isSpecial;
-        public final boolean isBerserk;     // enemy berserk mode (Battle.java low-HP behavior)
+        public final boolean wasDefend, isSpecial, isBerserk, isMultiHit;
+        public final int damageDealt, dotDamageApplied;
+        public final String target;
+        public final String statusEffect; // e.g. "STUN", "BLEED", "BURN", null
 
         public ActionResult(String logMessage, boolean wasDefend, int damageDealt,
                             int dotDamageApplied, String target,
-                            boolean isSpecial, boolean isBerserk) {
-            this.logMessage       = logMessage;
-            this.wasDefend        = wasDefend;
-            this.damageDealt      = damageDealt;
-            this.dotDamageApplied = dotDamageApplied;
-            this.target           = target;
-            this.isSpecial        = isSpecial;
-            this.isBerserk        = isBerserk;
+                            boolean isSpecial, boolean isBerserk,
+                            boolean isMultiHit, String statusEffect) {
+            this.logMessage = logMessage; this.wasDefend = wasDefend;
+            this.damageDealt = damageDealt; this.dotDamageApplied = dotDamageApplied;
+            this.target = target; this.isSpecial = isSpecial; this.isBerserk = isBerserk;
+            this.isMultiHit = isMultiHit; this.statusEffect = statusEffect;
         }
     }
 
-    public enum BattleOutcome { ONGOING, VICTORY, DEFEAT }
-
     // ─── Fields ───────────────────────────────────────────────────────────────
+    private final Combatant hero, enemy;
+    private TurnOwner currentTurn = TurnOwner.PLAYER;
+    private int round = 1;
+    private boolean reviveUsed = false;
+    private boolean phoenixSoulstoneAvailable = false;
+    private final List<String> battleLog = new ArrayList<>();
+    private final Random rng = new Random();
 
-    private final Combatant hero;
-    private final Combatant enemy;
-    private TurnOwner currentTurn;
-    private int round;
-    private boolean reviveUsed;
-    private boolean phoenixSoulstoneAvailable; // mirrors player.getInventory().hasPhoenixSoulstone()
-    private final List<String> battleLog;
-    private final Random rng;
+    // Hero skill energy costs (set from HeroData on startBattle)
+    private int skill1Cost = 5, skill2Cost = 10, ultimateCost = 20;
+    private HeroData.HeroDefinition heroDef;
+    private HeroData.WeaponDef weaponDef; // starting weapon — drives on-hit effects
 
-    // ─── Constructor ──────────────────────────────────────────────────────────
-
-    public BattleLogic(Combatant hero, Combatant enemy, boolean hasPhoenixSoulstone) {
-        this.hero                     = hero;
-        this.enemy                    = enemy;
-        this.currentTurn              = TurnOwner.PLAYER;
-        this.round                    = 1;
-        this.reviveUsed               = false;
-        this.phoenixSoulstoneAvailable = hasPhoenixSoulstone;
-        this.battleLog                = new ArrayList<>();
-        this.rng                      = new Random();
+    public BattleLogic(Combatant hero, Combatant enemy, boolean hasPhoenix) {
+        this.hero = hero; this.enemy = enemy;
+        this.phoenixSoulstoneAvailable = hasPhoenix;
     }
 
-    // ─── Public API ───────────────────────────────────────────────────────────
+    public void setHeroDef(HeroData.HeroDefinition def) {
+        this.heroDef = def;
+        this.weaponDef = (def != null) ? def.startingWeapon : null;
+        if (def != null && def.skills != null && def.skills.length >= 3) {
+            skill1Cost   = def.skills[0].energyCost;
+            skill2Cost   = def.skills[1].energyCost;
+            ultimateCost = def.skills[2].energyCost;
+        }
+    }
 
-    public Combatant getHero()  { return hero;  }
+    // ─── Getters ─────────────────────────────────────────────────────────────
+    public Combatant getHero()  { return hero; }
     public Combatant getEnemy() { return enemy; }
     public TurnOwner getCurrentTurn() { return currentTurn; }
     public int getRound() { return round; }
     public List<String> getBattleLog() { return battleLog; }
     public boolean isReviveUsed() { return reviveUsed; }
     public boolean isPhoenixSoulstoneAvailable() { return phoenixSoulstoneAvailable; }
+    public int getSkill1Cost()   { return skill1Cost; }
+    public int getSkill2Cost()   { return skill2Cost; }
+    public int getUltimateCost() { return ultimateCost; }
+    public boolean canUseSkill1()   { return hero.energy >= skill1Cost; }
+    public boolean canUseSkill2()   { return hero.energy >= skill2Cost; }
+    public boolean canUseUltimate() { return hero.energy >= ultimateCost && hero.specialCooldown == 0; }
 
-    /**
-     * Execute one player action.
-     * Mirrors Battle.java's player.turn(enemy) call.
-     * Returns the result so the GUI can animate / update bars.
-     */
+    // ─── Player Action ────────────────────────────────────────────────────────
     public ActionResult playerAction(BattleAction action) {
         if (currentTurn != TurnOwner.PLAYER) return null;
-
-        // mirrors: player.getEffects().updateAttackModifiers() / updateDefenseModifiers()
         updateModifiers(hero);
 
+        // Passive: Arcane Flow — restore 5% mana each turn (Simon)
+        if (heroDef != null && heroDef.role.equals("Mage")) {
+            int flow = (int)(hero.maxEnergy * 0.05);
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + flow);
+        }
+
         ActionResult result;
-
         switch (action) {
-            case ATTACK  -> result = resolveAttack(hero, enemy, 1.0, false, false);
-            case DEFEND  -> result = resolveDefend(hero);
-            case SPECIAL -> result = resolveSpecial(hero, enemy);
-            default      -> result = resolveAttack(hero, enemy, 1.0, false, false);
+            case SKILL1   -> result = resolveSkill1();
+            case SKILL2   -> result = resolveSkill2();
+            case ULTIMATE -> result = resolveUltimate();
+            case SKIP_TURN -> result = resolveSkipTurn();
+            default       -> result = resolveSkill1();
         }
 
-        // mirrors: player.getEffects().updateDoTEffects()
         int dot = applyDoT(hero);
-        if (dot > 0) {
-            log("🔥 " + hero.name + " takes " + dot + " burn/poison damage!");
-        }
-
-        // Cooldown tick happens at end of enemy turn (see enemyTurn())
         return new ActionResult(result.logMessage, result.wasDefend, result.damageDealt,
-                dot, result.target, result.isSpecial, false);
+                dot, result.target, result.isSpecial, false, result.isMultiHit, result.statusEffect);
     }
 
-    /**
-     * Execute one enemy turn.
-     * Mirrors Battle.java's enemy.turn(player) with the same AI:
-     *  - 15% chance to defend
-     *  - Berserk at < 40% HP (mirrors low-HP aggression hinted in Battle.java)
-     *  - Otherwise normal attack
-     */
+    // ─── Skill 1 ─────────────────────────────────────────────────────────────
+    private ActionResult resolveSkill1() {
+        if (!canUseSkill1()) return insufficientEnergy("Skill 1");
+        hero.energy -= skill1Cost;
+
+        String heroName = heroDef != null ? heroDef.name : hero.name;
+        String skillName = heroDef != null ? heroDef.skills[0].name : "Skill 1";
+        double mult = heroDef != null ? heroDef.skills[0].multiplier : 1.15;
+        boolean pierce = heroDef != null && heroDef.skills[0].pierceArmor;
+
+        int dmg = calcDamage(hero, enemy, mult, pierce);
+
+        // Passive: Blade Swift (Kael) — 15% crit chance gives +5% stamina
+        if (heroDef != null && heroDef.role.equals("Swordsman") && rng.nextDouble() < 0.15) {
+            dmg = (int)(dmg * 1.5);
+            int gain = (int)(hero.maxEnergy * 0.05);
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + gain);
+        }
+
+        // Passive: Hunter's Instinct (Karl) — +20% if enemy < 30% HP
+        if (heroDef != null && heroDef.role.equals("Archer")) {
+            if ((double)enemy.currentHp / enemy.maxHp < 0.3) dmg = (int)(dmg * 1.2);
+        }
+
+        enemy.currentHp = clamp(enemy.currentHp - dmg, 0, enemy.maxHp);
+        hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
+
+        // On-hit weapon effects (lifesteal, confuse, poison, energy)
+        String weaponFx = applyWeaponEffects(dmg);
+
+        // 30% chance status effect
+        String status = null;
+        if (rng.nextDouble() < 0.30) {
+            if (heroDef != null && heroDef.role.equals("Swordsman")) {
+                hero.attackModifier += (int)(hero.attack * 0.20); status = "STRENGTHEN";
+            } else if (heroDef != null && heroDef.role.equals("Archer")) {
+                enemy.dotDamage = Math.max(1, (int)(enemy.maxHp * 0.05));
+                enemy.dotTurnsLeft += 2; status = "BLEED";
+            } else if (heroDef != null && heroDef.role.equals("Mage")) {
+                enemy.dotDamage = Math.max(1, (int)(enemy.maxHp * 0.04));
+                enemy.dotTurnsLeft += 1; status = "BURN";
+            }
+        }
+
+        String fullStatus = (status != null && weaponFx != null) ? status + ", " + weaponFx
+                : (status != null) ? status : weaponFx;
+        String msg = hero.name + " uses " + skillName + " for " + dmg + " damage!" +
+                (fullStatus != null ? " (" + fullStatus + "!)" : "");
+        log(msg);
+        return new ActionResult(msg, false, dmg, 0, "enemy", false, false, false, fullStatus);
+    }
+
+    // ─── Skill 2 ─────────────────────────────────────────────────────────────
+    private ActionResult resolveSkill2() {
+        if (!canUseSkill2()) return insufficientEnergy("Skill 2");
+        hero.energy -= skill2Cost;
+
+        String skillName = heroDef != null ? heroDef.skills[1].name : "Skill 2";
+        double mult = heroDef != null ? heroDef.skills[1].multiplier : 1.35;
+        boolean pierce = heroDef != null && heroDef.skills[1].pierceArmor;
+
+        int dmg = calcDamage(hero, enemy, mult, pierce);
+
+        // Blade Swift passive for Kael skill 2
+        if (heroDef != null && heroDef.role.equals("Swordsman") && rng.nextDouble() < 0.15) {
+            dmg = (int)(dmg * 1.5);
+            int gain = (int)(hero.maxEnergy * 0.05);
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + gain);
+        }
+        // Hunter's Instinct for Karl
+        if (heroDef != null && heroDef.role.equals("Archer")) {
+            if ((double)enemy.currentHp / enemy.maxHp < 0.3) dmg = (int)(dmg * 1.2);
+            // Bullseye — guaranteed crit
+            dmg = (int)(dmg * 1.5);
+        }
+
+        enemy.currentHp = clamp(enemy.currentHp - dmg, 0, enemy.maxHp);
+        hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
+
+        // On-hit weapon effects
+        String weaponFx2 = applyWeaponEffects(dmg);
+
+        // 30% status
+        String status = null;
+        if (rng.nextDouble() < 0.30) {
+            if (heroDef != null && heroDef.role.equals("Swordsman")) {
+                enemy.stunned = true; status = "STUN";
+            } else if (heroDef != null && heroDef.role.equals("Archer")) {
+                enemy.defenseModifier -= (int)(enemy.defense * 0.30); status = "WEAKEN DEF";
+            } else if (heroDef != null && heroDef.role.equals("Mage")) {
+                if (rng.nextDouble() < 0.50) { enemy.frozen = true; status = "FREEZE"; }
+            }
+        }
+
+        String fullStatus2 = (status != null && weaponFx2 != null) ? status + ", " + weaponFx2
+                : (status != null) ? status : weaponFx2;
+        String msg = hero.name + " uses " + skillName + " for " + dmg + " damage!" +
+                (fullStatus2 != null ? " (" + fullStatus2 + "!)" : "");
+        log(msg);
+        return new ActionResult(msg, false, dmg, 0, "enemy", false, false, false, fullStatus2);
+    }
+
+    // ─── Ultimate ────────────────────────────────────────────────────────────
+    private ActionResult resolveUltimate() {
+        if (!canUseUltimate()) {
+            if (hero.specialCooldown > 0)
+                return insufficientEnergy("Ultimate (cooldown: " + hero.specialCooldown + ")");
+            return insufficientEnergy("Ultimate");
+        }
+        hero.energy -= ultimateCost;
+        hero.specialCooldown = (heroDef != null && heroDef.skills != null)
+                ? heroDef.skills[2].cooldown : 3;
+
+        String skillName = heroDef != null ? heroDef.skills[2].name : "Ultimate";
+        double mult = heroDef != null ? heroDef.skills[2].multiplier : 1.40;
+        boolean pierce = heroDef != null && heroDef.skills[2].pierceArmor;
+
+        // Multi-hit ultimates
+        int hits = 1;
+        if (heroDef != null) {
+            if (heroDef.role.equals("Swordsman")) hits = 3; // Eternal Cross Slash
+            else if (heroDef.role.equals("Archer")) hits = 5; // Rain of a Thousand Arrows
+            else if (heroDef.role.equals("Mage"))   hits = 5; // Meteor Storm
+        }
+
+        int totalDmg = 0;
+        StringBuilder hitLog = new StringBuilder();
+        for (int i = 1; i <= hits; i++) {
+            int dmg = calcDamage(hero, enemy, mult, pierce);
+            // Blade Swift passive
+            if (heroDef != null && heroDef.role.equals("Swordsman") && rng.nextDouble() < 0.15) {
+                dmg = (int)(dmg * 1.5);
+                int gain = (int)(hero.maxEnergy * 0.05);
+                hero.energy = Math.min(hero.maxEnergy, hero.energy + gain);
+            }
+            if (heroDef != null && heroDef.role.equals("Archer")) {
+                if ((double)enemy.currentHp / enemy.maxHp < 0.3) dmg = (int)(dmg * 1.2);
+            }
+            totalDmg += dmg;
+            if (hits > 1) hitLog.append("Hit ").append(i).append(": ").append(dmg).append("  ");
+        }
+        enemy.currentHp = clamp(enemy.currentHp - totalDmg, 0, enemy.maxHp);
+
+        // On-hit weapon effects (applied once for the full combo)
+        String weaponFxU = applyWeaponEffects(totalDmg);
+
+        // Status effects
+        String status = null;
+        if (heroDef != null) {
+            if (heroDef.role.equals("Swordsman")) {
+                enemy.dotDamage = Math.max(1, (int)(enemy.maxHp * 0.05));
+                enemy.dotTurnsLeft += 2;
+                hero.defenseModifier += (int)(hero.defense * 0.20);
+                status = "BLEED + FORTIFY";
+            } else if (heroDef.role.equals("Archer")) {
+                hero.nimble = true;
+                hero.attackModifier += (int)(hero.attack * 0.20);
+                status = "NIMBLE + STRENGTHEN";
+            } else if (heroDef.role.equals("Mage")) {
+                hero.attackModifier += (int)(hero.attack * 0.20);
+                if (rng.nextDouble() < 0.50) {
+                    enemy.dotDamage = Math.max(1, (int)(enemy.maxHp * 0.04));
+                    enemy.dotTurnsLeft += 2;
+                    status = "STRENGTHEN + BURN";
+                } else status = "STRENGTHEN";
+            }
+        }
+
+        String fullStatusU = (status != null && weaponFxU != null) ? status + ", " + weaponFxU
+                : (status != null) ? status : weaponFxU;
+        String msg = hero.name + " unleashes " + skillName + "! Total: " + totalDmg + " damage!" +
+                (hits > 1 ? "\n" + hitLog : "") +
+                (fullStatusU != null ? "\n(" + fullStatusU + "!)" : "");
+        log(msg);
+        return new ActionResult(msg, false, totalDmg, 0, "enemy", true, false, hits > 1, fullStatusU);
+    }
+
+    // ─── Skip Turn ───────────────────────────────────────────────────────────
+    private ActionResult resolveSkipTurn() {
+        int restoreHp = (int)(hero.maxHp * 0.10);
+        int restoreEnergy;
+        if (heroDef != null) {
+            restoreEnergy = switch (heroDef.role) {
+                case "Swordsman" -> 10;
+                case "Archer" -> 3;
+                case "Mage" -> 20;
+                default -> 15;
+            };
+        } else restoreEnergy = 10;
+
+        hero.currentHp = Math.min(hero.maxHp, hero.currentHp + restoreHp);
+        hero.energy    = Math.min(hero.maxEnergy, hero.energy + restoreEnergy);
+        hero.defending = true;
+        hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
+
+        String msg = hero.name + " skips turn. Restored " + restoreHp + " HP & " + restoreEnergy + " Energy.";
+        log(msg);
+        return new ActionResult(msg, true, 0, 0, "hero", false, false, false, null);
+    }
+
+    private ActionResult insufficientEnergy(String skillName) {
+        String msg = "Not enough energy to use " + skillName + "!";
+        log(msg);
+        return new ActionResult(msg, false, 0, 0, "hero", false, false, false, null);
+    }
+
+    // ─── Enemy Turn ──────────────────────────────────────────────────────────
     public ActionResult enemyTurn() {
         if (currentTurn != TurnOwner.ENEMY) return null;
-
-        // mirrors: enemy.getEffects().updateAttackModifiers() / updateDefenseModifiers()
         updateModifiers(enemy);
-
-        // Reset hero's defend flag (it only lasts one round)
         hero.defending = false;
+
+        // Status checks
+        if (enemy.stunned) {
+            enemy.stunned = false;
+            String msg = enemy.name + " is stunned! Turn skipped.";
+            log(msg);
+            round++;
+            if (hero.specialCooldown > 0) hero.specialCooldown--;
+            currentTurn = TurnOwner.PLAYER;
+            return new ActionResult(msg, false, 0, 0, "enemy", false, false, false, "STUNNED");
+        }
+        if (enemy.frozen) {
+            enemy.frozen = false;
+            String msg = enemy.name + " is frozen! Turn skipped.";
+            log(msg);
+            round++;
+            if (hero.specialCooldown > 0) hero.specialCooldown--;
+            currentTurn = TurnOwner.PLAYER;
+            return new ActionResult(msg, false, 0, 0, "enemy", false, false, false, "FROZEN");
+        }
 
         ActionResult result;
         double roll = rng.nextDouble();
 
         if (roll < 0.15) {
             result = resolveDefend(enemy);
-        } else if (roll < 0.30 && enemy.currentHp < enemy.maxHp * 0.4) {
-            // Berserk — mirrors Battle.java's "enemy.turn(player)" at low HP
+        } else if (enemy.currentHp < enemy.maxHp * 0.4 && roll < 0.45) {
+            // Berserk at low HP
             result = resolveAttack(enemy, hero, 1.5, false, true);
         } else {
             result = resolveAttack(enemy, hero, 1.0, false, false);
         }
 
-        // mirrors: enemy.getEffects().updateDoTEffects()
         int dot = applyDoT(enemy);
-        if (dot > 0) {
-            log("🔥 " + enemy.name + " takes " + dot + " burn/poison damage!");
-        }
-
-        // Advance round and tick hero's special cooldown
         round++;
         if (hero.specialCooldown > 0) hero.specialCooldown--;
-
         currentTurn = TurnOwner.PLAYER;
 
         return new ActionResult(result.logMessage, result.wasDefend, result.damageDealt,
-                dot, result.target, result.isSpecial, result.isBerserk);
+                dot, result.target, result.isSpecial, result.isBerserk, false, null);
     }
 
-    /**
-     * Check win/loss after each action.
-     * Mirrors the isAlive() checks in Battle.java's battleLoop().
-     */
+    // ─── Outcome ─────────────────────────────────────────────────────────────
     public BattleOutcome checkOutcome() {
         if (!enemy.isAlive()) return BattleOutcome.VICTORY;
         if (!hero.isAlive())  return BattleOutcome.DEFEAT;
         return BattleOutcome.ONGOING;
     }
 
-    /**
-     * Attempt a revive after defeat.
-     * Mirrors Battle.java's Phoenix Soulstone / ReviveTrial logic.
-     * Returns true if revive was applied.
-     */
+    // ─── Revive ──────────────────────────────────────────────────────────────
     public boolean attemptRevive() {
         if (phoenixSoulstoneAvailable) {
             hero.currentHp = hero.maxHp / 2;
             hero.energy    = hero.maxEnergy / 2;
             phoenixSoulstoneAvailable = false;
-            log("🕊️ The Phoenix Soulstone revives " + hero.name + "!");
-            log("💚 HP: " + hero.currentHp + " | Energy: " + hero.energy);
             currentTurn = TurnOwner.PLAYER;
             return true;
-        }
-        if (!reviveUsed) {
-            // mirrors ReviveTrial.run() — GUI handles the actual mini-game/check
-            // Here we just flag it; GUI calls confirmRevive() after its own logic
-            return false;
         }
         return false;
     }
 
-    /**
-     * Called by GUI after the player passes the ReviveTrial.
-     * Mirrors Battle.java: setHp(maxHp/2), setEnergy(maxEnergy/2), resetAllEffects().
-     */
     public void confirmRevive() {
         hero.currentHp = hero.maxHp / 2;
         hero.energy    = hero.maxEnergy / 2;
-        hero.attackModifier  = 0;   // mirrors player.getEffects().resetAllEffects()
-        hero.defenseModifier = 0;
-        hero.dotDamage       = 0;
-        hero.dotTurnsLeft    = 0;
-        hero.defending       = false;
+        hero.attackModifier = hero.defenseModifier = 0;
+        hero.dotDamage = hero.dotTurnsLeft = 0;
+        hero.defending = false;
         reviveUsed = true;
         currentTurn = TurnOwner.PLAYER;
-        log("✨ Knowledge revives " + hero.name + "! Restored with 50% HP and Energy.");
     }
 
-    /** Switch turn to enemy (called by GUI after player action animation). */
-    public void advanceToEnemyTurn() {
-        currentTurn = TurnOwner.ENEMY;
-    }
+    public void advanceToEnemyTurn() { currentTurn = TurnOwner.ENEMY; }
 
-    // ─── Health Bar Generator ─────────────────────────────────────────────────
-
-    /**
-     * Mirrors Battle.java generateBar().
-     * Returns a 20-char block string for display in the GUI log or tooltips.
-     */
-    public String generateBar(int current, int max) {
-        int length = 20;
-        int filled = (int) Math.round((double) current / max * length);
-        int empty  = length - filled;
-        StringBuilder bar = new StringBuilder();
-        for (int i = 0; i < filled; i++) bar.append("█");
-        for (int i = 0; i < empty;  i++) bar.append("░");
-        return bar.toString();
-    }
-
-    // ─── Private helpers ──────────────────────────────────────────────────────
-
-    private ActionResult resolveAttack(Combatant attacker, Combatant defender,
-                                       double multiplier, boolean pierceArmor, boolean berserk) {
-        int dmg = calcDamage(attacker, defender, multiplier, pierceArmor);
-        defender.currentHp = clamp(defender.currentHp - dmg, 0, defender.maxHp);
-        attacker.defending = false;
-
-        String who    = attacker == hero ? "⚔️ " + hero.name : "👹 " + enemy.name;
-        String target = attacker == hero ? "enemy" : "hero";
-        String msg    = berserk
-                ? who + " goes BERSERK and strikes for " + dmg + " damage! 🔥"
-                : who + " attacks for " + dmg + " damage!";
+    // ─── Private helpers ─────────────────────────────────────────────────────
+    private ActionResult resolveAttack(Combatant atk, Combatant def,
+                                       double mult, boolean pierce, boolean berserk) {
+        int dmg = calcDamage(atk, def, mult, pierce);
+        def.currentHp = clamp(def.currentHp - dmg, 0, def.maxHp);
+        atk.defending = false;
+        String target = atk == hero ? "enemy" : "hero";
+        String msg = berserk
+                ? atk.name + " goes BERSERK! Strikes for " + dmg + " damage!"
+                : atk.name + " attacks for " + dmg + " damage!";
         log(msg);
-        return new ActionResult(msg, false, dmg, 0, target, false, berserk);
+        return new ActionResult(msg, false, dmg, 0, target, false, berserk, false, null);
     }
 
     private ActionResult resolveDefend(Combatant c) {
         c.defending = true;
-        String msg = (c == hero)
-                ? "🛡️ " + hero.name  + " takes a defensive stance! Damage halved next hit."
-                : "🛡️ " + enemy.name + " braces for impact!";
+        String msg = c.name + " braces for impact! (Damage halved)";
         log(msg);
-        return new ActionResult(msg, true, 0, 0, c == hero ? "hero" : "enemy", false, false);
+        return new ActionResult(msg, true, 0, 0, c == hero ? "hero" : "enemy", false, false, false, null);
     }
 
-    private ActionResult resolveSpecial(Combatant attacker, Combatant defender) {
-        if (attacker.specialCooldown > 0 || attacker.special == null) {
-            return resolveAttack(attacker, defender, 1.0, false, false);
-        }
-        Special sp  = attacker.special;
-        int dmg     = calcDamage(attacker, defender, sp.multiplier, sp.pierceArmor);
-        defender.currentHp       = clamp(defender.currentHp - dmg, 0, defender.maxHp);
-        attacker.specialCooldown = sp.cooldown;
-        attacker.defending       = false;
-
-        String msg = "✨ " + attacker.name + " unleashes " + sp.icon + " " + sp.name
-                + " for " + dmg + " damage!";
-        log(msg);
-        return new ActionResult(msg, false, dmg, 0, "enemy", true, false);
+    private int calcDamage(Combatant atk, Combatant def, double mult, boolean pierce) {
+        double base    = atk.effectiveAttack() * mult;
+        double defVal  = pierce ? def.effectiveDefense() * 0.15 : def.effectiveDefense() * 0.5;
+        double variance= 0.85 + rng.nextDouble() * 0.30;
+        double raw     = (base - defVal) * variance;
+        int dmg        = (int) Math.round(Math.max(1.0, raw));
+        return def.defending ? Math.max(1, dmg / 2) : dmg;
     }
 
-    /**
-     * Core damage formula — mirrors Battle.java's implied calc:
-     * base = effectiveAttack * multiplier
-     * reduced by half of defender's effective defense
-     * ±15% variance
-     * halved again if defender is defending
-     */
-    private int calcDamage(Combatant attacker, Combatant defender,
-                           double multiplier, boolean pierceArmor) {
-        double base    = attacker.effectiveAttack() * multiplier;
-        double defense = pierceArmor
-                ? defender.effectiveDefense() * 0.3
-                : defender.effectiveDefense() * 0.5;
-        double variance = 0.85 + rng.nextDouble() * 0.30;
-        double raw      = (base - defense) * variance;
-        int dmg         = (int) Math.round(Math.max(1.0, raw));
-        return defender.defending ? Math.max(1, dmg / 2) : dmg;
-    }
-
-    /** Mirrors player.getEffects().updateAttackModifiers() / updateDefenseModifiers() */
     private void updateModifiers(Combatant c) {
-        // Base implementation: modifiers decay by 1 per turn (extendable)
-        if (c.attackModifier  > 0) c.attackModifier--;
-        if (c.defenseModifier > 0) c.defenseModifier--;
+        if (c.attackModifier  > 0) c.attackModifier  = Math.max(0, c.attackModifier  - 1);
+        if (c.defenseModifier < 0) c.defenseModifier = Math.min(0, c.defenseModifier + 1);
+        if (c.defenseModifier > 0) c.defenseModifier = Math.max(0, c.defenseModifier - 1);
     }
 
-    /** Mirrors player.getEffects().updateDoTEffects() */
     private int applyDoT(Combatant c) {
         if (c.dotTurnsLeft <= 0 || c.dotDamage <= 0) return 0;
         int dmg = c.dotDamage;
-        c.currentHp    = clamp(c.currentHp - dmg, 0, c.maxHp);
+        c.currentHp = clamp(c.currentHp - dmg, 0, c.maxHp);
         c.dotTurnsLeft = Math.max(0, c.dotTurnsLeft - 1);
         return dmg;
     }
 
-    private int clamp(int v, int min, int max) { return Math.min(max, Math.max(min, v)); }
+    // ─── Weapon on-hit effects ────────────────────────────────────────────────
+    // Returns a status string if an effect triggered, null otherwise
+    // Mutates hero (lifesteal, energy) and enemy (confuse, poison DoT)
+    private String applyWeaponEffects(int damageDealt) {
+        if (weaponDef == null || damageDealt <= 0) return null;
+        StringBuilder effects = new StringBuilder();
 
+        // Lifesteal
+        if (weaponDef.lifestealPercent > 0) {
+            int heal = Math.max(1, (int)(damageDealt * weaponDef.lifestealPercent / 100.0));
+            heal = Math.min(heal, hero.maxHp - hero.currentHp);
+            if (heal > 0) {
+                hero.currentHp += heal;
+                if (effects.length() > 0) effects.append(", ");
+                effects.append("Lifesteal +").append(heal).append("HP");
+            }
+        }
+
+        // Energy per attack (Arc Surge style)
+        if (weaponDef.energyPerAttack > 0) {
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + weaponDef.energyPerAttack);
+        }
+
+        // Confuse chance
+        if (weaponDef.confuseChance > 0 && rng.nextInt(100) < weaponDef.confuseChance) {
+            enemy.confused = true;
+            if (effects.length() > 0) effects.append(", ");
+            effects.append("CONFUSE");
+        }
+
+        // Poison chance
+        if (weaponDef.poisonChance > 0 && rng.nextInt(100) < weaponDef.poisonChance) {
+            enemy.dotDamage  = Math.max(enemy.dotDamage,  Math.max(1, (int)(enemy.maxHp * 0.03)));
+            enemy.dotTurnsLeft += 2;
+            if (effects.length() > 0) effects.append(", ");
+            effects.append("POISON");
+        }
+
+        return effects.length() > 0 ? effects.toString() : null;
+    }
+
+    private int clamp(int v, int min, int max) { return Math.min(max, Math.max(min, v)); }
     private void log(String msg) { battleLog.add(msg); }
 }
