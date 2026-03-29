@@ -6,7 +6,6 @@ import GameGUI.HeroData.EnemyDefinition;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Random;
 
 public class GameScreen extends JPanel {
 

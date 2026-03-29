@@ -135,6 +135,12 @@ public class BattlePanel extends JPanel {
         clearLog();
         addLog("BATTLE START! " + hero.name.toUpperCase() + " VS " + enemy.name.toUpperCase(), GOLD);
         resultOverlay.setVisible(false);
+        // Remove from layered pane if it was added there previously
+        JRootPane root = SwingUtilities.getRootPane(this);
+        if (root != null) {
+            root.getLayeredPane().remove(resultOverlay);
+            root.getLayeredPane().repaint();
+        }
         setActionsEnabled(true);
         animating = false;
         if (battleContinueBtn != null) battleContinueBtn.setEnabled(false);
