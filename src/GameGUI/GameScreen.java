@@ -53,17 +53,38 @@ public class GameScreen extends JPanel {
     private JLabel postBgLabel;
     private JLabel postWeaponLabel;
     private JLabel postArmorLabel;
-    private JLabel w1WorldLabel;  // shown initially, hidden after dialogue 1
+    private JLabel w1WorldLabel;
     private Timer world1FadeTimer;
     private int[] world1FadeAlpha;
     private JPanel world1FadeOverlay;
     private JPanel world1SceneBg;
     private float[] world1SceneAlpha;
     private float[] world1WorldAlpha;
-    private JLabel world1KhaiLabel;   // overlay for SilhouetteSirKhai crossfade
+    private JLabel world1KhaiLabel;
     private float[] world1KhaiAlpha = {0f};
     private HeroDefinition confirmedHero = null;
     private boolean pendingSelection = false;
+
+    // ★ Tracks which inter-enemy dialogue group is currently active
+    private int w1CurrentInterIndex = -1;
+
+    // ★ Background to show BEFORE each inter-dialogue chunk [interIndex][chunkIndex]
+    //   null = keep current background, String = switch to that image path
+    private static final String[][] WORLD1_INTER_BG = {
+            // Index 0: After Rotfang Wolves → before Shade Sprites
+            {
+                    null,                                                                   // chunk 0: "The path narrows..." — keep current bg
+                    "/assets/Backgrounds/World1BattleBackgroundFog.jpeg",                   // chunk 1: "The air grows icy..."
+                    null,                                                                   // chunk 2: "Shadows detach..."
+                    "/assets/Backgrounds/World1BattleBackgroundShadeSprites1.jpeg"          // chunk 3: "SHADE SPRITES."
+            },
+            // Index 1: After Shade Sprites → before Dreadbark Treants
+            { null, null },
+            // Index 2: After Dreadbark Treants → before Carrion Bats
+            { null, null },
+            // Index 3: After Carrion Bats → before Hollow Stag
+            { null, null }
+    };
 
     String[] dialogues = {
             "It's just another Tuesday, you come in for your Java examination.",
@@ -107,42 +128,36 @@ public class GameScreen extends JPanel {
 
     private void goToIntro() { cardLayout.show(cardPanel, SCREEN_INTRO); }
 
-    /** Test helper — auto-selects hero and goes straight to World 1, bypassing intro and post-select. */
     public void skipToWorld1(HeroData.HeroDefinition hero) {
         this.confirmedHero = hero;
         w1DialogueIndex = 0;
-        // Stop any intro typing
         if (typingTimer != null) typingTimer.stop();
-        // Reset world label
         if (w1WorldLabel != null) {
             w1WorldLabel.setVisible(true);
             w1WorldLabel.setForeground(Color.WHITE);
         }
-        // Reset khai overlay
         if (world1KhaiLabel != null) {
             world1KhaiLabel.setIcon(null);
             world1KhaiAlpha[0] = 0f;
             world1KhaiLabel.putClientProperty("prevImage", null);
             world1KhaiLabel.putClientProperty("prevAlpha", 0f);
         }
-        // Reset scene alphas
         if (world1SceneAlpha != null) world1SceneAlpha[0] = 1.0f;
         if (world1WorldAlpha != null) world1WorldAlpha[0] = 0.0f;
         goToWorld1Intro();
     }
+
     private void goToSelection() { cardLayout.show(cardPanel, SCREEN_SELECTION); }
     private void goToPostSelect() { cardLayout.show(cardPanel, SCREEN_POST_SELECT); }
     private void goToWorld1Intro() {
         cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
 
-        // Step 1: reset alphas — show NGEBeforeLights6 fully
         if (world1SceneBg != null) {
             world1SceneAlpha[0] = 1.0f;
             world1WorldAlpha[0] = 0.0f;
             world1SceneBg.repaint();
         }
 
-        // Step 2: after 0.5s, fade out NGEBeforeLights6 while fading in World1Background
         delay(1500, () -> {
             Timer crossfade = new Timer(16, null);
             crossfade.addActionListener(ev -> {
@@ -152,7 +167,6 @@ public class GameScreen extends JPanel {
                 world1SceneBg.repaint();
                 if (world1SceneAlpha[0] <= 0f && world1WorldAlpha[0] >= 1f) {
                     crossfade.stop();
-                    // Start typing after transition completes
                     startW1Typing();
                 }
             });
@@ -173,17 +187,20 @@ public class GameScreen extends JPanel {
         );
     }
 
-    /** Show dialogue between enemy groups on World1 screen, then resume fight. */
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ INTER-ENEMY DIALOGUE — shown between enemy groups
+    //   Now tracks w1CurrentInterIndex and switches backgrounds per chunk
+    // ════════════════════════════════════════════════════════════════════════
     private void showInterEnemyDialogue(int interIndex, Runnable resumeFight) {
         if (interIndex < 0 || interIndex >= WORLD1_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
         w1ResumeAfterDialogue = resumeFight;
         w1InInterDialogue = true;
+        w1CurrentInterIndex = interIndex; // ★ track which group we're in
         w1InterChunks = WORLD1_INTER_DIALOGUES[interIndex];
         w1InterChunkIndex = 0;
 
-        // Show World1Background only, no khai/wolf overlays
         if (world1KhaiLabel != null) {
             world1KhaiLabel.setIcon(null);
             world1KhaiAlpha[0] = 0f;
@@ -201,11 +218,23 @@ public class GameScreen extends JPanel {
         typeInterChunk();
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ TYPE INTER CHUNK — switches background before typing each chunk
+    // ════════════════════════════════════════════════════════════════════════
     private void typeInterChunk() {
         if (w1InterChunks == null || w1InterChunkIndex >= w1InterChunks.length) {
             finishInterDialogue(); return;
         }
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+
+        // ★ Switch background if one is defined for this chunk
+        if (w1CurrentInterIndex >= 0
+                && w1CurrentInterIndex < WORLD1_INTER_BG.length
+                && w1InterChunkIndex < WORLD1_INTER_BG[w1CurrentInterIndex].length) {
+            String bg = WORLD1_INTER_BG[w1CurrentInterIndex][w1InterChunkIndex];
+            if (bg != null) setW1InterBackground(bg);
+        }
+
         String text = w1InterChunks[w1InterChunkIndex];
         w1DialogueBox.setText("");
         w1ContinueBtn.setEnabled(false);
@@ -216,15 +245,37 @@ public class GameScreen extends JPanel {
                 w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
             } else {
                 w1TypingTimer.stop();
-                // Always wait for Continue press — no auto-advance
                 w1ContinueBtn.setEnabled(true);
             }
         });
         w1TypingTimer.start();
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ SET INTER BACKGROUND — switches World1 scene to a new image instantly
+    // ════════════════════════════════════════════════════════════════════════
+    private void setW1InterBackground(String path) {
+        if (world1SceneBg == null || world1WorldAlpha == null) return;
+        try {
+            java.net.URL url = getClass().getResource(path);
+            if (url == null) {
+                System.out.println("[W1 Inter] Missing bg: " + path); return;
+            }
+            java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
+            // Store as interBg client property so paintComponent can draw it
+            world1SceneBg.putClientProperty("interBg", newImg);
+            // Make sure scene alpha is 0 and world alpha is 1 so interBg layer shows
+            world1SceneAlpha[0] = 0f;
+            world1WorldAlpha[0] = 1f;
+            world1SceneBg.repaint();
+        } catch (Exception ex) {
+            System.out.println("[W1 Inter] bg error: " + ex.getMessage());
+        }
+    }
+
     private void finishInterDialogue() {
         w1InInterDialogue = false;
+        w1CurrentInterIndex = -1; // ★ reset
         w1DialogueBox.setText("");
         Runnable resume = w1ResumeAfterDialogue;
         w1ResumeAfterDialogue = null;
@@ -324,7 +375,6 @@ public class GameScreen extends JPanel {
         wrapper.setLayout(null);
         wrapper.setPreferredSize(new Dimension(1280, 720));
 
-        // ── TheBackground.png fills the full 1280x720 behind everything ──
         JLabel theBackground = new JLabel();
         theBackground.setBounds(0, 0, 1280, 720);
         theBackground.setOpaque(true);
@@ -340,9 +390,8 @@ public class GameScreen extends JPanel {
         sceneBgLabel.setHorizontalAlignment(SwingConstants.CENTER);
         sceneBgLabel.setVerticalAlignment(SwingConstants.CENTER);
         sceneBgLabel.setBackground(new Color(30, 28, 50));
-        sceneBgLabel.setOpaque(false); // transparent so TheBackground shows in gap
+        sceneBgLabel.setOpaque(false);
 
-        // DialogueBox background image
         JLabel dialogueBgLabel = new JLabel();
         dialogueBgLabel.setBounds(-40, 453, 1053, 343);
         java.net.URL dialogueBgUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
@@ -396,8 +445,8 @@ public class GameScreen extends JPanel {
         battleChoicePopup = buildBattleChoicePopup();
 
         layeredPane.setBounds(0, 0, 1280, 720);
-        layeredPane.add(theBackground,     JLayeredPane.FRAME_CONTENT_LAYER);  // bottom-most
-        layeredPane.add(sceneBgLabel,      JLayeredPane.DEFAULT_LAYER);  // NGE assets on top
+        layeredPane.add(theBackground,     JLayeredPane.FRAME_CONTENT_LAYER);
+        layeredPane.add(sceneBgLabel,      JLayeredPane.DEFAULT_LAYER);
         layeredPane.add(dialogueBgLabel,   JLayeredPane.PALETTE_LAYER);
         layeredPane.add(dialogueBox,       JLayeredPane.MODAL_LAYER);
         layeredPane.add(continueBtn,       JLayeredPane.PALETTE_LAYER);
@@ -535,7 +584,7 @@ public class GameScreen extends JPanel {
 
         examStartBtn.addActionListener(e -> {
             examPopup.setVisible(false);
-            continueBtn.setEnabled(false); // locked during lights sequence
+            continueBtn.setEnabled(false);
             runLightsSequence();
         });
 
@@ -586,7 +635,6 @@ public class GameScreen extends JPanel {
                                                             "When you come to your senses, you're no longer in the lab.\n"+
                                                                     "You wake up in an unfamiliar place.",
                                                             () -> {
-                                                                // Re-enable Continue — next press goes to hero selection
                                                                 pendingSelection = true;
                                                                 continueBtn.setEnabled(true);
                                                             }
@@ -646,7 +694,6 @@ public class GameScreen extends JPanel {
     }
 
     private void continueDialogue() {
-        // If lights sequence finished, go to hero selection
         if (pendingSelection) {
             pendingSelection = false;
             continueBtn.setEnabled(false);
@@ -822,7 +869,6 @@ public class GameScreen extends JPanel {
         wrapper.setLayout(null);
         wrapper.setPreferredSize(new Dimension(1280, 720));
 
-        // TheBackground — full screen bottom layer
         JLabel theBackground = new JLabel();
         theBackground.setBounds(0, 0, 1280, 720);
         theBackground.setOpaque(true);
@@ -833,28 +879,24 @@ public class GameScreen extends JPanel {
             theBackground.setIcon(new ImageIcon(theBgScaled2));
         }
 
-        // Hero intro background image (swapped per hero)
         postBgLabel = new JLabel();
         postBgLabel.setBounds(0, 0, 1280, 520);
         postBgLabel.setOpaque(false);
         postBgLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         postBgLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
 
-        // Weapon label — left side
         postWeaponLabel = new JLabel();
         postWeaponLabel.setBounds(30, 60, 300, 420);
         postWeaponLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         postWeaponLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
         postWeaponLabel.setVisible(false);
 
-        // Armor label — right side
         postArmorLabel = new JLabel();
         postArmorLabel.setBounds(950, 60, 300, 420);
         postArmorLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         postArmorLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
         postArmorLabel.setVisible(false);
 
-        // DialogueBox image — same as intro screen
         JLabel postDialogueBgLabel = new JLabel();
         postDialogueBgLabel.setBounds(-40, 453, 1053, 343);
         java.net.URL postDbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
@@ -863,7 +905,6 @@ public class GameScreen extends JPanel {
             postDialogueBgLabel.setIcon(new ImageIcon(postDbScaled));
         }
 
-        // Dialogue textarea — same position/font as intro
         postDialogueBox = new JTextArea();
         postDialogueBox.setBounds(104, 541, 900, 100);
         postDialogueBox.setEditable(false);
@@ -885,7 +926,6 @@ public class GameScreen extends JPanel {
         postDialogueBox.setForeground(Color.BLACK);
         postDialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
-        // Buttons — same as intro screen
         postContinueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64, "Continue");
@@ -919,10 +959,9 @@ public class GameScreen extends JPanel {
     }
 
     private Timer postTypingTimer;
-    private String[] postChunks;    // sentences of current dialogue split into 2-sentence chunks
-    private int postChunkIndex = 0; // which chunk we're on
+    private String[] postChunks;
+    private int postChunkIndex = 0;
 
-    /** Split a dialogue string into chunks of 2 sentences each. */
     private String[] splitIntoChunks(String text) {
         String[] lines = text.split("\n");
         java.util.List<String> chunks = new java.util.ArrayList<>();
@@ -946,7 +985,6 @@ public class GameScreen extends JPanel {
         if (postDialogues == null || postDialogueIndex >= postDialogues.length) return;
         if (postTypingTimer != null && postTypingTimer.isRunning()) postTypingTimer.stop();
 
-        // Build chunks for current dialogue
         postChunks = splitIntoChunks(postDialogues[postDialogueIndex]);
         postChunkIndex = 0;
         typePostChunk();
@@ -966,7 +1004,6 @@ public class GameScreen extends JPanel {
                 postDialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
             } else {
                 postTypingTimer.stop();
-                // If more chunks remain, wait 1s then auto-advance to next chunk
                 if (postChunkIndex < postChunks.length - 1) {
                     postContinueBtn.setEnabled(false);
                     delay(1000, () -> {
@@ -975,14 +1012,12 @@ public class GameScreen extends JPanel {
                         typePostChunk();
                     });
                 }
-                // Last chunk — wait for user to press Continue
             }
         });
         postTypingTimer.start();
     }
 
     private void continuePostDialogue() {
-        // If still typing current chunk — skip to end of chunk
         if (postTypingTimer != null && postTypingTimer.isRunning()) {
             postTypingTimer.stop();
             if (postChunks != null && postChunkIndex < postChunks.length) {
@@ -1045,8 +1080,7 @@ public class GameScreen extends JPanel {
         }
     }
 
-    // Dialogues shown BETWEEN enemy groups (after group N is defeated, before group N+1 starts)
-    // Each string is one chunk (shown separately, player presses Continue between each)
+    // Dialogues shown BETWEEN enemy groups
     private static final String[][] WORLD1_INTER_DIALOGUES = {
             // After Rodtfang Wolves (index 0) → before Shade Sprites
             {
@@ -1073,31 +1107,22 @@ public class GameScreen extends JPanel {
     };
 
     private static final String[] WORLD1_DIALOGUES = {
-            // [0] Opening
             "You wake up gasping for air. The world is drained of color.",
-            // [1] Moss/forest — after this: label fades, World1Bg->SirKhai transition
             "You are lying on a bed of gray moss in a dead forest. The trees are skeletal\n"+
                     "giants, stripped to bone-white wood. A cold mist coils around your ankles,\n"+
                     "and silence presses from every side watching, waiting.",
-            // [2] Dong Dong — after this: SirKhai->SirKhai2 transition
             "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",
-            // [3] Figure/Khai reveal — after this: SirKhai3.png (no transition, instant)
             "From the mist steps a figure cloaked in tattered robes.\n"+
                     "He leans heavily on a staff. As he lifts his hood, you jolt back \n"+
                     "the face is familiar. It looks exactly like your professor, Khai.\n"+
                     "But his eyes are weary, holding the weight of centuries.",
-            // [4] Khai speaks — after this: SirKhai2->SirKhai transition, then World1Bg, then typing resumes
             "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n\n"+
                     "\"We suffer because an evil Necromancer has corrupted these lands.\n"+
                     "He has drained the nature itself. We must find the Three Stones of Life\n"+
                     "that hold this reality together. Only then will your path home reveal itself.\"",
-            // [5] Khai fades
             "Khai fades back into the mist.",
-            // [6] Wolves appear — after this: Wolf1(1s)->Wolf2(1s) transition
             "Three Rodtfang Wolves emerge from the tree line.",
-            // [7] Glowing eyes — after this: instant Wolf3
             "Their glowing red eyes",
-            // [8] Final
             "fixate on you. They do not hunt for food they hunt to kill."
     };
 
@@ -1114,7 +1139,6 @@ public class GameScreen extends JPanel {
         wrapper.setLayout(null);
         wrapper.setPreferredSize(new Dimension(1280, 720));
 
-        // TheBackground — full screen bottom layer
         JLabel w1TheBg = new JLabel();
         w1TheBg.setBounds(0, 0, 1280, 720);
         w1TheBg.setOpaque(true);
@@ -1125,7 +1149,6 @@ public class GameScreen extends JPanel {
             w1TheBg.setIcon(new ImageIcon(w1BgScaled));
         }
 
-        // Scene background — crossfade from NGEBeforeLights6 to World1Background
         final float[] sceneAlpha = {1.0f};
         final float[] worldAlpha = {0.0f};
 
@@ -1141,6 +1164,7 @@ public class GameScreen extends JPanel {
         final java.awt.image.BufferedImage fLights6 = lights6Img;
         final java.awt.image.BufferedImage fWorld1  = world1Img;
 
+        // ★ Scene background panel — also handles interBg switching via client property
         JPanel w1SceneBg = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -1153,6 +1177,13 @@ public class GameScreen extends JPanel {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, worldAlpha[0]));
                     g2.drawImage(fWorld1, 0, 0, getWidth(), getHeight(), null);
                 }
+                // ★ Draw inter-enemy background on top if set and World1Bg is showing
+                Object interBg = getClientProperty("interBg");
+                if (interBg instanceof java.awt.image.BufferedImage
+                        && worldAlpha[0] >= 1f && sceneAlpha[0] <= 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                    g2.drawImage((java.awt.image.BufferedImage) interBg, 0, 0, getWidth(), getHeight(), null);
+                }
                 g2.dispose();
             }
         };
@@ -1163,13 +1194,11 @@ public class GameScreen extends JPanel {
         world1SceneAlpha = sceneAlpha;
         world1WorldAlpha = worldAlpha;
 
-        // World label — all caps, white
-        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF ENDINGS", SwingConstants.CENTER);
+        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF SILENCE", SwingConstants.CENTER);
         w1WorldLabel.setBounds(0, 220, 1280, 50);
         w1WorldLabel.setForeground(Color.WHITE);
         w1WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
 
-        // DialogueBox image
         JLabel w1DialogueBgLabel = new JLabel();
         w1DialogueBgLabel.setBounds(-40, 453, 1053, 343);
         java.net.URL w1DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
@@ -1178,7 +1207,6 @@ public class GameScreen extends JPanel {
             w1DialogueBgLabel.setIcon(new ImageIcon(w1DbScaled));
         }
 
-        // Dialogue textarea — same as intro screen
         w1DialogueBox = new JTextArea();
         w1DialogueBox.setBounds(104, 541, 900, 100);
         w1DialogueBox.setEditable(false);
@@ -1200,7 +1228,6 @@ public class GameScreen extends JPanel {
         w1DialogueBox.setForeground(Color.BLACK);
         w1DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
-        // Buttons — same as intro screen
         w1ContinueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64, "Continue");
@@ -1217,20 +1244,15 @@ public class GameScreen extends JPanel {
                 1108, 613, 140, 50, "Exit", 19);
         w1ExitBtn.addActionListener(e -> System.exit(0));
 
-
-
-        // Khai silhouette overlay label — supports two-image crossfade via client properties
         JLabel w1KhaiPanel = new JLabel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                // Draw previous image fading out
                 Object prevImg = getClientProperty("prevImage");
                 Object prevA   = getClientProperty("prevAlpha");
                 if (prevImg instanceof Image && prevA instanceof Float && (Float)prevA > 0f) {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (Float)prevA));
                     g2.drawImage((Image)prevImg, 0, 0, getWidth(), getHeight(), null);
                 }
-                // Draw new image fading in
                 if (getIcon() != null && world1KhaiAlpha[0] > 0f) {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, world1KhaiAlpha[0])));
                     g2.drawImage(((ImageIcon)getIcon()).getImage(), 0, 0, getWidth(), getHeight(), null);
@@ -1244,7 +1266,7 @@ public class GameScreen extends JPanel {
 
         layeredPane.setBounds(0, 0, 1280, 720);
         layeredPane.add(w1TheBg,          JLayeredPane.FRAME_CONTENT_LAYER);
-        layeredPane.add(w1SceneBg,        JLayeredPane.DEFAULT_LAYER); // custom crossfade panel
+        layeredPane.add(w1SceneBg,        JLayeredPane.DEFAULT_LAYER);
         layeredPane.add(w1KhaiPanel,      JLayeredPane.PALETTE_LAYER);
         layeredPane.add(w1WorldLabel,     JLayeredPane.PALETTE_LAYER);
         layeredPane.add(w1DialogueBgLabel,JLayeredPane.PALETTE_LAYER);
@@ -1254,15 +1276,13 @@ public class GameScreen extends JPanel {
         layeredPane.add(w1BackBtn,        JLayeredPane.PALETTE_LAYER);
         layeredPane.add(w1ExitBtn,        JLayeredPane.PALETTE_LAYER);
 
-
-
         wrapper.add(layeredPane);
         return wrapper;
     }
 
     private String[] w1Chunks;
     private int w1ChunkIndex = 0;
-    private Runnable w1ResumeAfterDialogue = null; // called after inter-enemy dialogue finishes
+    private Runnable w1ResumeAfterDialogue = null;
     private boolean w1InInterDialogue = false;
     private int w1InterDialogueIndex = 0;
     private String[] w1InterChunks;
@@ -1277,7 +1297,6 @@ public class GameScreen extends JPanel {
         typeW1Chunk();
     }
 
-    /** Split into chunks of 3 lines. */
     private String[] splitIntoChunks3(String text) {
         String[] lines = text.split("\n");
         java.util.List<String> chunks = new java.util.ArrayList<>();
@@ -1325,7 +1344,6 @@ public class GameScreen extends JPanel {
     }
 
     private void continueW1Dialogue() {
-        // If still typing — skip to end of current chunk
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) {
             w1TypingTimer.stop();
             if (w1InInterDialogue && w1InterChunks != null && w1InterChunkIndex < w1InterChunks.length) {
@@ -1336,10 +1354,7 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // Inter-enemy dialogue mode
         if (w1InInterDialogue) {
-            // If still typing — skip to end
-            // (handled above in the typing check)
             w1InterChunkIndex++;
             if (w1InterChunkIndex < w1InterChunks.length) {
                 typeInterChunk();
@@ -1349,18 +1364,15 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // ── After dialogue 1 (moss/forest): fade label + World1Bg->SirKhai ──
         if (w1DialogueIndex == 1 && w1WorldLabel != null) {
             fadeW1Label();
             delay(1000, () -> crossfadeW1ToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {}));
         }
 
-        // ── After dialogue 2 (Dong Dong): SirKhai->SirKhai2 ──
         if (w1DialogueIndex == 2) {
             transitionW1Scene("/assets/Backgrounds/SilhouetteSirKhai2.jpg");
         }
 
-        // ── After dialogue 3 (his eyes weary, SirKhai2): instant switch to SirKhai3 ──
         if (w1DialogueIndex == 3) {
             try {
                 java.net.URL u = getClass().getResource("/assets/Backgrounds/SilhouetteSirKhai3.png");
@@ -1374,14 +1386,10 @@ public class GameScreen extends JPanel {
             } catch (Exception ex) { System.out.println("[W1] SirKhai3 error: " + ex.getMessage()); }
         }
 
-        // ── After dialogue 4 (Be calm, SirKhai3): SirKhai3->SirKhai2->SirKhai->World1Bg, all slow fades ──
         if (w1DialogueIndex == 4) {
             w1ContinueBtn.setEnabled(false);
-            // Slow fade: SirKhai3 -> SirKhai2
             crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai2.jpg", () -> {
-                // Slow fade: SirKhai2 -> SirKhai
                 crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {
-                    // Fade out khai, restore World1Bg, advance to [5]
                     delay(1000, () -> {
                         world1KhaiAlpha[0] = 0f;
                         world1KhaiLabel.repaint();
@@ -1396,12 +1404,9 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // ── After dialogue 6 (Wolves emerge): Wolf1(1s) -> Wolf2(1s), then play [7] ──
         if (w1DialogueIndex == 6) {
             w1ContinueBtn.setEnabled(false);
-            // Show Wolf1 via crossfade
             crossfadeKhaiToKhai("/assets/Backgrounds/World1RodtfangWolf1.png", () -> {
-                // Hold Wolf1 for 1s, then snap to Wolf2
                 delay(1000, () -> {
                     try {
                         java.net.URL u = getClass().getResource("/assets/Backgrounds/World1RodtfangWolf2.png");
@@ -1413,7 +1418,6 @@ public class GameScreen extends JPanel {
                             world1KhaiLabel.repaint();
                         }
                     } catch (Exception ex) { System.out.println("[W1] Wolf2 error: " + ex.getMessage()); }
-                    // Hold Wolf2 for 1s, then advance to [7]
                     delay(1000, () -> {
                         w1DialogueIndex = 7;
                         w1ContinueBtn.setEnabled(true);
@@ -1424,7 +1428,6 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // ── After dialogue 7 (glowing red eyes): instant Wolf3 ──
         if (w1DialogueIndex == 7) {
             try {
                 java.net.URL u = getClass().getResource("/assets/Backgrounds/World1RodtfangWolf3.png");
@@ -1447,7 +1450,6 @@ public class GameScreen extends JPanel {
         }
     }
 
-    /** Fade the world label out over ~1.5s. */
     private void fadeW1Label() {
         if (w1WorldLabel == null) return;
         final float[] a = {1.0f};
@@ -1461,7 +1463,6 @@ public class GameScreen extends JPanel {
         t.start();
     }
 
-    /** Crossfade current khai label image to a new image at same 0.02f speed. */
     private void crossfadeKhaiToKhai(String path, Runnable onDone) {
         try {
             java.net.URL url = getClass().getResource(path);
@@ -1494,7 +1495,6 @@ public class GameScreen extends JPanel {
         } catch (Exception ex) { System.out.println("[W1] crossfadeKhaiToKhai error: " + ex.getMessage()); if (onDone != null) onDone.run(); }
     }
 
-    /** Crossfade World1Bg panel to khai image, call onDone when complete. */
     private void crossfadeW1ToKhai(String path, Runnable onDone) {
         if (world1SceneBg == null) return;
         try {
@@ -1529,7 +1529,6 @@ public class GameScreen extends JPanel {
         } catch (Exception ex) { System.out.println("[W1] crossfadeW1ToKhai error: " + ex.getMessage()); }
     }
 
-    /** Crossfade the World1 scene to a new image — same style as NGEBeforeLights6 -> SilhouetteSirKhai. */
     private void transitionW1Scene(String path) {
         delay(1000, () -> {
             if (world1KhaiLabel == null) return;
@@ -1538,17 +1537,14 @@ public class GameScreen extends JPanel {
                 if (url == null) { System.out.println("[W1] Missing: " + path); return; }
                 java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
                 final Image nextImage = newImg.getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
-                // Store current image as prev before switching
                 final Image prevImage = world1KhaiLabel.getIcon() != null
                         ? ((ImageIcon) world1KhaiLabel.getIcon()).getImage() : null;
                 final float[] prevAlpha = {1.0f};
                 final float[] newAlpha  = {0f};
-                // Set next image on label, paintComponent will blend prev+next
                 world1KhaiLabel.setIcon(new ImageIcon(nextImage));
                 world1KhaiLabel.putClientProperty("prevImage", prevImage);
                 world1KhaiLabel.putClientProperty("prevAlpha", 1.0f);
                 world1KhaiAlpha[0] = 0f;
-                // Same 0.02f speed as World1Bg->SirKhai transition
                 Timer fade = new Timer(16, null);
                 fade.addActionListener(ev -> {
                     prevAlpha[0] = Math.max(0f, prevAlpha[0] - 0.02f);
