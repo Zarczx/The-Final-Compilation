@@ -1,4 +1,4 @@
-package GameGUI;
+package GameGUI.engine;
 
 import characters.*;
 import characters.Character;
