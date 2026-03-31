@@ -37,6 +37,7 @@ public class BattleLogic {
 
         // Status effects
         public boolean stunned, frozen, confused, nimble;
+        public String lastLevelUpData = null;
 
         public Combatant(String name, String role, String emoji,
                          int maxHp, int attack, int defense,

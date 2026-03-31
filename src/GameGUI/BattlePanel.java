@@ -1,8 +1,15 @@
 package GameGUI;
 
-import GameGUI.BattleLogic.*;
-import GameGUI.HeroData.HeroDefinition;
-import GameGUI.HeroData.EnemyDefinition;
+import GameGUI.logic.BattleLogic;
+import GameGUI.logic.BattleLogic.*;
+import GameGUI.model.HeroData.HeroDefinition;
+import GameGUI.model.HeroData.EnemyDefinition;
+import GameGUI.logic.BattleLogic.TurnOwner;
+import GameGUI.logic.BattleLogic.BattleOutcome;
+import GameGUI.logic.BattleLogic.ActionResult;
+import GameGUI.model.HeroData;
+import GameGUI.model.Combatant;
+import GameGUI.model.HeroFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -190,6 +197,28 @@ public class BattlePanel extends JPanel {
 
     private BattleLogic.Combatant savedHeroCombatant = null;
 
+    private BattleLogic.Combatant buildHeroFromDef(HeroDefinition def) {
+        BattleLogic.Special special = null;
+        if (def.skills != null && def.skills.length >= 3) {
+            var ult = def.skills[2];
+            special = new BattleLogic.Special(ult.name, ult.icon, ult.description,
+                    ult.multiplier, ult.pierceArmor, ult.cooldown);
+        }
+        int hp   = def.maxHp   + (def.startingArmor  != null ? def.startingArmor.hpBuff   : 0);
+        int atk  = def.attack  + (def.startingWeapon != null ? def.startingWeapon.atkBuff  : 0);
+        int def2 = def.defense + (def.startingArmor  != null ? def.startingArmor.defBuff   : 0);
+        BattleLogic.Combatant hero = new BattleLogic.Combatant(
+                def.name, def.role, def.emoji, hp, atk, def2,
+                def.maxEnergy, def.maxEnergy, special);
+        hero.specialCooldown = 3;
+        return hero;
+    }
+
+    private BattleLogic.Combatant buildEnemyFromDef(EnemyDefinition def) {
+        return new BattleLogic.Combatant(def.name, def.role, def.emoji,
+                def.maxHp, def.attack, def.defense, 0, 0, null);
+    }
+
     private void startNextFight() {
         if (enemySequenceIndex >= enemySequence.size()) {
             if (onSequenceComplete != null) onSequenceComplete.run();
@@ -197,10 +226,9 @@ public class BattlePanel extends JPanel {
         }
         EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
         this.enemyDef = eDef;
-        Combatant heroToUse = (savedHeroCombatant != null)
-                ? savedHeroCombatant : HeroData.buildHero(heroDef);
-        savedHeroCombatant = null;
-        Combatant enemyC = HeroData.buildEnemy(eDef);
+        BattleLogic.Combatant heroToUse = (savedHeroCombatant != null)
+                ? savedHeroCombatant : buildHeroFromDef(heroDef);
+        BattleLogic.Combatant enemyC = buildEnemyFromDef(eDef);
         this.engine = new BattleLogic(heroToUse, enemyC, false);
         this.engine.setHeroDef(heroDef);
         populateCombatantUI();
@@ -223,8 +251,8 @@ public class BattlePanel extends JPanel {
         this.heroDef  = hero;
         this.enemyDef = enemy;
         this.enemySequence = null;
-        Combatant heroC  = HeroData.buildHero(hero);
-        Combatant enemyC = HeroData.buildEnemy(enemy);
+        BattleLogic.Combatant heroC  = buildHeroFromDef(hero);
+        BattleLogic.Combatant enemyC = buildEnemyFromDef(enemy);
         this.engine = new BattleLogic(heroC, enemyC, false);
         this.engine.setHeroDef(hero);
         populateCombatantUI();
@@ -1190,7 +1218,7 @@ public class BattlePanel extends JPanel {
 
     private void startPostVictorySequence(EnemyDefinition eDef, Runnable onDone) {
         postVictoryEnemy = eDef; postVictoryNext = onDone; postVictoryStep = PostVictoryStep.LOOT; lvlUp_level = 0;
-        if (engine != null) { int xp = eDef.xpReward * eDef.count; engine.getHero().gainExp(xp); if (engine.getHero().lastLevelUpMsg != null) parseLevelUpMsg(engine.getHero()); }
+        if (engine != null) { int xp = eDef.xpReward * eDef.count; engine.getHero().gainExp(xp); if (engine.getHero().lastLevelUpData != null) parseLevelUpMsg(engine.getHero()); }
         setLogFontSmall(); clearLog(); addLootText(eDef); battleContinueBtn.setEnabled(true);
         turnLabel.setText(""); roundLabel.setText(""); specialCdLabel.setText("");
         stopEnemyAnimation();
@@ -1204,8 +1232,8 @@ public class BattlePanel extends JPanel {
     }
 
     private void parseLevelUpMsg(BattleLogic.Combatant hero) {
-        if (hero.lastLevelUpMsg == null) return;
-        String[] p = hero.lastLevelUpMsg.split("\\|"); hero.lastLevelUpMsg = null;
+        if (hero.lastLevelUpData == null) return;
+        String[] p = hero.lastLevelUpData.split("\\|"); hero.lastLevelUpData = null;
         if (p.length < 8) return;
         lvlUp_level = Integer.parseInt(p[1]); lvlUp_hpGain = Integer.parseInt(p[2]); lvlUp_newHp = Integer.parseInt(p[3]);
         lvlUp_atkGain = Integer.parseInt(p[4]); lvlUp_newAtk = Integer.parseInt(p[5]); lvlUp_defGain = Integer.parseInt(p[6]); lvlUp_newDef = Integer.parseInt(p[7]);
@@ -1434,7 +1462,7 @@ public class BattlePanel extends JPanel {
     }
 
     private void populateCombatantUI() {
-        Combatant h = engine.getHero(), e = engine.getEnemy();
+        BattleLogic.Combatant h = engine.getHero(), e = engine.getEnemy();
         heroEmojiLbl.setText(heroDef.emoji); heroNameLbl.setText(heroDef.name); heroRoleLbl.setText(heroDef.role);
         if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + h.level);
         String enemyEmoji = switch (enemyDef.name) {
@@ -1453,7 +1481,7 @@ public class BattlePanel extends JPanel {
     private void updateEnergyLabel(String label) { }
 
     private void refreshBattleUI() {
-        Combatant h = engine.getHero(), e = engine.getEnemy();
+        BattleLogic.Combatant h = engine.getHero(), e = engine.getEnemy();
         heroHpBar.setValue(h.currentHp); heroHpText.setText(h.currentHp + "/" + h.maxHp);
         if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + h.level);
         enemyHpBar.setValue(e.currentHp); enemyHpText.setText(e.currentHp + "/" + e.maxHp);
