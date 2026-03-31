@@ -96,39 +96,55 @@ public class HeroData {
     public static final ArmorDef  LEATHER_GUARD  = new ArmorDef("Leather Guard", "White", 0, 5);
 
     // ─── Hero Registry ───────────────────────────────────────────────────────
+    // ─── Hero Registry ───────────────────────────────────────────────────────
     public static final List<HeroDefinition> HEROES = List.of(
             new HeroDefinition(
                     "Kael Saint Laurent", "Swordsman", "⚔️",
-                    "Born in the shadow of the Black Castle...", "Blade Swift",
+                    "Born in the shadow of the Black Castle, Kael seeks to avenge his fallen brethren. His blade is sworn to eradicate the darkness.",
+                    "Blade Swift",
                     100, 12, 5, 100,
                     new SkillDef[]{
-                            new SkillDef("⚔", "Blade Rush", "Quick slash.", 1.15, false, 0, 5),
-                            new SkillDef("X", "Piercing Slash", "Armor-piercing.", 1.35, true, 0, 10),
-                            new SkillDef("+", "Eternal Cross Slash", "3-hit combo.", 1.40, false, 3, 20)
+                            new SkillDef("⚔", "Blade Rush", "A quick, standard slash.", 1.15, false, 0, 5),
+                            new SkillDef("X", "Piercing Slash", "An armor-piercing strike.", 1.35, true, 0, 10),
+                            new SkillDef("+", "Eternal Cross Slash", "A devastating 3-hit combo.", 1.40, false, 3, 20)
                     },
                     OLD_BROADSWORD, LEATHER_GUARD
             ),
             new HeroDefinition(
                     "Karl Clover Dior IV", "Archer", "🏹",
-                    "Born in the Forest of Silence...", "Hunter's Instinct",
-                    99999, 99999, 999999, 99999,
+                    "Born in the Forest of Silence, Karl's arrows never miss their mark. He hunts the beasts that corrupted his homeland.",
+                    "Hunter's Instinct",
+                    80, 14, 3, 24,
                     new SkillDef[]{
-                            new SkillDef(">", "Piercing Arrow", "Pierce.", 1.00, true, 0, 1),
-                            new SkillDef("*", "Bullseye", "Crit.", 1.10, false, 0, 3),
-                            new SkillDef("~", "Rain of Arrows", "Combo.", 0.75, false, 3, 5)
+                            new SkillDef(">", "Piercing Arrow", "A sharp, piercing shot.", 1.00, true, 0, 1),
+                            new SkillDef("*", "Bullseye", "A heavy critical shot.", 1.10, false, 0, 3),
+                            new SkillDef("~", "Rain of Arrows", "A rapid volley of arrows.", 0.75, false, 3, 5)
                     },
                     WOODEN_BOW, LEATHER_GUARD
             ),
             new HeroDefinition(
                     "Simon Versace", "Mage", "🧙",
-                    "Unshakable dream of power...", "Arcane Flow",
+                    "Driven by an unshakable dream of power, Simon bends the arcane elements to his will. Magic flows through his veins.",
+                    "Arcane Flow",
                     60, 18, 2, 120,
                     new SkillDef[]{
-                            new SkillDef("F", "Fireball", "Burn.", 1.25, false, 0, 15),
-                            new SkillDef("I", "Ice Prison", "Freeze.", 1.00, false, 0, 25),
-                            new SkillDef("M", "Meteor Storm", "Multi.", 0.75, false, 3, 40)
+                            new SkillDef("F", "Fireball", "Hurls a ball of searing fire.", 1.25, false, 0, 15),
+                            new SkillDef("I", "Ice Prison", "Freezes the enemy in their tracks.", 1.00, false, 0, 25),
+                            new SkillDef("M", "Meteor Storm", "Summons destructive meteors.", 0.75, false, 3, 40)
                     },
                     WOODEN_STAFF, LEATHER_GUARD
+            ),
+            new HeroDefinition(
+                    "Null", "Mage", "🌌",
+                    "An anomaly in the system. It was never meant to exist. Reality bends and breaks in its presence.",
+                    "System Override",
+                    99999, 9999, 9999, 9999,
+                    new SkillDef[]{
+                            new SkillDef("💥", "Direct Hit", "A simple but devastating strike.", 1.0, true, 0, 1),
+                            new SkillDef("🔥", "Obliterate", "Erases the target's existence.", 2.0, true, 0, 1),
+                            new SkillDef("🌌", "World End", "Brings forth the end of reality.", 10.0, true, 3, 1)
+                    },
+                    null, null // Null has no need for mortal weapons or armor
             )
     );
 

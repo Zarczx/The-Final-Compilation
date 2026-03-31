@@ -1,7 +1,8 @@
-package GameGUI;
+package GameGUI.engine;
 
-import GameGUI.HeroData.HeroDefinition;
-import GameGUI.HeroData.EnemyDefinition;
+import GameGUI.model.HeroData;
+import GameGUI.ui.BattlePanel;
+import GameGUI.ui.HeroSelectionPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,7 +63,7 @@ public class GameScreen extends JPanel {
     private float[] world1WorldAlpha;
     private JLabel world1KhaiLabel;
     private float[] world1KhaiAlpha = {0f};
-    private HeroDefinition confirmedHero = null;
+    private HeroData.HeroDefinition confirmedHero = null;
     private boolean pendingSelection = false;
 
     // ★ Tracks which inter-enemy dialogue group is currently active
@@ -286,11 +287,11 @@ public class GameScreen extends JPanel {
     private void restartBattle() { goToBattle(); }
 
     private HeroData.EnemyDefinition pickEnemy() {
-        var enemies = HeroData.ENEMIES;
+        var enemies = HeroData.WORLD1_ENEMIES;
         return enemies.get(new Random().nextInt(enemies.size()));
     }
 
-    private void onHeroConfirmed(HeroDefinition hero) {
+    private void onHeroConfirmed(HeroData.HeroDefinition hero) {
         this.confirmedHero = hero;
         buildPostSelectDialogues(hero);
 
@@ -815,7 +816,7 @@ public class GameScreen extends JPanel {
 
     private String[] postDialogues;
 
-    private void buildPostSelectDialogues(HeroDefinition hero) {
+    private void buildPostSelectDialogues(HeroData.HeroDefinition hero) {
         String heroLine;
         String weaponLine;
         String armorLine;

@@ -48,12 +48,11 @@ public class GameTester {
         HeroData.HeroDefinition testHero = HeroData.HEROES.get(1);
 
         // 4. Execute the chosen warp
-        switch (choice) {
-            case 0 -> System.out.println("Starting normally..."); // Does nothing, plays intro
-            case 1 -> mainScreen.debugSkipToWorld2(testHero);
-            case 2 -> mainScreen.debugSkipToShop(testHero);
-            case 3 -> mainScreen.debugSkipToWorld3(testHero);
-            case 4 -> mainScreen.debugSkipToFinalBoss(testHero);
+        //switch (choice) {
+            //case 0 -> System.out.println("Starting normally..."); // Does nothing, plays intro
+            //case 1 -> mainScreen.debugSkipToWorld2(testHero);
+            //case 2 -> mainScreen.debugSkipToShop(testHero);
+            //case 3 -> mainScreen.debugSkipToWorld3(testHero);
+            //case 4 -> mainScreen.debugSkipToFinalBoss(testHero);
         }
     }
-}
