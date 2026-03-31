@@ -7,10 +7,12 @@ import GameGUI.model.HeroFactory;
 import GameGUI.logic.BattleManager;
 import GameGUI.logic.ProgressionService;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -27,6 +29,92 @@ public class BattlePanel extends JPanel {
     private HeroDefinition heroDef;
     private EnemyDefinition enemyDef;
     private boolean animating = false;
+
+    // ════════════════════════════════════════════
+    // ★ HERO SPRITE FIELDS
+    // ════════════════════════════════════════════
+    private JLabel heroSpriteLabel;
+    private javax.swing.Timer heroIdleTimer;
+    private int heroSpriteFrame = 0;
+
+    private static final int SPRITE_FRAME_COUNT         = 2;
+    private static final int BLADE_RUSH_FRAME_COUNT     = 6;
+    private static final int PIERCING_SLASH_FRAME_COUNT = 8;
+    private static final int ETERNAL_CROSS_FRAME_COUNT  = 8;
+    private static final int KAEL_HURT_FRAME_COUNT      = 2;
+
+    private static final int    SPRITE_W     = 80;
+    private static final int    SPRITE_H     = 64;
+    private static final double SPRITE_SCALE = 1.5;
+    private static final int SHADE_X = 900;
+    private static final int SHADE_Y = 340;
+
+    private BufferedImage[] idleFrames;
+    private BufferedImage[] bladeRushFrames;
+    private BufferedImage[] piercingSlashFrames;
+    private BufferedImage[] eternalCrossFrames;
+    private BufferedImage[] kaelHurtFrames;
+
+    private boolean isPlayingBladeRush     = false;
+    private boolean isPlayingPiercingSlash = false;
+    private boolean isPlayingEternalCross  = false;
+    private boolean isPlayingKaelHurt      = false;
+
+    // ════════════════════════════════════════════
+    // ★ ENEMY SPRITE FIELDS
+    // ════════════════════════════════════════════
+    private JLabel enemySpriteLabel;
+    private javax.swing.Timer enemyIdleTimer;
+    private int enemySpriteFrame = 0;
+
+    // Wolf
+    private BufferedImage[] wolfIdleFrames;
+    private BufferedImage[] wolfHurtFrames;
+    private BufferedImage[] wolfSavageHowlFrames;
+    private BufferedImage[] wolfDefeatFrames;
+    private BufferedImage[] wolfEntranceFrames;
+
+    private static final int    WOLF_FRAME_COUNT          = 5;
+    private static final int    WOLF_HURT_FRAME_COUNT     = 2;
+    private static final int    WOLF_HOWL_FRAME_COUNT     = 4;
+    private static final int    WOLF_DEFEAT_FRAME_COUNT   = 4;
+    private static final int    WOLF_ENTRANCE_FRAME_COUNT = 5;
+    private static final int    WOLF_SPEED                = 170;
+    private static final double ENEMY_SCALE               = 1.5;
+    private static final int    ENEMY_Y                   = 365;
+    private static final int    ENEMY_X                   = 900;
+    private static final int    WOLF_ENTRANCE_START_X     = 1100;
+
+    private boolean isPlayingWolfHurt       = false;
+    private boolean isPlayingWolfSavageHowl = false;
+    private boolean isPlayingWolfDefeat     = false;
+    private boolean isPlayingWolfEntrance   = false;
+
+    // Shade Sprite
+    private BufferedImage[] spriteIdleFrames;
+    private BufferedImage[] spriteHurtFrames;
+    private BufferedImage[] spriteTricksterFrames;
+    private BufferedImage[] spriteDefeatFrames;
+    private BufferedImage[] spriteEntranceFrames;
+
+    private static final int SPRITE_IDLE_COUNT      = 2;
+    private static final int SPRITE_HURT_COUNT      = 2;
+    private static final int SPRITE_TRICKSTER_COUNT = 6;
+    private static final int SPRITE_DEFEAT_COUNT    = 8;
+    private static final int SPRITE_ENTRANCE_COUNT  = 9;
+
+    private boolean isPlayingSpriteHurt      = false;
+    private boolean isPlayingSpriteTrickster = false;
+    private boolean isPlayingSpriteDefeat    = false;
+    private boolean isPlayingSpriteEntrance  = false;
+
+    // ════════════════════════════════════════════
+    // ★ POSITION CONSTANTS
+    // ════════════════════════════════════════════
+    private static final int IDLE_X        = 200;
+    private static final int IDLE_Y        = 340;
+    private static final int ACTION_X_BASE = 210;
+    private static final int ACTION_Y      = 280;
 
     // Colors
     private static final Color BG_DARK    = new Color(12, 10, 22);
@@ -45,7 +133,6 @@ public class BattlePanel extends JPanel {
     private static final Color BORDER_NORM = new Color(70, 65, 100);
 
     // Fonts
-    private static final Font FONT_TITLE  = new Font("Monospaced", Font.BOLD, 16);
     private static final Font FONT_STAT   = new Font("Monospaced", Font.PLAIN, 11);
     private static final Font FONT_BTN    = new Font("Monospaced", Font.BOLD, 12);
     private static final Font FONT_RESULT = new Font("Monospaced", Font.BOLD, 28);
@@ -54,11 +141,9 @@ public class BattlePanel extends JPanel {
     private JLabel heroEmojiLbl, heroNameLbl, heroRoleLbl, heroLvlLbl;
     private JProgressBar heroHpBar, heroEnergyBar;
     private JLabel heroHpText, heroEnergyText, heroStatusLbl;
-
     private JLabel enemyEmojiLbl, enemyNameLbl, enemyRoleLbl;
     private JProgressBar enemyHpBar;
     private JLabel enemyHpText, enemyStatusLbl;
-
     private JLabel roundLabel, turnLabel;
     private javax.swing.JTextPane logArea;
     private JButton skill1Btn, skill2Btn, skipTurnBtn, ultimateBtn, battleContinueBtn;
@@ -71,7 +156,6 @@ public class BattlePanel extends JPanel {
     private JLabel lootItem1Icon, lootItem1Name;
     private JTextArea lootItem1Desc;
     private JButton lootItem1Btn;
-
     private JLabel lootItem2Icon, lootItem2Name;
     private JTextArea lootItem2Desc;
     private JButton lootItem2Btn;
@@ -100,10 +184,7 @@ public class BattlePanel extends JPanel {
         buildUI();
     }
 
-    // Returns the live hero data so the Magic Shop can read their Soul Shards and Stats
-    public Combatant getCurrentHero() {
-        return currentHero;
-    }
+    public Combatant getCurrentHero() { return currentHero; }
 
     public void setOnReturnToSelection(Runnable r) { this.onReturnToSelection = r; }
     public void setOnRestartBattle(Runnable r)     { this.onRestartBattle = r; }
@@ -147,6 +228,8 @@ public class BattlePanel extends JPanel {
         setLogFontNormal();
         if (battleContinueBtn != null) battleContinueBtn.setEnabled(false);
         setTurnLabel(true);
+        startHeroIdleAnimation();
+        startEnemyIdleAnimation(eDef);
     }
 
     private void buildUI() {
@@ -168,6 +251,11 @@ public class BattlePanel extends JPanel {
         JPanel heroCard = buildStatCard(true);
         heroCard.setBounds(10, 8, 340, 90);
         add(heroCard);
+
+        heroSpriteLabel = buildHeroSpriteLabel();
+        add(heroSpriteLabel);
+        enemySpriteLabel = buildEnemySpriteLabel();
+        add(enemySpriteLabel);
 
         JPanel enemyCard = buildStatCard(false);
         enemyCard.setBounds(920, 8, 340, 90);
@@ -213,7 +301,8 @@ public class BattlePanel extends JPanel {
 
         add(battleContinueBtn); add(menuBtn); add(backBtn); add(exitBtn);
 
-        int btnY = 478, btnW = 140, btnH = 48, btnGap = 12;
+        // Updated sizes for a rounder, balanced button!
+        int btnY = 460, btnW = 150, btnH = 65, btnGap = 24;
         int startX = (1280 - (4 * btnW + 3 * btnGap)) / 2;
 
         skill1Btn   = makeSkillBtn("Skill 1", new Color(60, 30, 90), new Color(130, 60, 200), startX, btnY, btnW, btnH);
@@ -261,51 +350,651 @@ public class BattlePanel extends JPanel {
         setComponentZOrder(dialogueBg, 13);
         setComponentZOrder(heroCard, 14);
         setComponentZOrder(enemyCard, 15);
-        setComponentZOrder(battleBg, 16);
-        setComponentZOrder(theBg, 17);
+        setComponentZOrder(heroSpriteLabel, 16);
+        setComponentZOrder(enemySpriteLabel, 17);
+        setComponentZOrder(battleBg, 18);
+        setComponentZOrder(theBg, 19);
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ DYNAMIC IMAGE BUTTON CONFIGURATOR
+    // ════════════════════════════════════════════════════════════════════════
+    private void configureSkillButton(JButton btn, String skillName, String iconText, Color bg, Color border) {
+        String normalPath = null, hoverPath = null, disabledPath = null;
+
+        if (skillName.equals("Blade Rush")) {
+            normalPath = "/assets/KaelAssets/BladeRush.png";
+            hoverPath = "/assets/KaelAssets/BladeRushHovered.png";
+        } else if (skillName.equals("Piercing Slash")) {
+            normalPath = "/assets/KaelAssets/PiercingSlash.png";
+            hoverPath = "/assets/KaelAssets/PiercingSlashHovered.png";
+        } else if (skillName.equals("Eternal Cross Slash")) {
+            normalPath = "/assets/KaelAssets/EternalCrossSlash.png";
+            hoverPath = "/assets/KaelAssets/EternalCrossSlashHovered.png";
+            disabledPath = "/assets/KaelAssets/EternalCrossSlashCooldown.png";
+        } else if (skillName.equals("Skip Turn")) {
+            normalPath = "/assets/KaelAssets/SkipTurn.png";
+        }
+
+        java.net.URL nUrl = (normalPath != null) ? getClass().getResource(normalPath) : null;
+
+        if (nUrl != null) {
+            btn.setText("");
+            btn.setContentAreaFilled(false);
+            btn.setBorderPainted(false);
+            btn.setOpaque(false);
+
+            try {
+                btn.setIcon(new ImageIcon(new ImageIcon(nUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
+                if (hoverPath != null) {
+                    java.net.URL hUrl = getClass().getResource(hoverPath);
+                    if (hUrl != null) btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
+                } else btn.setRolloverIcon(null);
+
+                if (disabledPath != null) {
+                    java.net.URL dUrl = getClass().getResource(disabledPath);
+                    if (dUrl != null) btn.setDisabledIcon(new ImageIcon(new ImageIcon(dUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
+                } else btn.setDisabledIcon(null);
+            } catch (Exception e) {
+                System.out.println("Error loading image for " + skillName);
+            }
+        } else {
+            btn.setIcon(null);
+            btn.setRolloverIcon(null);
+            btn.setDisabledIcon(null);
+            btn.setContentAreaFilled(true);
+            btn.setBorderPainted(true);
+            btn.setOpaque(true);
+            btn.setBackground(bg);
+            btn.setText((iconText != null && !iconText.isEmpty() ? iconText + " " : "") + skillName);
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(border, 2),
+                    BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ SPRITE LOADERS
+    // ════════════════════════════════════════════════════════════════════════
+    private JLabel buildHeroSpriteLabel() {
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_FRAME_COUNT, fh = sheet.getHeight();
+                idleFrames = new BufferedImage[SPRITE_FRAME_COUNT];
+                for (int i = 0; i < SPRITE_FRAME_COUNT; i++) idleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelBladeRush.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLADE_RUSH_FRAME_COUNT, fh = sheet.getHeight();
+                bladeRushFrames = new BufferedImage[BLADE_RUSH_FRAME_COUNT];
+                for (int i = 0; i < BLADE_RUSH_FRAME_COUNT; i++) bladeRushFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelPiercingSlash.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / PIERCING_SLASH_FRAME_COUNT, fh = sheet.getHeight();
+                piercingSlashFrames = new BufferedImage[PIERCING_SLASH_FRAME_COUNT];
+                for (int i = 0; i < PIERCING_SLASH_FRAME_COUNT; i++) piercingSlashFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelEternalCrossSlash.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ETERNAL_CROSS_FRAME_COUNT, fh = sheet.getHeight();
+                eternalCrossFrames = new BufferedImage[ETERNAL_CROSS_FRAME_COUNT];
+                for (int i = 0; i < ETERNAL_CROSS_FRAME_COUNT; i++) eternalCrossFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KAEL_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                kaelHurtFrames = new BufferedImage[KAEL_HURT_FRAME_COUNT];
+                for (int i = 0; i < KAEL_HURT_FRAME_COUNT; i++) kaelHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        JLabel sprite = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                BufferedImage[] frames =
+                        isPlayingBladeRush     ? bladeRushFrames :
+                                isPlayingPiercingSlash ? piercingSlashFrames :
+                                        isPlayingEternalCross  ? eternalCrossFrames :
+                                                isPlayingKaelHurt      ? kaelHurtFrames : idleFrames;
+                if (frames == null || heroSpriteFrame >= frames.length) return;
+                BufferedImage frame = frames[heroSpriteFrame];
+                if (frame == null) return;
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.drawImage(frame, 0, 0, (int)(frame.getWidth() * SPRITE_SCALE), (int)(frame.getHeight() * SPRITE_SCALE), null);
+                g2.dispose();
+            }
+        };
+
+        int labelW = idleFrames != null ? (int)(idleFrames[0].getWidth()  * SPRITE_SCALE) : SPRITE_W;
+        int labelH = idleFrames != null ? (int)(idleFrames[0].getHeight() * SPRITE_SCALE) : SPRITE_H;
+        sprite.setBounds(IDLE_X, IDLE_Y, labelW, labelH);
+        sprite.setOpaque(false);
+        return sprite;
+    }
+
+    private JLabel buildEnemySpriteLabel() {
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/RodtfangWolfIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / WOLF_FRAME_COUNT, fh = sheet.getHeight();
+                wolfIdleFrames = new BufferedImage[WOLF_FRAME_COUNT];
+                for (int i = 0; i < WOLF_FRAME_COUNT; i++) wolfIdleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/RodtfangWolfHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / WOLF_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                wolfHurtFrames = new BufferedImage[WOLF_HURT_FRAME_COUNT];
+                for (int i = 0; i < WOLF_HURT_FRAME_COUNT; i++) wolfHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/RodtfangWolfSavageHowl.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / WOLF_HOWL_FRAME_COUNT, fh = sheet.getHeight();
+                wolfSavageHowlFrames = new BufferedImage[WOLF_HOWL_FRAME_COUNT];
+                for (int i = 0; i < WOLF_HOWL_FRAME_COUNT; i++) wolfSavageHowlFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/RodtfangWolfDefeat.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / WOLF_DEFEAT_FRAME_COUNT, fh = sheet.getHeight();
+                wolfDefeatFrames = new BufferedImage[WOLF_DEFEAT_FRAME_COUNT];
+                for (int i = 0; i < WOLF_DEFEAT_FRAME_COUNT; i++) wolfDefeatFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/RodtfangWolfEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / WOLF_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                wolfEntranceFrames = new BufferedImage[WOLF_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < WOLF_ENTRANCE_FRAME_COUNT; i++) wolfEntranceFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/ShadeSpriteIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_IDLE_COUNT, fh = sheet.getHeight();
+                spriteIdleFrames = new BufferedImage[SPRITE_IDLE_COUNT];
+                for (int i = 0; i < SPRITE_IDLE_COUNT; i++) spriteIdleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/ShadeSpriteHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_HURT_COUNT, fh = sheet.getHeight();
+                spriteHurtFrames = new BufferedImage[SPRITE_HURT_COUNT];
+                for (int i = 0; i < SPRITE_HURT_COUNT; i++) spriteHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/ShadeSpriteTricksterStrike.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_TRICKSTER_COUNT, fh = sheet.getHeight();
+                spriteTricksterFrames = new BufferedImage[SPRITE_TRICKSTER_COUNT];
+                for (int i = 0; i < SPRITE_TRICKSTER_COUNT; i++) spriteTricksterFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/ShadeSpriteDefeat.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_DEFEAT_COUNT, fh = sheet.getHeight();
+                spriteDefeatFrames = new BufferedImage[SPRITE_DEFEAT_COUNT];
+                for (int i = 0; i < SPRITE_DEFEAT_COUNT; i++) spriteDefeatFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/ShadeSpriteEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_ENTRANCE_COUNT, fh = sheet.getHeight();
+                spriteEntranceFrames = new BufferedImage[SPRITE_ENTRANCE_COUNT];
+                for (int i = 0; i < SPRITE_ENTRANCE_COUNT; i++) spriteEntranceFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        JLabel sprite = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                BufferedImage[] frames;
+                boolean isShade = enemyDef != null && enemyDef.name.equals("Shade Sprite");
+                if      (isPlayingWolfHurt)        frames = wolfHurtFrames;
+                else if (isPlayingWolfSavageHowl)  frames = wolfSavageHowlFrames;
+                else if (isPlayingWolfDefeat)      frames = wolfDefeatFrames;
+                else if (isPlayingWolfEntrance)    frames = wolfEntranceFrames;
+                else if (isPlayingSpriteHurt)      frames = spriteHurtFrames;
+                else if (isPlayingSpriteTrickster) frames = spriteTricksterFrames;
+                else if (isPlayingSpriteDefeat)    frames = spriteDefeatFrames;
+                else if (isPlayingSpriteEntrance)  frames = spriteEntranceFrames;
+                else if (isShade)                  frames = spriteIdleFrames;
+                else                               frames = wolfIdleFrames;
+
+                if (frames == null || enemySpriteFrame >= frames.length) return;
+                BufferedImage frame = frames[enemySpriteFrame];
+                if (frame == null) return;
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  RenderingHints.VALUE_ANTIALIAS_ON);
+                double scale = isShade ? SPRITE_SCALE : ENEMY_SCALE;
+                g2.drawImage(frame, 0, 0, (int)(frame.getWidth() * scale), (int)(frame.getHeight() * scale), null);
+                g2.dispose();
+            }
+        };
+
+        int labelW = wolfIdleFrames != null ? (int)(wolfIdleFrames[0].getWidth()  * ENEMY_SCALE) : SPRITE_W;
+        int labelH = wolfIdleFrames != null ? (int)(wolfIdleFrames[0].getHeight() * ENEMY_SCALE) : SPRITE_H;
+        sprite.setBounds(ENEMY_X, ENEMY_Y, labelW, labelH);
+        sprite.setOpaque(false);
+        sprite.setVisible(false);
+        return sprite;
+    }
+
+    private BufferedImage removeBlackBg(BufferedImage src) {
+        BufferedImage out = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < src.getWidth(); x++)
+            for (int y = 0; y < src.getHeight(); y++) {
+                int px = src.getRGB(x, y);
+                int r = (px >> 16) & 0xFF, g = (px >> 8) & 0xFF, b = px & 0xFF;
+                out.setRGB(x, y, (r < 30 && g < 30 && b < 30) ? 0x00000000 : px);
+            }
+        return out;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ ANIMATION TRIGGERS
+    // ════════════════════════════════════════════════════════════════════════
+    private void startHeroIdleAnimation() {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        isPlayingBladeRush = false; isPlayingPiercingSlash = false;
+        isPlayingEternalCross = false; isPlayingKaelHurt = false;
+        heroSpriteFrame = 0;
+        if (idleFrames != null) {
+            int w = (int)(idleFrames[0].getWidth()  * SPRITE_SCALE);
+            int h = (int)(idleFrames[0].getHeight() * SPRITE_SCALE);
+            heroSpriteLabel.setBounds(IDLE_X, IDLE_Y, w, h);
+        }
+        heroIdleTimer = new javax.swing.Timer(220, e -> {
+            heroSpriteFrame = (heroSpriteFrame + 1) % SPRITE_FRAME_COUNT;
+            if (heroSpriteLabel != null) heroSpriteLabel.repaint();
+        });
+        heroIdleTimer.start();
+    }
+
+    private void startEnemyIdleAnimation(EnemyDefinition eDef) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        isPlayingWolfHurt = false; isPlayingWolfSavageHowl = false;
+        isPlayingWolfDefeat = false; isPlayingWolfEntrance = false;
+        isPlayingSpriteHurt = false; isPlayingSpriteTrickster = false;
+        isPlayingSpriteDefeat = false; isPlayingSpriteEntrance = false;
+        enemySpriteFrame = 0;
+
+        if (eDef.name.equals("Rotfang Wolf") && wolfIdleFrames != null) {
+            int w = (int)(wolfIdleFrames[0].getWidth()  * ENEMY_SCALE);
+            int h = (int)(wolfIdleFrames[0].getHeight() * ENEMY_SCALE);
+            enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(WOLF_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % WOLF_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Shade Sprite") && spriteIdleFrames != null) {
+            int w = (int)(spriteIdleFrames[0].getWidth()  * SPRITE_SCALE);
+            int h = (int)(spriteIdleFrames[0].getHeight() * SPRITE_SCALE);
+            enemySpriteLabel.setBounds(SHADE_X, SHADE_Y + 8, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(220, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % SPRITE_IDLE_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else {
+            enemySpriteLabel.setVisible(false);
+        }
+    }
+
+    private void stopEnemyAnimation() {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (enemySpriteLabel != null) enemySpriteLabel.setVisible(false);
+    }
+
+    private boolean isShadeSprite() { return enemyDef != null && enemyDef.name.equals("Shade Sprite"); }
+
+    private void playEnemyHurt(Runnable onDone)    { if (isShadeSprite()) playSpriteHurtAnimation(onDone);      else playWolfHurtAnimation(onDone); }
+    private void playEnemyAttack(Runnable onDone)  { if (isShadeSprite()) playSpriteTricksterAnimation(onDone); else playWolfSavageHowlAnimation(onDone); }
+    private void playEnemyDefeat(Runnable onDone)  { if (isShadeSprite()) playSpriteDefeatAnimation(onDone);    else playWolfDefeatAnimation(onDone); }
+    private void playEnemyEntrance(Runnable onDone){ if (isShadeSprite()) playSpriteEntranceAnimation(onDone);  else playWolfEntranceAnimation(onDone); }
+
+    // WOLF
+    private void playWolfDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (wolfDefeatFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingWolfDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(wolfDefeatFrames[0].getWidth()  * ENEMY_SCALE), h = (int)(wolfDefeatFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < WOLF_DEFEAT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingWolfDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playWolfEntranceAnimation(Runnable onDone) {
+        if (wolfEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingWolfEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(wolfEntranceFrames[0].getWidth()  * ENEMY_SCALE), h = (int)(wolfEntranceFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(WOLF_ENTRANCE_START_X, ENEMY_Y, w, h); enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(120, e -> { enemySpriteFrame = (enemySpriteFrame + 1) % WOLF_ENTRANCE_FRAME_COUNT; enemySpriteLabel.repaint(); });
+        frameTimer.start();
+        int[] currentX = {WOLF_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 10;
+            if (currentX[0] <= ENEMY_X) {
+                enemySpriteLabel.setLocation(ENEMY_X, ENEMY_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingWolfEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], ENEMY_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playWolfHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (wolfHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingWolfHurt = true; enemySpriteFrame = 0;
+        int w = (int)(wolfHurtFrames[0].getWidth()  * ENEMY_SCALE), h = (int)(wolfHurtFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < WOLF_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingWolfHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playWolfSavageHowlAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (wolfSavageHowlFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingWolfSavageHowl = true; enemySpriteFrame = 0;
+        int w = (int)(wolfSavageHowlFrames[0].getWidth()  * ENEMY_SCALE), h = (int)(wolfSavageHowlFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < WOLF_HOWL_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingWolfSavageHowl = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    // SPRITE
+    private void playSpriteHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (spriteHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingSpriteHurt = true; enemySpriteFrame = 0;
+        int w = (int)(spriteHurtFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteHurtFrames[0].getHeight() * SPRITE_SCALE);
+        enemySpriteLabel.setBounds(SHADE_X, SHADE_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < SPRITE_HURT_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSpriteHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playSpriteTricksterAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (spriteTricksterFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingSpriteTrickster = true; enemySpriteFrame = 0;
+        int w = (int)(spriteTricksterFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteTricksterFrames[0].getHeight() * SPRITE_SCALE);
+        enemySpriteLabel.setBounds(SHADE_X - 20, SHADE_Y - 15, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < SPRITE_TRICKSTER_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSpriteTrickster = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playSpriteDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (spriteDefeatFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingSpriteDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(spriteDefeatFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteDefeatFrames[0].getHeight() * SPRITE_SCALE);
+        enemySpriteLabel.setBounds(SHADE_X, SHADE_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < SPRITE_DEFEAT_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingSpriteDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playSpriteEntranceAnimation(Runnable onDone) {
+        if (spriteEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingSpriteEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(spriteEntranceFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteEntranceFrames[0].getHeight() * SPRITE_SCALE);
+        enemySpriteLabel.setBounds(WOLF_ENTRANCE_START_X, SHADE_Y, w, h); enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(120, e -> { enemySpriteFrame = (enemySpriteFrame + 1) % SPRITE_ENTRANCE_COUNT; enemySpriteLabel.repaint(); });
+        frameTimer.start();
+        int[] currentX = {WOLF_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 10;
+            if (currentX[0] <= SHADE_X) {
+                enemySpriteLabel.setLocation(SHADE_X, SHADE_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingSpriteEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], SHADE_Y); }
+        });
+        slideTimer.start();
+    }
+
+    // HERO ACTIONS
+    private void playKaelHurtAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (kaelHurtFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingKaelHurt = true; heroSpriteFrame = 0;
+        int w = (int)(kaelHurtFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(kaelHurtFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(IDLE_X, IDLE_Y, w, h); heroSpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(150, e -> {
+            if (frame[0] < KAEL_HURT_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKaelHurt = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private int getActionX(BufferedImage[] frames) {
+        int labelW = (int)(frames[0].getWidth()  * SPRITE_SCALE);
+        int idleW  = idleFrames != null ? (int)(idleFrames[0].getWidth() * SPRITE_SCALE) : SPRITE_W;
+        return ACTION_X_BASE - (labelW - idleW) / 2;
+    }
+
+    private void playBladeRushAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (bladeRushFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingBladeRush = true; heroSpriteFrame = 0;
+        int lW = (int)(bladeRushFrames[0].getWidth()  * SPRITE_SCALE), lH = (int)(bladeRushFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(bladeRushFrames), ACTION_Y, lW, lH); heroSpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(130, e -> {
+            if (frame[0] < BLADE_RUSH_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBladeRush = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playPiercingSlashAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (piercingSlashFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingPiercingSlash = true; heroSpriteFrame = 0;
+        int lW = (int)(piercingSlashFrames[0].getWidth()  * SPRITE_SCALE), lH = (int)(piercingSlashFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(piercingSlashFrames), ACTION_Y, lW, lH); heroSpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(110, e -> {
+            if (frame[0] < PIERCING_SLASH_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingPiercingSlash = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playEternalCrossSlashAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (eternalCrossFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingEternalCross = true; heroSpriteFrame = 0;
+        int lW = (int)(eternalCrossFrames[0].getWidth()  * SPRITE_SCALE), lH = (int)(eternalCrossFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(eternalCrossFrames), ACTION_Y, lW, lH); heroSpriteLabel.repaint();
+        int[] frame = {0}, repeat = {0};
+        javax.swing.Timer t = new javax.swing.Timer(60, e -> {
+            if (frame[0] < ETERNAL_CROSS_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else {
+                repeat[0]++;
+                if (repeat[0] < 2) { frame[0] = 0; heroSpriteFrame = 0; heroSpriteLabel.repaint(); }
+                else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingEternalCross = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+            }
+        });
+        t.start();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ BATTLE LOGIC
+    // ════════════════════════════════════════════════════════════════════════
     private void onPlayerAction(BattleManager.BattleAction action) {
         if (animating || engine.getCurrentTurn() != BattleManager.TurnOwner.PLAYER) return;
         animating = true;
         setActionsEnabled(false);
-
         clearLog();
         setTurnLabel(true);
+
         BattleManager.ActionResult pResult = engine.playerAction(action);
-        if (pResult != null) addLogFromResult(pResult, true);
         refreshBattleUI();
 
-        if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
-            handleVictory();
-            return;
-        }
-
-        Timer t1 = new Timer(900, e -> {
-            engine.advanceToEnemyTurn();
-            setTurnLabel(false);
-
-            Timer t2 = new Timer(500, ev -> {
-                clearLog();
-                BattleManager.ActionResult eResult = engine.enemyTurn();
-                if (eResult != null) addLogFromResult(eResult, false);
-                refreshBattleUI();
-
-                if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
-                    handleDefeat();
-                } else {
-                    Timer t3 = new Timer(800, ev2 -> {
-                        clearLog();
-                        setTurnLabel(true);
-                        setActionsEnabled(true);
+        Runnable afterHeroAnim = () -> {
+            if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
+                playEnemyHurt(() -> {
+                    clearLog();
+                    if (pResult != null) addLogFromResult(pResult, true);
+                    playEnemyDefeat(() -> {
+                        handleVictory();
                         animating = false;
                     });
-                    t3.setRepeats(false); t3.start();
-                }
+                });
+            } else {
+                playEnemyHurt(() -> {
+                    clearLog();
+                    if (pResult != null) addLogFromResult(pResult, true);
+                    Timer t1 = new Timer(900, e -> {
+                        engine.advanceToEnemyTurn();
+                        setTurnLabel(false);
+                        playEnemyAttack(() -> {
+                            BattleManager.ActionResult er = engine.enemyTurn();
+                            refreshBattleUI();
+                            playKaelHurtAnimation(() -> {
+                                clearLog();
+                                if (er != null) addEnemyAttackLog(er);
+                                if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+                                    handleDefeat();
+                                } else {
+                                    Timer t3 = new Timer(800, ev2 -> {
+                                        clearLog(); setTurnLabel(true);
+                                        setActionsEnabled(true); animating = false;
+                                    });
+                                    t3.setRepeats(false); t3.start();
+                                }
+                            });
+                        });
+                    });
+                    t1.setRepeats(false); t1.start();
+                });
+            }
+        };
+
+        if (action == BattleManager.BattleAction.SKILL1)        playBladeRushAnimation(afterHeroAnim);
+        else if (action == BattleManager.BattleAction.SKILL2)   playPiercingSlashAnimation(afterHeroAnim);
+        else if (action == BattleManager.BattleAction.ULTIMATE) playEternalCrossSlashAnimation(afterHeroAnim);
+        else {
+            if (pResult != null) addLogFromResult(pResult, true);
+            if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) { handleVictory(); animating = false; return; }
+            Timer t1 = new Timer(900, e -> {
+                engine.advanceToEnemyTurn(); setTurnLabel(false);
+                playEnemyAttack(() -> {
+                    BattleManager.ActionResult er = engine.enemyTurn(); refreshBattleUI();
+                    playKaelHurtAnimation(() -> {
+                        clearLog(); if (er != null) addEnemyAttackLog(er);
+                        if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
+                        else {
+                            Timer t3 = new Timer(800, ev2 -> { clearLog(); setTurnLabel(true); setActionsEnabled(true); animating = false; });
+                            t3.setRepeats(false); t3.start();
+                        }
+                    });
+                });
             });
-            t2.setRepeats(false); t2.start();
-        });
-        t1.setRepeats(false); t1.start();
+            t1.setRepeats(false); t1.start();
+        }
+    }
+
+    private void addEnemyAttackLog(BattleManager.ActionResult r) {
+        if (enemyDef == null) { addLogFromResult(r, false); return; }
+        String msg = switch (enemyDef.name) {
+            case "Rotfang Wolf"  -> "Rotfang Wolf uses Savage Howl";
+            case "Shade Sprite"  -> "Shade Sprite uses Trickster Strike";
+            default              -> null;
+        };
+        if (msg != null) {
+            if (r.logMessage != null && !r.logMessage.isEmpty()) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
+                msg += m.find() ? " and dealt " + m.group() + " damage!" : "!";
+            } else { msg += "!"; }
+            addLog(msg, RED);
+            if (r.dotDamageApplied > 0) addLog("Burn tick: " + r.dotDamageApplied, new Color(150, 60, 0));
+        } else {
+            addLogFromResult(r, false);
+        }
     }
 
     private void handleVictory() {
@@ -315,11 +1004,11 @@ public class BattlePanel extends JPanel {
             clearLog();
             if (enemyFightIndex < eDef.count) {
                 savedHeroCombatant = engine.getHero();
-                addLog(eDef.name + " defeated! (" + enemyFightIndex + "/" + eDef.count + ")", GREEN);
-                delay(2000, () -> {
+                addLog(getPerKillMessage(eDef, enemyFightIndex), GREEN);
+                delay(1500, () -> {
                     clearLog();
-                    addLog("Another " + eDef.name + " approaches!", GOLD);
-                    delay(1200, this::startNextFight);
+                    addLog(getNextApproachMessage(eDef, enemyFightIndex), GOLD);
+                    delay(800, () -> playEnemyEntrance(() -> startNextFight()));
                 });
             } else {
                 savedHeroCombatant = engine.getHero();
@@ -360,13 +1049,16 @@ public class BattlePanel extends JPanel {
         setLogFontSmall();
         clearLog();
         addLog("You received:", GOLD);
+        int shards = eDef.name.equals("The Hollow Stag") ? 10 : 1;
+        addLog("  " + shards + " Soul Shard" + (shards > 1 ? "s" : ""), new Color(20, 80, 160));
+        currentHero.soulShards += shards;
         addLog("  +" + xp + " XP", new Color(140, 90, 0));
-        addLog("  + Soul Shards", new Color(20, 80, 160));
 
         battleContinueBtn.setEnabled(true);
         turnLabel.setText("");
         roundLabel.setText("");
         specialCdLabel.setText("");
+        stopEnemyAnimation();
     }
 
     private void onContinuePressed() {
@@ -383,7 +1075,7 @@ public class BattlePanel extends JPanel {
                 } else {
                     postVictoryStep = PostVictoryStep.OBJECTIVE;
                     setLogFontNormal();
-                    addLog("OBJECTIVE: " + postVictoryEnemy.name.toUpperCase() + " CLEARED!", GOLD);
+                    addLog(getObjectiveCompleteText(postVictoryEnemy), GOLD);
                 }
                 battleContinueBtn.setEnabled(true);
             }
@@ -405,16 +1097,22 @@ public class BattlePanel extends JPanel {
                 postVictoryStep = PostVictoryStep.OBJECTIVE;
                 setLogFontNormal();
                 clearLog();
-                addLog("OBJECTIVE: " + postVictoryEnemy.name.toUpperCase() + " CLEARED!", GOLD);
+                addLog(getObjectiveCompleteText(postVictoryEnemy), GOLD);
                 battleContinueBtn.setEnabled(true);
             }
             case OBJECTIVE -> {
                 postVictoryStep = PostVictoryStep.VICTORY_FLAVOUR;
                 clearLog();
-                addLog("Victory! You collect your rewards and move on.", GREEN);
+                addLog(getVictoryFlavourText(postVictoryEnemy), GREEN);
                 battleContinueBtn.setEnabled(true);
             }
             case VICTORY_FLAVOUR -> {
+                postVictoryStep = PostVictoryStep.LOOT_FLAVOUR;
+                clearLog();
+                addLog(getLootFlavourText(postVictoryEnemy), new Color(100, 65, 10));
+                battleContinueBtn.setEnabled(true);
+            }
+            case LOOT_FLAVOUR -> {
                 postVictoryStep = PostVictoryStep.NONE;
                 postVictoryEnemy = null;
                 clearLog();
@@ -430,7 +1128,17 @@ public class BattlePanel extends JPanel {
 
     private void handleDefeat() {
         addLog("You have fallen...", RED);
-        // Integrate the learning check or revive logic here
+
+        try {
+            if ((boolean) currentHero.getClass().getField("hasPhoenixSoulstone").get(currentHero)) {
+                currentHero.getClass().getField("hasPhoenixSoulstone").set(currentHero, false);
+                currentHero.currentHp = currentHero.maxHp;
+                clearLog();
+                addLog("Phoenix Soulstone activated! Revived!", GREEN);
+                refreshBattleUI(); setTurnLabel(true); setActionsEnabled(true); animating = false; return;
+            }
+        } catch (Exception ignored) {}
+
         String ans = JOptionPane.showInputDialog(this, "Q: What keyword is used to inherit a class in Java?");
         if (ans != null && ans.trim().equalsIgnoreCase("extends")) {
             currentHero.currentHp = currentHero.maxHp / 2;
@@ -446,16 +1154,73 @@ public class BattlePanel extends JPanel {
         }
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ FLAVOUR TEXTS
+    // ════════════════════════════════════════════════════════════════════════
+    private String getPerKillMessage(EnemyDefinition eDef, int killed) {
+        String score = killed + "/" + eDef.count;
+        return switch (eDef.name) {
+            case "Rotfang Wolf"    -> "The wolf whimpers and dissolves into black smoke. (" + score + ")";
+            case "Shade Sprite"    -> "You dispelled the Shade Sprite! (" + score + ")";
+            case "Dreadbark Treant"-> "You felled the Dreadbark Treant! (" + score + ")";
+            case "Carrion Bat"     -> "You slayed the Carrion Bat! (" + score + ")";
+            case "The Hollow Stag" -> "The Hollow Stag has fallen! (" + score + ")";
+            default -> eDef.name + " defeated! (" + score + ")";
+        };
+    }
+
+    private String getNextApproachMessage(EnemyDefinition eDef, int killed) {
+        int next = killed + 1;
+        return switch (eDef.name) {
+            case "Rotfang Wolf"    -> "Another wolf snarls and steps forward! (" + next + "/" + eDef.count + ")";
+            case "Shade Sprite"    -> "The mist swirls — another soul screams into existence! (" + next + "/" + eDef.count + ")";
+            case "Dreadbark Treant"-> "The ground quakes again! The second ancient giant lumbers forward! (" + next + "/" + eDef.count + ")";
+            case "Carrion Bat"     -> "Another screech echoes above — the swarm continues! (" + next + "/" + eDef.count + ")";
+            default -> "Another " + eDef.name + " approaches! (" + next + "/" + eDef.count + ")";
+        };
+    }
+
+    private String getObjectiveCompleteText(EnemyDefinition eDef) {
+        return switch (eDef.name) {
+            case "Rotfang Wolf"    -> "OBJECTIVE: DEFEAT 3 ROTFANG WOLVES!  (3/3)";
+            case "Shade Sprite"    -> "OBJECTIVE: DEFEAT 2 SHADE SPRITES!  (2/2)";
+            case "Dreadbark Treant"-> "OBJECTIVE: DEFEAT 2 DREADBARK TREANTS!  (2/2)";
+            case "Carrion Bat"     -> "OBJECTIVE: DEFEAT 4 CARRION BATS!  (4/4)";
+            case "The Hollow Stag" -> "OBJECTIVE: DEFEAT THE HOLLOW STAG!  COMPLETE";
+            default -> "OBJECTIVE: " + eDef.name.toUpperCase() + " CLEARED!";
+        };
+    }
+
+    private String getVictoryFlavourText(EnemyDefinition eDef) {
+        return switch (eDef.name) {
+            case "Rotfang Wolf"    -> "Victory! The last of the Rotfang Wolves collapses.\nThe adrenaline in your veins cools, but the forest feels no safer.";
+            case "Shade Sprite"    -> "With a final shriek, the sprites disperse like fog in the wind.\nThe mist recedes. The whispering in your mind finally stops.";
+            case "Dreadbark Treant"-> "The massive Treants freeze and collapse.\nWhere they fall, small green sprouts rise from the ash.";
+            case "Carrion Bat"     -> "The last bat crashes into the ground.\nThe forest grows quiet. The stench of decay lifts into the cold wind.";
+            case "The Hollow Stag" -> "MINI-BOSS DEFEATED!\nThe Stag staggers. The white fire in its antlers flickers and dies.\nIt dissolves into particles of pure light.";
+            default -> "You have defeated " + eDef.name + "!";
+        };
+    }
+
+    private String getLootFlavourText(EnemyDefinition eDef) {
+        return switch (eDef.name) {
+            case "Rotfang Wolf"    -> "You bandage your wounds and collect what little the wolves carried.";
+            case "Shade Sprite"    -> "You feel your strength returning after overcoming the darkness.";
+            case "Dreadbark Treant"-> "You emerge covered in dust, but victorious. Treasures fall from the decaying wood.";
+            case "Carrion Bat"     -> "You catch your breath. You feel stronger... and richer.";
+            case "The Hollow Stag" -> "You reach out and grasp the light. It pulses with quiet power.";
+            default -> "You collect your rewards.";
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ GENERAL UTILITIES
+    // ════════════════════════════════════════════════════════════════════════
     private void parseLevelUpMsg(String msg) {
         String[] p = msg.split("\\|");
         if (p.length < 8) return;
-        lvlUp_level   = Integer.parseInt(p[1]);
-        lvlUp_hpGain  = Integer.parseInt(p[2]);
-        lvlUp_newHp   = Integer.parseInt(p[3]);
-        lvlUp_atkGain = Integer.parseInt(p[4]);
-        lvlUp_newAtk  = Integer.parseInt(p[5]);
-        lvlUp_defGain = Integer.parseInt(p[6]);
-        lvlUp_newDef  = Integer.parseInt(p[7]);
+        lvlUp_level   = Integer.parseInt(p[1]); lvlUp_hpGain  = Integer.parseInt(p[2]); lvlUp_newHp   = Integer.parseInt(p[3]);
+        lvlUp_atkGain = Integer.parseInt(p[4]); lvlUp_newAtk  = Integer.parseInt(p[5]); lvlUp_defGain = Integer.parseInt(p[6]); lvlUp_newDef  = Integer.parseInt(p[7]);
     }
 
     private void addLogFromResult(BattleManager.ActionResult r, boolean isPlayer) {
@@ -473,8 +1238,7 @@ public class BattlePanel extends JPanel {
         javax.swing.text.StyleConstants.setFontFamily(attrs, logArea.getFont().getFamily());
         javax.swing.text.StyleConstants.setFontSize(attrs, logArea.getFont().getSize());
         javax.swing.text.StyleConstants.setBold(attrs, true);
-        try { doc.insertString(doc.getLength(), text + "\n", attrs); }
-        catch (Exception e) {}
+        try { doc.insertString(doc.getLength(), text + "\n", attrs); } catch (Exception e) {}
         logArea.setCaretPosition(doc.getLength());
     }
 
@@ -499,7 +1263,13 @@ public class BattlePanel extends JPanel {
         heroNameLbl.setText(heroDef.name);
         heroRoleLbl.setText(heroDef.role);
         if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.level);
-        enemyEmojiLbl.setText(enemyDef.emoji);
+
+        String enemyEmoji = switch (enemyDef.name) {
+            case "Rotfang Wolf" -> "🐾";
+            case "Shade Sprite" -> "👻";
+            default -> enemyDef.emoji;
+        };
+        enemyEmojiLbl.setText(enemyEmoji);
         enemyNameLbl.setText(enemyDef.name);
         enemyRoleLbl.setText(enemyDef.role);
 
@@ -508,10 +1278,11 @@ public class BattlePanel extends JPanel {
         if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.maxEnergy);
 
         if (heroDef.skills != null && heroDef.skills.length >= 3) {
-            skill1Btn.setText(heroDef.skills[0].icon + " " + heroDef.skills[0].name);
-            skill2Btn.setText(heroDef.skills[1].icon + " " + heroDef.skills[1].name);
-            ultimateBtn.setText(heroDef.skills[2].icon + " " + heroDef.skills[2].name);
+            configureSkillButton(skill1Btn, heroDef.skills[0].name, heroDef.skills[0].icon, new Color(60, 30, 90), new Color(130, 60, 200));
+            configureSkillButton(skill2Btn, heroDef.skills[1].name, heroDef.skills[1].icon, new Color(30, 60, 90), new Color(52, 120, 219));
+            configureSkillButton(ultimateBtn, heroDef.skills[2].name, heroDef.skills[2].icon, new Color(90, 30, 30), new Color(192, 57, 43));
         }
+        configureSkillButton(skipTurnBtn, "Skip Turn", "", new Color(30, 60, 40), new Color(39, 174, 96));
     }
 
     private void refreshBattleUI() {
@@ -574,8 +1345,9 @@ public class BattlePanel extends JPanel {
         revalidate(); repaint();
     }
 
-    // --- Swing Builder Helpers ---
-
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ SWING BUILDER HELPERS
+    // ════════════════════════════════════════════════════════════════════════
     private JButton makeBtn(String normalPath, String hoverPath, int x, int y, int w, int h, String fallback, int hoverOffset) {
         JButton btn = new JButton();
         btn.setBounds(x, y, w, h);
@@ -752,11 +1524,10 @@ public class BattlePanel extends JPanel {
     }
 
     private JPanel buildLootChoiceOverlay() {
-        JPanel overlay = new JPanel(new GridBagLayout()); // Centers the card
-        overlay.setBackground(OVERLAY_BG); // Same 200 alpha black as your result screen
+        JPanel overlay = new JPanel(new GridBagLayout());
+        overlay.setBackground(OVERLAY_BG);
         overlay.setOpaque(true);
 
-        // Main Card Container
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(new Color(20, 18, 36));
@@ -774,12 +1545,10 @@ public class BattlePanel extends JPanel {
         subtitle.setForeground(TEXT_DIM);
         subtitle.setAlignmentX(CENTER_ALIGNMENT);
 
-        // Side-by-Side Container
         JPanel itemsPanel = new JPanel(new GridLayout(1, 2, 40, 0));
         itemsPanel.setBackground(new Color(20, 18, 36));
         itemsPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
 
-        // --- ITEM 1 PANEL ---
         JPanel p1 = new JPanel();
         p1.setLayout(new BoxLayout(p1, BoxLayout.Y_AXIS));
         p1.setBackground(new Color(30, 28, 45));
@@ -792,7 +1561,6 @@ public class BattlePanel extends JPanel {
         lootItem1Icon.setForeground(TEXT_DIM);
         lootItem1Icon.setPreferredSize(new Dimension(100, 100));
         lootItem1Icon.setAlignmentX(CENTER_ALIGNMENT);
-        // TODO for your team: lootItem1Icon.setIcon(new ImageIcon("path/to/image.png"));
 
         lootItem1Name = new JLabel("Item 1 Name", SwingConstants.CENTER);
         lootItem1Name.setFont(new Font("Monospaced", Font.BOLD, 16));
@@ -816,7 +1584,6 @@ public class BattlePanel extends JPanel {
         p1.add(lootItem1Icon); p1.add(Box.createVerticalStrut(10));
         p1.add(lootItem1Name); p1.add(lootItem1Desc); p1.add(lootItem1Btn);
 
-        // --- ITEM 2 PANEL ---
         JPanel p2 = new JPanel();
         p2.setLayout(new BoxLayout(p2, BoxLayout.Y_AXIS));
         p2.setBackground(new Color(30, 28, 45));
@@ -829,7 +1596,6 @@ public class BattlePanel extends JPanel {
         lootItem2Icon.setForeground(TEXT_DIM);
         lootItem2Icon.setPreferredSize(new Dimension(100, 100));
         lootItem2Icon.setAlignmentX(CENTER_ALIGNMENT);
-        // TODO for your team: lootItem2Icon.setIcon(new ImageIcon("path/to/image.png"));
 
         lootItem2Name = new JLabel("Item 2 Name", SwingConstants.CENTER);
         lootItem2Name.setFont(new Font("Monospaced", Font.BOLD, 16));
