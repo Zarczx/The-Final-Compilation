@@ -1,13 +1,13 @@
 package GameGUI.engine;
 
 import GameGUI.model.HeroData;
+import GameGUI.model.HeroData.HeroDefinition;
 import GameGUI.ui.BattlePanel;
 import GameGUI.ui.HeroSelectionPanel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Random;
 
 public class GameScreen extends JPanel {
 
@@ -15,7 +15,12 @@ public class GameScreen extends JPanel {
     private static final String SCREEN_SELECTION ="selection";
     private static final String SCREEN_POST_SELECT ="postSelect";
     private static final String SCREEN_WORLD1_INTRO ="world1Intro";
+    private static final String SCREEN_WORLD2_INTRO ="world2Intro";
+    private static final String SCREEN_WORLD3_INTRO ="world3Intro";
     private static final String SCREEN_BATTLE ="battle";
+    private static final String SCREEN_SHOP = "shop";
+
+    private GameGUI.ui.MagicShopPanel magicShopPanel;
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardPanel = new JPanel(cardLayout);
@@ -24,6 +29,8 @@ public class GameScreen extends JPanel {
     private BattlePanel battlePanel;
     private JPanel postSelectPanel;
     private JPanel world1IntroPanel;
+    private JPanel world2IntroPanel;
+    private JPanel world3IntroPanel;
 
     private JTextArea postDialogueBox;
     private JButton postContinueBtn;
@@ -33,6 +40,34 @@ public class GameScreen extends JPanel {
     private JButton w1ContinueBtn;
     private int w1DialogueIndex = 0;
     private Timer w1TypingTimer;
+
+    // World 2 intro screen fields
+    private JTextArea w2DialogueBox;
+    private JButton w2ContinueBtn;
+    private int w2DialogueIndex = 0;
+    private Timer w2TypingTimer;
+    private String[] w2Chunks;
+    private int w2ChunkIndex = 0;
+    private JLabel w2WorldLabel;
+    private JLabel w2KhaiLabel;
+    private float[] w2KhaiAlpha = {0f};
+    private JPanel w2SceneBg;
+    private float[] w2SceneAlpha;
+    private float[] w2WorldAlpha;
+
+    // World 3 intro screen fields
+    private JTextArea w3DialogueBox;
+    private JButton w3ContinueBtn;
+    private int w3DialogueIndex = 0;
+    private Timer w3TypingTimer;
+    private String[] w3Chunks;
+    private int w3ChunkIndex = 0;
+    private JLabel w3WorldLabel;
+    private JLabel w3KhaiLabel;
+    private float[] w3KhaiAlpha = {0f};
+    private JPanel w3SceneBg;
+    private float[] w3SceneAlpha;
+    private float[] w3WorldAlpha;
 
     JTextArea dialogueBox;
     JButton continueBtn, menuBtn, backBtn, exitBtn;
@@ -63,29 +98,9 @@ public class GameScreen extends JPanel {
     private float[] world1WorldAlpha;
     private JLabel world1KhaiLabel;
     private float[] world1KhaiAlpha = {0f};
-    private HeroData.HeroDefinition confirmedHero = null;
+    private HeroDefinition confirmedHero = null;
     private boolean pendingSelection = false;
-
-    // ★ Tracks which inter-enemy dialogue group is currently active
-    private int w1CurrentInterIndex = -1;
-
-    // ★ Background to show BEFORE each inter-dialogue chunk [interIndex][chunkIndex]
-    //   null = keep current background, String = switch to that image path
-    private static final String[][] WORLD1_INTER_BG = {
-            // Index 0: After Rotfang Wolves → before Shade Sprites
-            {
-                    null,                                                                   // chunk 0: "The path narrows..." — keep current bg
-                    "/assets/Backgrounds/World1BattleBackgroundFog.jpeg",                   // chunk 1: "The air grows icy..."
-                    null,                                                                   // chunk 2: "Shadows detach..."
-                    "/assets/Backgrounds/World1BattleBackgroundShadeSprites1.jpeg"          // chunk 3: "SHADE SPRITES."
-            },
-            // Index 1: After Shade Sprites → before Dreadbark Treants
-            { null, null },
-            // Index 2: After Dreadbark Treants → before Carrion Bats
-            { null, null },
-            // Index 3: After Carrion Bats → before Hollow Stag
-            { null, null }
-    };
+    private int currentWorld = 1;
 
     String[] dialogues = {
             "It's just another Tuesday, you come in for your Java examination.",
@@ -116,10 +131,20 @@ public class GameScreen extends JPanel {
         world1IntroPanel = buildWorld1IntroScreen();
         cardPanel.add(world1IntroPanel, SCREEN_WORLD1_INTRO);
 
+        world2IntroPanel = buildWorld2IntroScreen();
+        cardPanel.add(world2IntroPanel, SCREEN_WORLD2_INTRO);
+
+        world3IntroPanel = buildWorld3IntroScreen();
+        cardPanel.add(world3IntroPanel, SCREEN_WORLD3_INTRO);
+
         battlePanel = new BattlePanel();
         battlePanel.setOnReturnToSelection(this::goToSelection);
         battlePanel.setOnRestartBattle(this::restartBattle);
         cardPanel.add(battlePanel, SCREEN_BATTLE);
+
+        magicShopPanel = new GameGUI.ui.MagicShopPanel();
+        magicShopPanel.setOnLeaveShop(this::startWorld3Transition);
+        cardPanel.add(magicShopPanel, SCREEN_SHOP);
 
         add(cardPanel, BorderLayout.CENTER);
 
@@ -127,9 +152,47 @@ public class GameScreen extends JPanel {
         startTyping(dialogues[dialogueIndex], null);
     }
 
+    // =========================================================================
+    //  DEV TOOLS / TESTER WARPS
+    // =========================================================================
+
+    public void debugSkipToWorld2(HeroDefinition hero) {
+        this.confirmedHero = hero;
+        this.currentWorld = 2;
+        if (typingTimer != null) typingTimer.stop();
+        goToWorld2Intro();
+    }
+
+    public void debugSkipToWorld3(HeroDefinition hero) {
+        this.confirmedHero = hero;
+        this.currentWorld = 3;
+        if (typingTimer != null) typingTimer.stop();
+        startWorld3Transition();
+    }
+
+    public void debugSkipToFinalBoss(HeroDefinition hero) {
+        this.confirmedHero = hero;
+        this.currentWorld = 3;
+        if (typingTimer != null) typingTimer.stop();
+        startFinalBossTransition();
+    }
+
+    public void debugSkipToShop(HeroDefinition hero) {
+        this.confirmedHero = hero;
+        this.currentWorld = 2;
+        if (typingTimer != null) typingTimer.stop();
+
+        GameGUI.model.Combatant dummy = GameGUI.model.HeroFactory.createHero(hero);
+        dummy.soulShards = 999;
+
+        magicShopPanel.loadPlayer(dummy);
+        cardLayout.show(cardPanel, SCREEN_SHOP);
+    }
+
+
     private void goToIntro() { cardLayout.show(cardPanel, SCREEN_INTRO); }
 
-    public void skipToWorld1(HeroData.HeroDefinition hero) {
+    public void skipToWorld1(HeroDefinition hero) {
         this.confirmedHero = hero;
         w1DialogueIndex = 0;
         if (typingTimer != null) typingTimer.stop();
@@ -150,6 +213,7 @@ public class GameScreen extends JPanel {
 
     private void goToSelection() { cardLayout.show(cardPanel, SCREEN_SELECTION); }
     private void goToPostSelect() { cardLayout.show(cardPanel, SCREEN_POST_SELECT); }
+
     private void goToWorld1Intro() {
         cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
 
@@ -178,27 +242,49 @@ public class GameScreen extends JPanel {
     private void goToBattle() {
         if (confirmedHero == null) return;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
-            showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+            if (currentWorld == 1) {
+                showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+            } else if (currentWorld == 2) {
+                showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+            } else if (currentWorld == 3) {
+                showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+            } else {
+                resumeFight.run();
+            }
         });
-        battlePanel.startEnemySequence(
-                confirmedHero,
-                HeroData.WORLD1_ENEMIES,
-                () -> goToSelection()
-        );
+
+        if (currentWorld == 1) {
+            battlePanel.startEnemySequence(
+                    confirmedHero,
+                    HeroData.WORLD1_ENEMIES,
+                    this::startWorld2Transition
+            );
+        } else if (currentWorld == 2) {
+            battlePanel.startEnemySequence(
+                    confirmedHero,
+                    HeroData.WORLD2_ENEMIES,
+                    () -> {
+                        magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
+                        cardLayout.show(cardPanel, SCREEN_SHOP);
+                    }
+            );
+        } else if (currentWorld == 3) {
+            battlePanel.startEnemySequence(
+                    confirmedHero,
+                    HeroData.WORLD3_ENEMIES,
+                    this::startFinalBossTransition
+            );
+        }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // ★ INTER-ENEMY DIALOGUE — shown between enemy groups
-    //   Now tracks w1CurrentInterIndex and switches backgrounds per chunk
-    // ════════════════════════════════════════════════════════════════════════
     private void showInterEnemyDialogue(int interIndex, Runnable resumeFight) {
         if (interIndex < 0 || interIndex >= WORLD1_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
         w1ResumeAfterDialogue = resumeFight;
         w1InInterDialogue = true;
-        w1CurrentInterIndex = interIndex; // ★ track which group we're in
         w1InterChunks = WORLD1_INTER_DIALOGUES[interIndex];
         w1InterChunkIndex = 0;
 
@@ -219,23 +305,11 @@ public class GameScreen extends JPanel {
         typeInterChunk();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // ★ TYPE INTER CHUNK — switches background before typing each chunk
-    // ════════════════════════════════════════════════════════════════════════
     private void typeInterChunk() {
         if (w1InterChunks == null || w1InterChunkIndex >= w1InterChunks.length) {
             finishInterDialogue(); return;
         }
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
-
-        // ★ Switch background if one is defined for this chunk
-        if (w1CurrentInterIndex >= 0
-                && w1CurrentInterIndex < WORLD1_INTER_BG.length
-                && w1InterChunkIndex < WORLD1_INTER_BG[w1CurrentInterIndex].length) {
-            String bg = WORLD1_INTER_BG[w1CurrentInterIndex][w1InterChunkIndex];
-            if (bg != null) setW1InterBackground(bg);
-        }
-
         String text = w1InterChunks[w1InterChunkIndex];
         w1DialogueBox.setText("");
         w1ContinueBtn.setEnabled(false);
@@ -252,31 +326,8 @@ public class GameScreen extends JPanel {
         w1TypingTimer.start();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // ★ SET INTER BACKGROUND — switches World1 scene to a new image instantly
-    // ════════════════════════════════════════════════════════════════════════
-    private void setW1InterBackground(String path) {
-        if (world1SceneBg == null || world1WorldAlpha == null) return;
-        try {
-            java.net.URL url = getClass().getResource(path);
-            if (url == null) {
-                System.out.println("[W1 Inter] Missing bg: " + path); return;
-            }
-            java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
-            // Store as interBg client property so paintComponent can draw it
-            world1SceneBg.putClientProperty("interBg", newImg);
-            // Make sure scene alpha is 0 and world alpha is 1 so interBg layer shows
-            world1SceneAlpha[0] = 0f;
-            world1WorldAlpha[0] = 1f;
-            world1SceneBg.repaint();
-        } catch (Exception ex) {
-            System.out.println("[W1 Inter] bg error: " + ex.getMessage());
-        }
-    }
-
     private void finishInterDialogue() {
         w1InInterDialogue = false;
-        w1CurrentInterIndex = -1; // ★ reset
         w1DialogueBox.setText("");
         Runnable resume = w1ResumeAfterDialogue;
         w1ResumeAfterDialogue = null;
@@ -286,12 +337,7 @@ public class GameScreen extends JPanel {
 
     private void restartBattle() { goToBattle(); }
 
-    private HeroData.EnemyDefinition pickEnemy() {
-        var enemies = HeroData.WORLD1_ENEMIES;
-        return enemies.get(new Random().nextInt(enemies.size()));
-    }
-
-    private void onHeroConfirmed(HeroData.HeroDefinition hero) {
+    private void onHeroConfirmed(HeroDefinition hero) {
         this.confirmedHero = hero;
         buildPostSelectDialogues(hero);
 
@@ -309,9 +355,6 @@ public class GameScreen extends JPanel {
                     Image scaled = raw.getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
                     postBgLabel.setIcon(new ImageIcon(scaled));
                     postBgLabel.setText("");
-                } else {
-                    postBgLabel.setIcon(null);
-                    System.out.println("[GameScreen] Missing post-select bg:"+ imgPath);
                 }
             } else {
                 postBgLabel.setIcon(null);
@@ -357,7 +400,6 @@ public class GameScreen extends JPanel {
             sceneBgLabel.setIcon(null);
             sceneBgLabel.setText("<html><center><font color='#ff6666'> Missing:<br>"
                     + resourcePath + "</font></center></html>");
-            System.out.println("[GameScreen] Asset not found:"+ absPath);
         }
         sceneBgLabel.repaint();
     }
@@ -413,11 +455,9 @@ public class GameScreen extends JPanel {
                 Font pixelFont = Font.createFont(Font.TRUETYPE_FONT, fontStream).deriveFont(Font.BOLD, 16f);
                 dialogueBox.setFont(pixelFont);
             } else {
-                System.out.println("[GameScreen] Missing font: /assets/AssetFont/Pixelari.ttf");
                 dialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
             }
         } catch (Exception ex) {
-            System.out.println("[GameScreen] Font load error:"+ ex.getMessage());
             dialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
         }
         dialogueBox.setOpaque(false);
@@ -522,7 +562,6 @@ public class GameScreen extends JPanel {
             loginStartBtn.setBackground(new Color(60, 100, 200));
             loginStartBtn.setContentAreaFilled(true);
             loginStartBtn.setBorderPainted(false);
-            System.out.println("[GameScreen] Missing: /assets/GUIButtons/NGESignUPButton.png");
         }
         popup.add(loginStartBtn);
 
@@ -579,7 +618,6 @@ public class GameScreen extends JPanel {
             examStartBtn.setForeground(Color.WHITE);
             examStartBtn.setBackground(new Color(60, 160, 80));
             examStartBtn.setContentAreaFilled(true);
-            System.out.println("[GameScreen] Missing: /assets/GUIButtons/NGEStartButton.png");
         }
         popup.add(examStartBtn);
 
@@ -770,12 +808,6 @@ public class GameScreen extends JPanel {
         typingTimer.start();
     }
 
-    private JButton createButton(String text, int x, int y, int w, int h) {
-        JButton btn = new JButton(text);
-        btn.setBounds(x, y, w, h);
-        return btn;
-    }
-
     private JButton createImageButton(String normalPath, String hoverPath,
                                       int x, int y, int w, int h, String fallbackText) {
         return createImageButton(normalPath, hoverPath, x, y, w, h, fallbackText, 10);
@@ -809,14 +841,13 @@ public class GameScreen extends JPanel {
             btn.setText(fallbackText);
             btn.setForeground(Color.WHITE);
             btn.setContentAreaFilled(true);
-            System.out.println("[GameScreen] Missing button asset:"+ normalPath);
         }
         return btn;
     }
 
     private String[] postDialogues;
 
-    private void buildPostSelectDialogues(HeroData.HeroDefinition hero) {
+    private void buildPostSelectDialogues(HeroDefinition hero) {
         String heroLine;
         String weaponLine;
         String armorLine;
@@ -1076,31 +1107,304 @@ public class GameScreen extends JPanel {
                 parent.repaint();
             }
         } else {
-            System.out.println("[GameScreen] Missing post-select item:"+ path);
             label.setVisible(false);
         }
     }
 
-    // Dialogues shown BETWEEN enemy groups
+    private void startWorld2Transition() {
+        currentWorld = 2;
+        if (world1KhaiLabel != null) {
+            world1KhaiLabel.setIcon(null);
+            world1KhaiAlpha[0] = 0f;
+            world1KhaiLabel.putClientProperty("prevImage", null);
+            world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+            world1KhaiLabel.repaint();
+        }
+        if (world1SceneAlpha != null) world1SceneAlpha[0] = 0f;
+        if (world1WorldAlpha != null) world1WorldAlpha[0] = 1.0f;
+        if (world1SceneBg != null) world1SceneBg.repaint();
+        if (w1WorldLabel != null) w1WorldLabel.setVisible(false);
+
+        cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
+        w1ContinueBtn.setEnabled(false);
+
+        String[] transitionChunks = {
+                "Sir Khai's staff strikes the scorched earth with a resonant hum.",
+                "The forest around you shudders — not in pain, but in relief.\n" +
+                        "Gray bark cracks to reveal rich brown wood.\nThe ash on the ground blooms into lush green moss.",
+                "The corruption fades, leaving behind faint sparks of life glowing in the air.",
+                "\"This forest is saved. Life is beautiful,\" Sir Khai murmurs, watching a small flower bloom.\n" +
+                        "\"But our journey is far from over. Two more Stones remain… and darkness gathers ahead.\"",
+                "A path begins to part through the trees, leading out of the forest...\n" +
+                        "It winds toward a valley shrouded in a wall of thick fog\nand the sound of distant thunder."
+        };
+
+        final int[] idx = {0};
+        Runnable[] typeNext = {null};
+        typeNext[0] = () -> {
+            if (idx[0] >= transitionChunks.length) {
+                w1ContinueBtn.setEnabled(false);
+                delay(600, this::goToWorld2Intro);
+                return;
+            }
+            String text = transitionChunks[idx[0]];
+            w1DialogueBox.setText("");
+            int[] ci = {0};
+            if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+            final Runnable next = typeNext[0];
+            w1TypingTimer = new Timer(25, null);
+            w1TypingTimer.addActionListener(e -> {
+                if (ci[0] < text.length()) {
+                    w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+                } else {
+                    w1TypingTimer.stop();
+                    idx[0]++;
+                    w1ContinueBtn.setEnabled(true);
+                    java.awt.event.ActionListener[] existing = w1ContinueBtn.getActionListeners();
+                    for (java.awt.event.ActionListener l : existing) w1ContinueBtn.removeActionListener(l);
+                    w1ContinueBtn.addActionListener(ev -> {
+                        w1ContinueBtn.setEnabled(false);
+                        for (java.awt.event.ActionListener l : existing) w1ContinueBtn.removeActionListener(l);
+                        w1ContinueBtn.addActionListener(e2 -> continueW1Dialogue());
+                        next.run();
+                    });
+                }
+            });
+            w1TypingTimer.start();
+        };
+        typeNext[0].run();
+    }
+
+    private void goToWorld2Intro() {
+        w2DialogueIndex = 0;
+        if (w2WorldLabel != null) {
+            w2WorldLabel.setVisible(true);
+            w2WorldLabel.setForeground(Color.WHITE);
+        }
+        if (w2KhaiLabel != null) {
+            w2KhaiLabel.setIcon(null);
+            w2KhaiAlpha[0] = 0f;
+            w2KhaiLabel.putClientProperty("prevImage", null);
+            w2KhaiLabel.putClientProperty("prevAlpha", 0f);
+        }
+        if (w2SceneAlpha != null) w2SceneAlpha[0] = 1.0f;
+        if (w2WorldAlpha != null) w2WorldAlpha[0] = 0.0f;
+        if (w2SceneBg != null) w2SceneBg.repaint();
+        cardLayout.show(cardPanel, SCREEN_WORLD2_INTRO);
+
+        delay(800, () -> {
+            Timer crossfade = new Timer(16, null);
+            crossfade.addActionListener(ev -> {
+                if (w2SceneBg == null) { crossfade.stop(); return; }
+                w2SceneAlpha[0] = Math.max(0f, w2SceneAlpha[0] - 0.02f);
+                w2WorldAlpha[0] = Math.min(1f, w2WorldAlpha[0] + 0.02f);
+                w2SceneBg.repaint();
+                if (w2SceneAlpha[0] <= 0f && w2WorldAlpha[0] >= 1f) {
+                    crossfade.stop();
+                    delay(600, () -> fadeW2Label());
+                    delay(1400, () -> startW2Typing());
+                }
+            });
+            crossfade.start();
+        });
+    }
+
+    private void fadeW2Label() {
+        if (w2WorldLabel == null) return;
+        final float[] a = {1.0f};
+        JLabel lbl = w2WorldLabel;
+        Timer t = new Timer(16, null);
+        t.addActionListener(e -> {
+            a[0] = Math.max(0f, a[0] - 0.011f);
+            lbl.setForeground(new Color(1f, 1f, 1f, a[0]));
+            if (a[0] <= 0f) { ((Timer)e.getSource()).stop(); lbl.setVisible(false); }
+        });
+        t.start();
+    }
+
+    private void startW2Typing() {
+        if (w2DialogueIndex >= WORLD2_DIALOGUES.length) return;
+        if (w2TypingTimer != null && w2TypingTimer.isRunning()) w2TypingTimer.stop();
+        w2Chunks = splitIntoChunks3(WORLD2_DIALOGUES[w2DialogueIndex]);
+        w2ChunkIndex = 0;
+        typeW2Chunk();
+    }
+
+    private void typeW2Chunk() {
+        if (w2Chunks == null || w2ChunkIndex >= w2Chunks.length) return;
+        if (w2TypingTimer != null && w2TypingTimer.isRunning()) w2TypingTimer.stop();
+        String text = w2Chunks[w2ChunkIndex];
+        w2DialogueBox.setText("");
+        int[] ci = {0};
+        w2TypingTimer = new Timer(25, null);
+        w2TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w2DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w2TypingTimer.stop();
+                if (w2ChunkIndex < w2Chunks.length - 1) {
+                    w2ContinueBtn.setEnabled(false);
+                    delay(1000, () -> { w2ChunkIndex++; w2ContinueBtn.setEnabled(true); typeW2Chunk(); });
+                } else {
+                    w2ContinueBtn.setEnabled(true);
+                }
+            }
+        });
+        w2TypingTimer.start();
+    }
+
+    private void continueW2Dialogue() {
+        if (w2TypingTimer != null && w2TypingTimer.isRunning()) {
+            w2TypingTimer.stop();
+            if (w2Chunks != null && w2ChunkIndex < w2Chunks.length)
+                w2DialogueBox.setText(w2Chunks[w2ChunkIndex]);
+            return;
+        }
+        if (w2InInterDialogue) {
+            w2InterChunkIndex++;
+            if (w2InterChunkIndex < w2InterChunks.length) typeW2InterChunk();
+            else finishW2InterDialogue();
+            return;
+        }
+        w2DialogueIndex++;
+        if (w2DialogueIndex < WORLD2_DIALOGUES.length) {
+            startW2Typing();
+        } else {
+            w2DialogueIndex = 0;
+            goToBattle();
+        }
+    }
+
+    private boolean w2InInterDialogue = false;
+    private Runnable w2ResumeAfterDialogue = null;
+    private String[] w2InterChunks;
+    private int w2InterChunkIndex = 0;
+
+    private void showWorld2InterDialogue(int interIndex, Runnable resumeFight) {
+        if (interIndex < 0 || interIndex >= WORLD2_INTER_DIALOGUES.length) {
+            resumeFight.run(); return;
+        }
+        w2ResumeAfterDialogue = resumeFight;
+        w2InInterDialogue = true;
+        w2InterChunks = WORLD2_INTER_DIALOGUES[interIndex];
+        w2InterChunkIndex = 0;
+
+        if (w2KhaiLabel != null) {
+            w2KhaiLabel.setIcon(null);
+            w2KhaiAlpha[0] = 0f;
+            w2KhaiLabel.putClientProperty("prevImage", null);
+            w2KhaiLabel.putClientProperty("prevAlpha", 0f);
+            w2KhaiLabel.repaint();
+        }
+        if (w2SceneAlpha != null) w2SceneAlpha[0] = 0f;
+        if (w2WorldAlpha != null) w2WorldAlpha[0] = 1.0f;
+        if (w2SceneBg != null) w2SceneBg.repaint();
+        if (w2WorldLabel != null) w2WorldLabel.setVisible(false);
+
+        cardLayout.show(cardPanel, SCREEN_WORLD2_INTRO);
+        w2ContinueBtn.setEnabled(true);
+        typeW2InterChunk();
+    }
+
+    private void typeW2InterChunk() {
+        if (w2InterChunks == null || w2InterChunkIndex >= w2InterChunks.length) {
+            finishW2InterDialogue(); return;
+        }
+        if (w2TypingTimer != null && w2TypingTimer.isRunning()) w2TypingTimer.stop();
+        String text = w2InterChunks[w2InterChunkIndex];
+        w2DialogueBox.setText("");
+        w2ContinueBtn.setEnabled(false);
+        int[] ci = {0};
+        w2TypingTimer = new Timer(25, null);
+        w2TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w2DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w2TypingTimer.stop();
+                w2ContinueBtn.setEnabled(true);
+            }
+        });
+        w2TypingTimer.start();
+    }
+
+    private void finishW2InterDialogue() {
+        w2InInterDialogue = false;
+        w2DialogueBox.setText("");
+        Runnable resume = w2ResumeAfterDialogue;
+        w2ResumeAfterDialogue = null;
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        if (resume != null) resume.run();
+    }
+
+    // ─── Dialogues ──────────────────────────────────────────────
+
+    private static final String[][] WORLD2_INTER_DIALOGUES = {
+            {
+                    "The last Vermin goes still. The stench of rot clings to your clothes.",
+                    "Further in, you hear a rhythmic chanting — low, guttural, wrong.\n" +
+                            "The shadows ahead pulse with violet light.",
+                    "FORSAKEN CULTISTS.\nThey have surrendered their souls for power. Now they serve the darkness without question."
+            },
+            {
+                    "The chanting dies. The cultists crumple — their pact finally, mercifully broken.",
+                    "The silence that follows is not peaceful.\nSomething low and wet breathes in the dark ahead.",
+                    "Two shapes detach from the fog.\nBlight Hounds — their bodies wrong, their eyes hollow, driven by hunger and rot."
+            },
+            {
+                    "The Hounds collapse. Their corruption bleeds into the mud beneath them.",
+                    "Khai places a hand on your shoulder.\n\"The town garrison has fallen. What marches ahead were once its defenders.\"",
+                    "GHOUL FOOTMEN — four of them.\nThey were soldiers once. Now they obey a master who does not care if they survive."
+            },
+            {
+                    "The last Footman falls with a hollow clatter. The silence after is heavy.",
+                    "From somewhere deep in the town, a door of iron groans open.\n" +
+                            "Something massive steps through — chains dragging on stone.",
+                    "\"The Black Jailer,\" Khai breathes. \"He keeps the Second Stone locked away.\"\n" +
+                            "\"No one who has faced him has ever walked free.\""
+            },
+            {
+                    "The Black Jailer staggers. His chains go slack — the first time they have ever rested.",
+                    "His iron mask cracks. Behind it: a face that was once human.\n\"Free…\" he rasps. Then he is still.",
+                    "A slow clap echoes through the hall. A figure descends a crumbling staircase.",
+                    "LUTHER VON.\nThe Corrupted King. He who let this town rot from within while he sat on his throne.\n" +
+                            "\"Impressive,\" he says. \"Now face something worthy of that title.\""
+            }
+    };
+
+    private static final String[] WORLD2_DIALOGUES = {
+            "You emerge from the forest's edge, gasping as the clean air turns heavy and sour.",
+            "Ahead lies a town, huddled against the gray sky.\n" +
+                    "Relief surges for a moment — until the wind changes.\n" +
+                    "It carries the copper scent of blood and the sickly sweet smell of rot.",
+            "You walk through the broken gates. The mud is thick and black.\n" +
+                    "This place is diseased. The buildings lean like dying men.\n" +
+                    "The silence is broken only by wet, hacking coughs.",
+            "Khai stops, his face twisting in grief.\n" +
+                    "\"Look at them.\" he whispers.\n" +
+                    "\"Children cough in alleys. Hollow-eyed guards demand bribes just to look the other way.\"",
+            "\"This town used to be the epitome of peace and unity,\" Khai continues, gripping his staff.\n" +
+                    "\"Now, every face tells the same story:\nsomething has poisoned the very heart of this world.\"",
+            "A scratching sound echoes from the gutters.\nThe shadows near your feet begin to move.",
+            "The stench of rot suddenly intensifies.\n" +
+                    "From the sewers and piles of filth, three PLAGUE VERMINS scuttle out.\n" +
+                    "They hiss — claws dripping with venomous filth. They do not flee. They charge."
+    };
+
     private static final String[][] WORLD1_INTER_DIALOGUES = {
-            // After Rodtfang Wolves (index 0) → before Shade Sprites
             {
                     "The path narrows. The mist becomes so thick\nyou can barely see your hand in front of your face.",
                     "The air grows icy. The silence is broken by a sound like static,\nor perhaps whispering voices overlapping until they become noise.",
                     "Shadows detach themselves from the trees.\nThey twist and contort, forming vague human-like shapes.",
                     "SHADE SPRITES.\nThey are the lost souls of travelers who died in this woods, now jealous of your life."
             },
-            // After Shade Sprites (index 1) → before Dreadbark Treants
             {
                     "The whispering finally stops.\nThe mist recedes, revealing faint lights hovering among the dead trees.",
                     "The ground shudders beneath your feet.\nAncient roots crack through the soil."
             },
-            // After Dreadbark Treants (index 2) → before Carrion Bats
             {
                     "The Treants collapse in a shower of rotting bark.\nWhere they fall, small green sprouts push through the ash.",
                     "A foul stench drifts down from above.\nSomething vast circles in the dead canopy overhead."
             },
-            // After Carrion Bats (index 3) → before Hollow Stag
             {
                     "The last bat crashes into the earth.\nThe forest holds its breath.",
                     "Ahead, pale moonlight breaks through the canopy.\nA clearing opens — and within it, something stirs."
@@ -1125,6 +1429,82 @@ public class GameScreen extends JPanel {
             "Three Rodtfang Wolves emerge from the tree line.",
             "Their glowing red eyes",
             "fixate on you. They do not hunt for food they hunt to kill."
+    };
+
+    // ─── WORLD 3 DIALOGUES ──────────────────────────────────────────────
+    private static final String[] WORLD3_DIALOGUES = {
+            "You have been travelling for days, leaving the green world far behind.\n" +
+                    "You have reached a land where not even a glimmer of life can survive.",
+            "The earth here has turned to black glass. Ash falls like snow, coating your armor in gray dust.\n" +
+                    "Rivers of molten fire carve through the rock, lighting the underbelly of the dark clouds.",
+            "At the center of this desolation, rising higher than the mountains...\n" +
+                    "Stands a spire of twisted obsidian, piercing the storm itself.\n" +
+                    "THE NECROMANCER'S TOWER.",
+            "\"We are here,\" Khai whispers, his voice barely audible over the roaring wind.\n" +
+                    "\"The source of the rot. The end of the path.\"",
+            "The ground beneath you becomes uncomfortably hot. The cracks in the rock begin to glow.\n" +
+                    "Molten magma bubbles to the surface!",
+            "From the fire, shape-less forms pull themselves together.\n" +
+                    "FLAME REVENANTS rise, their bodies flickering with ember and hatred.\n" +
+                    "They scream without mouths, a sound like burning timber."
+    };
+
+    private static final String[][] WORLD3_INTER_DIALOGUES = {
+            {
+                    "You steel yourself and look up at the Tower.",
+                    "You begin the ascent. The air thickens with suffocating magic.\n" +
+                            "Each step you take hums with a pulse from the Stones you carry, as if they are calling out.",
+                    "The air grows cold, despite the rivers of lava flowing nearby.\n" +
+                            "A hollow chanting fills the chamber, vibrating in your bones.",
+                    "From the shadows of the obsidian pillars, figures draped in tattered robes emerge.\n" +
+                            "BONE WARLOCKS.",
+                    "They raise staffs made of spine and skull, chanting forbidden incantations\n" +
+                            "to twist the very life force from your body."
+            },
+            {
+                    "A deep, rhythmic thumping echoes through the cavern. Boom... Boom...\n" +
+                            "Lava geysers burst upward, spraying molten rock against the walls.",
+                    "Massive shadows rise from behind the curtain of fire.\n" +
+                            "OBSIDIAN CRUSHERS emerge — molten giants forged from living stone and fury.",
+                    "Their skin is black rock, their veins flow with lava,\n" +
+                            "and they look at you as nothing more than dust to be swept away."
+            },
+            {
+                    "Halfway up the winding stairs, you find something etched into the obsidian wall.\n" +
+                            "It is a mural, ancient and jagged.",
+                    "It shows a hooded figure holding three glowing stones high above a kneeling crowd.\n" +
+                            "Beneath it, carved in a language that looks chillingly familiar, is a single phrase:\n" +
+                            "\"TO TEACH IS TO CONTROL.\"",
+                    "A shiver runs down your spine that has nothing to do with the cold.\n" +
+                            "You climb higher into the spire. The air grows thin and impossibly cold.",
+                    "Suddenly, stone cracks with a sharp snap!\n" +
+                            "Perched on the obsidian ledges above, grim stone statues shed their rocky skin and shriek as they dive.",
+                    "SOULFLAYER GARGOYLES take flight.\n" +
+                            "Their wings block out the red lightning, and their eyes burn with hunger for the living."
+            },
+            {
+                    "You reach the penultimate landing. The heat here is unbearable.\n" +
+                            "The stone beneath your boots is soft, almost melting.",
+                    "A towering figure steps from the magma falls blocking the path.\n" +
+                            "ZYRRYL, Warden of the Shattered Tower.",
+                    "His armor is forged from cursed steel and hardened lava.\n" +
+                            "He drags a massive greatsword that glows white-hot."
+            }
+    };
+
+    private static final String[] KHAI_BETRAYAL_DIALOGUE = {
+            "With a heavy crash, Zyrryl, the Tower Warden, falls to the ground.\n" +
+                    "You catch your breath. You hold the final Stone of Life.",
+            "Sir Khai steps forward. His staff is no longer wood—it is blazing with chaotic energy.\n" +
+                    "\"Finally.\"",
+            "\"You’ve served well, my student.\n" +
+                    "Who better to collect the Stones of Life than one who trusts their teacher blindly?\"",
+            "\"I have guided you not to save this land... but to claim its power.\n" +
+                    "I have been waiting for a vessel like you for a millennium.\"",
+            "The air around him turns black. His weary eyes are gone, replaced by burning voids.",
+            "\"I wish to bring chaos not only to this land, but to all lands beyond.\n" +
+                    "The Necromancer you sought... The one who brings the end of worlds...\"",
+            "...IS ME!!!!!!!!!"
     };
 
     private JPanel buildWorld1IntroScreen() {
@@ -1160,12 +1540,11 @@ public class GameScreen extends JPanel {
             java.net.URL w1url = getClass().getResource("/assets/Backgrounds/World1Background.png");
             if (l6url != null) lights6Img = javax.imageio.ImageIO.read(l6url);
             if (w1url  != null) world1Img  = javax.imageio.ImageIO.read(w1url);
-        } catch (Exception ex) { System.out.println("[W1] Image load error: " + ex.getMessage()); }
+        } catch (Exception ex) {}
 
         final java.awt.image.BufferedImage fLights6 = lights6Img;
         final java.awt.image.BufferedImage fWorld1  = world1Img;
 
-        // ★ Scene background panel — also handles interBg switching via client property
         JPanel w1SceneBg = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -1178,13 +1557,6 @@ public class GameScreen extends JPanel {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, worldAlpha[0]));
                     g2.drawImage(fWorld1, 0, 0, getWidth(), getHeight(), null);
                 }
-                // ★ Draw inter-enemy background on top if set and World1Bg is showing
-                Object interBg = getClientProperty("interBg");
-                if (interBg instanceof java.awt.image.BufferedImage
-                        && worldAlpha[0] >= 1f && sceneAlpha[0] <= 0f) {
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-                    g2.drawImage((java.awt.image.BufferedImage) interBg, 0, 0, getWidth(), getHeight(), null);
-                }
                 g2.dispose();
             }
         };
@@ -1195,7 +1567,7 @@ public class GameScreen extends JPanel {
         world1SceneAlpha = sceneAlpha;
         world1WorldAlpha = worldAlpha;
 
-        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF SILENCE", SwingConstants.CENTER);
+        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF ENDINGS", SwingConstants.CENTER);
         w1WorldLabel.setBounds(0, 220, 1280, 50);
         w1WorldLabel.setForeground(Color.WHITE);
         w1WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
@@ -1384,7 +1756,7 @@ public class GameScreen extends JPanel {
                     world1KhaiAlpha[0] = 1.0f;
                     world1KhaiLabel.repaint();
                 }
-            } catch (Exception ex) { System.out.println("[W1] SirKhai3 error: " + ex.getMessage()); }
+            } catch (Exception ex) {}
         }
 
         if (w1DialogueIndex == 4) {
@@ -1418,7 +1790,7 @@ public class GameScreen extends JPanel {
                             world1KhaiAlpha[0] = 1.0f;
                             world1KhaiLabel.repaint();
                         }
-                    } catch (Exception ex) { System.out.println("[W1] Wolf2 error: " + ex.getMessage()); }
+                    } catch (Exception ex) {}
                     delay(1000, () -> {
                         w1DialogueIndex = 7;
                         w1ContinueBtn.setEnabled(true);
@@ -1439,7 +1811,7 @@ public class GameScreen extends JPanel {
                     world1KhaiAlpha[0] = 1.0f;
                     world1KhaiLabel.repaint();
                 }
-            } catch (Exception ex) { System.out.println("[W1] Wolf3 error: " + ex.getMessage()); }
+            } catch (Exception ex) {}
         }
 
         w1DialogueIndex++;
@@ -1467,7 +1839,7 @@ public class GameScreen extends JPanel {
     private void crossfadeKhaiToKhai(String path, Runnable onDone) {
         try {
             java.net.URL url = getClass().getResource(path);
-            if (url == null) { System.out.println("[W1] Missing: " + path); if (onDone != null) onDone.run(); return; }
+            if (url == null) { if (onDone != null) onDone.run(); return; }
             java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
             final Image nextImage = newImg.getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
             final Image prevImage = world1KhaiLabel.getIcon() != null
@@ -1493,14 +1865,14 @@ public class GameScreen extends JPanel {
                 }
             });
             fade.start();
-        } catch (Exception ex) { System.out.println("[W1] crossfadeKhaiToKhai error: " + ex.getMessage()); if (onDone != null) onDone.run(); }
+        } catch (Exception ex) { if (onDone != null) onDone.run(); }
     }
 
     private void crossfadeW1ToKhai(String path, Runnable onDone) {
         if (world1SceneBg == null) return;
         try {
             java.net.URL khaiUrl = getClass().getResource(path);
-            if (khaiUrl == null) { System.out.println("[W1] Missing: " + path); return; }
+            if (khaiUrl == null) { return; }
             java.awt.image.BufferedImage khaiImg = javax.imageio.ImageIO.read(khaiUrl);
             final java.awt.image.BufferedImage fKhai = khaiImg;
             final float[] khaiAlpha = {0f};
@@ -1527,7 +1899,7 @@ public class GameScreen extends JPanel {
                 }
             });
             fade.start();
-        } catch (Exception ex) { System.out.println("[W1] crossfadeW1ToKhai error: " + ex.getMessage()); }
+        } catch (Exception ex) {}
     }
 
     private void transitionW1Scene(String path) {
@@ -1535,7 +1907,7 @@ public class GameScreen extends JPanel {
             if (world1KhaiLabel == null) return;
             try {
                 java.net.URL url = getClass().getResource(path);
-                if (url == null) { System.out.println("[W1] Missing: " + path); return; }
+                if (url == null) { return; }
                 java.awt.image.BufferedImage newImg = javax.imageio.ImageIO.read(url);
                 final Image nextImage = newImg.getScaledInstance(1280, 520, Image.SCALE_SMOOTH);
                 final Image prevImage = world1KhaiLabel.getIcon() != null
@@ -1560,9 +1932,551 @@ public class GameScreen extends JPanel {
                     }
                 });
                 fade.start();
-            } catch (Exception ex) {
-                System.out.println("[W1] Scene transition error: " + ex.getMessage());
+            } catch (Exception ex) { }
+        });
+    }
+
+    private JPanel buildWorld2IntroScreen() {
+        JLayeredPane layeredPane = new JLayeredPane();
+
+        JPanel wrapper = new JPanel(null) {
+            @Override public void doLayout() {
+                super.doLayout();
+                layeredPane.setBounds(0, 0, getWidth(), getHeight());
+            }
+        };
+        wrapper.setBackground(new Color(20, 10, 30));
+        wrapper.setLayout(null);
+        wrapper.setPreferredSize(new Dimension(1280, 720));
+
+        JLabel w2TheBg = new JLabel();
+        w2TheBg.setBounds(0, 0, 1280, 720);
+        w2TheBg.setOpaque(true);
+        w2TheBg.setBackground(new Color(20, 10, 30));
+        java.net.URL w2BgUrl = getClass().getResource("/assets/Backgrounds/TheBackground.png");
+        if (w2BgUrl != null) {
+            w2TheBg.setIcon(new ImageIcon(
+                    new ImageIcon(w2BgUrl).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH)));
+        }
+
+        final float[] sceneAlpha = {1.0f};
+        final float[] worldAlpha = {0.0f};
+
+        java.awt.image.BufferedImage darkFrameImg = null;
+        java.awt.image.BufferedImage world2Img    = null;
+        try {
+            java.net.URL darkUrl = getClass().getResource("/assets/Backgrounds/NGEBeforeLights6.png");
+            java.net.URL w2url   = getClass().getResource("/assets/Backgrounds/World2Background.png");
+            if (darkUrl != null) darkFrameImg = javax.imageio.ImageIO.read(darkUrl);
+            if (w2url   != null) world2Img    = javax.imageio.ImageIO.read(w2url);
+        } catch (Exception ex) { }
+
+        final java.awt.image.BufferedImage fDark   = darkFrameImg;
+        final java.awt.image.BufferedImage fWorld2 = world2Img;
+
+        JPanel w2Scene = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                if (fDark != null && sceneAlpha[0] > 0) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sceneAlpha[0]));
+                    g2.drawImage(fDark, 0, 0, getWidth(), getHeight(), null);
+                }
+                if (fWorld2 != null && worldAlpha[0] > 0) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, worldAlpha[0]));
+                    g2.drawImage(fWorld2, 0, 0, getWidth(), getHeight(), null);
+                }
+                g2.dispose();
+            }
+        };
+        w2Scene.setBounds(0, 0, 1280, 520);
+        w2Scene.setOpaque(false);
+
+        w2SceneBg    = w2Scene;
+        w2SceneAlpha = sceneAlpha;
+        w2WorldAlpha = worldAlpha;
+
+        w2WorldLabel = new JLabel("WORLD 2 : THE DECAYING TOWN", SwingConstants.CENTER);
+        w2WorldLabel.setBounds(0, 220, 1280, 50);
+        w2WorldLabel.setForeground(Color.WHITE);
+        w2WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
+
+        JLabel w2KhaiPanel = new JLabel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                Object prevImg = getClientProperty("prevImage");
+                Object prevA   = getClientProperty("prevAlpha");
+                if (prevImg instanceof Image && prevA instanceof Float && (Float)prevA > 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (Float)prevA));
+                    g2.drawImage((Image)prevImg, 0, 0, getWidth(), getHeight(), null);
+                }
+                if (getIcon() != null && w2KhaiAlpha[0] > 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(
+                            AlphaComposite.SRC_OVER, Math.min(1f, w2KhaiAlpha[0])));
+                    g2.drawImage(((ImageIcon)getIcon()).getImage(), 0, 0, getWidth(), getHeight(), null);
+                }
+                g2.dispose();
+            }
+        };
+        w2KhaiPanel.setBounds(0, 0, 1280, 520);
+        w2KhaiPanel.setOpaque(false);
+        w2KhaiLabel = w2KhaiPanel;
+
+        JLabel w2DialogueBgLabel = new JLabel();
+        w2DialogueBgLabel.setBounds(-40, 453, 1053, 343);
+        java.net.URL w2DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
+        if (w2DbUrl != null) {
+            w2DialogueBgLabel.setIcon(new ImageIcon(
+                    new ImageIcon(w2DbUrl).getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH)));
+        }
+
+        w2DialogueBox = new JTextArea();
+        w2DialogueBox.setBounds(104, 541, 900, 100);
+        w2DialogueBox.setEditable(false);
+        w2DialogueBox.setLineWrap(true);
+        w2DialogueBox.setWrapStyleWord(true);
+        try {
+            java.io.InputStream fs = getClass().getResourceAsStream("/assets/AssetFont/Pixelari.ttf");
+            if (fs != null) {
+                Font pf = Font.createFont(Font.TRUETYPE_FONT, fs).deriveFont(Font.BOLD, 19f);
+                w2DialogueBox.setFont(pf);
+            } else {
+                w2DialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+            }
+        } catch (Exception ex) {
+            w2DialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+        }
+        w2DialogueBox.setOpaque(false);
+        w2DialogueBox.setBackground(new Color(0, 0, 0, 0));
+        w2DialogueBox.setForeground(Color.BLACK);
+        w2DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
+
+        w2ContinueBtn = createImageButton(
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
+                964, 554, 154, 64, "Continue");
+        w2ContinueBtn.addActionListener(e -> continueW2Dialogue());
+
+        JButton w2MenuBtn = createImageButton(
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
+                1103, 555, 148, 58, "Menu", 0);
+        JButton w2BackBtn = createImageButton(
+                "/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png",
+                970, 613, 140, 50, "Back", 20);
+        JButton w2ExitBtn = createImageButton(
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
+                1108, 613, 140, 50, "Exit", 19);
+        w2ExitBtn.addActionListener(e -> System.exit(0));
+
+        layeredPane.setBounds(0, 0, 1280, 720);
+        layeredPane.add(w2TheBg,           JLayeredPane.FRAME_CONTENT_LAYER);
+        layeredPane.add(w2Scene,           JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(w2KhaiPanel,       JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w2WorldLabel,      JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w2DialogueBgLabel, JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w2DialogueBox,     JLayeredPane.MODAL_LAYER);
+        layeredPane.add(w2ContinueBtn,     JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w2MenuBtn,         JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w2BackBtn,         JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w2ExitBtn,         JLayeredPane.PALETTE_LAYER);
+
+        wrapper.add(layeredPane);
+        return wrapper;
+    }
+
+    // =========================================================================
+    //  BUILD WORLD 3 INTRO SCREEN
+    // =========================================================================
+    private JPanel buildWorld3IntroScreen() {
+        JLayeredPane layeredPane = new JLayeredPane();
+
+        JPanel wrapper = new JPanel(null) {
+            @Override public void doLayout() {
+                super.doLayout();
+                layeredPane.setBounds(0, 0, getWidth(), getHeight());
+            }
+        };
+        wrapper.setBackground(new Color(30, 10, 10));
+        wrapper.setLayout(null);
+        wrapper.setPreferredSize(new Dimension(1280, 720));
+
+        JLabel w3TheBg = new JLabel();
+        w3TheBg.setBounds(0, 0, 1280, 720);
+        w3TheBg.setOpaque(true);
+        w3TheBg.setBackground(new Color(30, 10, 10));
+        java.net.URL w3BgUrl = getClass().getResource("/assets/Backgrounds/TheBackground.png");
+        if (w3BgUrl != null) {
+            w3TheBg.setIcon(new ImageIcon(
+                    new ImageIcon(w3BgUrl).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH)));
+        }
+
+        final float[] sceneAlpha = {1.0f};
+        final float[] worldAlpha = {0.0f};
+
+        java.awt.image.BufferedImage darkFrameImg = null;
+        java.awt.image.BufferedImage world3Img    = null;
+        try {
+            java.net.URL darkUrl = getClass().getResource("/assets/Backgrounds/NGEBeforeLights6.png");
+            java.net.URL w3url   = getClass().getResource("/assets/Backgrounds/World3Background.png");
+            if (darkUrl != null) darkFrameImg = javax.imageio.ImageIO.read(darkUrl);
+            if (w3url   != null) world3Img    = javax.imageio.ImageIO.read(w3url);
+        } catch (Exception ex) { }
+
+        final java.awt.image.BufferedImage fDark   = darkFrameImg;
+        final java.awt.image.BufferedImage fWorld3 = world3Img;
+
+        JPanel w3Scene = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+
+                g2.setColor(new Color(30, 10, 10));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+
+                if (fDark != null && sceneAlpha[0] > 0) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sceneAlpha[0]));
+                    g2.drawImage(fDark, 0, 0, getWidth(), getHeight(), null);
+                }
+                if (fWorld3 != null && worldAlpha[0] > 0) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, worldAlpha[0]));
+                    g2.drawImage(fWorld3, 0, 0, getWidth(), getHeight(), null);
+                }
+                g2.dispose();
+            }
+        };
+        w3Scene.setBounds(0, 0, 1280, 520);
+        w3Scene.setOpaque(false);
+
+        w3SceneBg    = w3Scene;
+        w3SceneAlpha = sceneAlpha;
+        w3WorldAlpha = worldAlpha;
+
+        w3WorldLabel = new JLabel("WORLD 3 : THE NECROMANCER'S TOWER", SwingConstants.CENTER);
+        w3WorldLabel.setBounds(0, 220, 1280, 50);
+        w3WorldLabel.setForeground(Color.WHITE);
+        w3WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
+
+        JLabel w3KhaiPanel = new JLabel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                Object prevImg = getClientProperty("prevImage");
+                Object prevA   = getClientProperty("prevAlpha");
+                if (prevImg instanceof Image && prevA instanceof Float && (Float)prevA > 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (Float)prevA));
+                    g2.drawImage((Image)prevImg, 0, 0, getWidth(), getHeight(), null);
+                }
+                if (getIcon() != null && w3KhaiAlpha[0] > 0f) {
+                    g2.setComposite(AlphaComposite.getInstance(
+                            AlphaComposite.SRC_OVER, Math.min(1f, w3KhaiAlpha[0])));
+                    g2.drawImage(((ImageIcon)getIcon()).getImage(), 0, 0, getWidth(), getHeight(), null);
+                }
+                g2.dispose();
+            }
+        };
+        w3KhaiPanel.setBounds(0, 0, 1280, 520);
+        w3KhaiPanel.setOpaque(false);
+        w3KhaiLabel = w3KhaiPanel;
+
+        JLabel w3DialogueBgLabel = new JLabel();
+        w3DialogueBgLabel.setBounds(-40, 453, 1053, 343);
+        java.net.URL w3DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
+        if (w3DbUrl != null) {
+            w3DialogueBgLabel.setIcon(new ImageIcon(
+                    new ImageIcon(w3DbUrl).getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH)));
+        }
+
+        w3DialogueBox = new JTextArea();
+        w3DialogueBox.setBounds(104, 541, 900, 100);
+        w3DialogueBox.setEditable(false);
+        w3DialogueBox.setLineWrap(true);
+        w3DialogueBox.setWrapStyleWord(true);
+        try {
+            java.io.InputStream fs = getClass().getResourceAsStream("/assets/AssetFont/Pixelari.ttf");
+            if (fs != null) {
+                Font pf = Font.createFont(Font.TRUETYPE_FONT, fs).deriveFont(Font.BOLD, 19f);
+                w3DialogueBox.setFont(pf);
+            } else {
+                w3DialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+            }
+        } catch (Exception ex) {
+            w3DialogueBox.setFont(new Font("Dialog", Font.BOLD, 16));
+        }
+        w3DialogueBox.setOpaque(false);
+        w3DialogueBox.setBackground(new Color(0, 0, 0, 0));
+        w3DialogueBox.setForeground(Color.BLACK);
+        w3DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
+
+        w3ContinueBtn = createImageButton(
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
+                964, 554, 154, 64, "Continue");
+        w3ContinueBtn.addActionListener(e -> continueW3Dialogue());
+
+        JButton w3MenuBtn = createImageButton(
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
+                1103, 555, 148, 58, "Menu", 0);
+        JButton w3BackBtn = createImageButton(
+                "/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png",
+                970, 613, 140, 50, "Back", 20);
+        JButton w3ExitBtn = createImageButton(
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
+                1108, 613, 140, 50, "Exit", 19);
+        w3ExitBtn.addActionListener(e -> System.exit(0));
+
+        layeredPane.setBounds(0, 0, 1280, 720);
+        layeredPane.add(w3TheBg,           JLayeredPane.FRAME_CONTENT_LAYER);
+        layeredPane.add(w3Scene,           JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(w3KhaiPanel,       JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3WorldLabel,      JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3DialogueBgLabel, JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3DialogueBox,     JLayeredPane.MODAL_LAYER);
+        layeredPane.add(w3ContinueBtn,     JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3MenuBtn,         JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3BackBtn,         JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3ExitBtn,         JLayeredPane.PALETTE_LAYER);
+
+        wrapper.add(layeredPane);
+        return wrapper;
+    }
+
+    // =========================================================================
+    //  WORLD 3 TRANSITION & LOGIC
+    // =========================================================================
+
+    private void startWorld3Transition() {
+        currentWorld = 3;
+        w3DialogueIndex = 0;
+        if (w3WorldLabel != null) {
+            w3WorldLabel.setVisible(true);
+            w3WorldLabel.setForeground(Color.WHITE);
+        }
+        if (w3KhaiLabel != null) {
+            w3KhaiLabel.setIcon(null);
+            w3KhaiAlpha[0] = 0f;
+            w3KhaiLabel.putClientProperty("prevImage", null);
+            w3KhaiLabel.putClientProperty("prevAlpha", 0f);
+        }
+        if (w3SceneAlpha != null) w3SceneAlpha[0] = 1.0f;
+        if (w3WorldAlpha != null) w3WorldAlpha[0] = 0.0f;
+        if (w3SceneBg != null) w3SceneBg.repaint();
+
+        cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
+
+        delay(800, () -> {
+            Timer crossfade = new Timer(16, null);
+            crossfade.addActionListener(ev -> {
+                if (w3SceneBg == null) { crossfade.stop(); return; }
+                w3SceneAlpha[0] = Math.max(0f, w3SceneAlpha[0] - 0.02f);
+                w3WorldAlpha[0] = Math.min(1f, w3WorldAlpha[0] + 0.02f);
+                w3SceneBg.repaint();
+                if (w3SceneAlpha[0] <= 0f && w3WorldAlpha[0] >= 1f) {
+                    crossfade.stop();
+                    delay(600, () -> fadeW3Label());
+                    delay(1400, () -> startW3Typing());
+                }
+            });
+            crossfade.start();
+        });
+    }
+
+    private void fadeW3Label() {
+        if (w3WorldLabel == null) return;
+        final float[] a = {1.0f};
+        JLabel lbl = w3WorldLabel;
+        Timer t = new Timer(16, null);
+        t.addActionListener(e -> {
+            a[0] = Math.max(0f, a[0] - 0.011f);
+            lbl.setForeground(new Color(1f, 1f, 1f, a[0]));
+            if (a[0] <= 0f) { ((Timer)e.getSource()).stop(); lbl.setVisible(false); }
+        });
+        t.start();
+    }
+
+    private void startW3Typing() {
+        if (w3DialogueIndex >= WORLD3_DIALOGUES.length) return;
+        if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+        w3Chunks = splitIntoChunks3(WORLD3_DIALOGUES[w3DialogueIndex]);
+        w3ChunkIndex = 0;
+        typeW3Chunk();
+    }
+
+    private void typeW3Chunk() {
+        if (w3Chunks == null || w3ChunkIndex >= w3Chunks.length) return;
+        if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+        String text = w3Chunks[w3ChunkIndex];
+        w3DialogueBox.setText("");
+        int[] ci = {0};
+        w3TypingTimer = new Timer(25, null);
+        w3TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w3DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w3TypingTimer.stop();
+                if (w3ChunkIndex < w3Chunks.length - 1) {
+                    w3ContinueBtn.setEnabled(false);
+                    delay(1000, () -> { w3ChunkIndex++; w3ContinueBtn.setEnabled(true); typeW3Chunk(); });
+                } else {
+                    w3ContinueBtn.setEnabled(true);
+                }
             }
         });
+        w3TypingTimer.start();
+    }
+
+    private void continueW3Dialogue() {
+        if (w3TypingTimer != null && w3TypingTimer.isRunning()) {
+            w3TypingTimer.stop();
+            if (w3Chunks != null && w3ChunkIndex < w3Chunks.length)
+                w3DialogueBox.setText(w3Chunks[w3ChunkIndex]);
+            return;
+        }
+        if (w3InInterDialogue) {
+            w3InterChunkIndex++;
+            if (w3InterChunkIndex < w3InterChunks.length) typeW3InterChunk();
+            else finishW3InterDialogue();
+            return;
+        }
+        w3DialogueIndex++;
+        if (w3DialogueIndex < WORLD3_DIALOGUES.length) {
+            startW3Typing();
+        } else {
+            w3DialogueIndex = 0;
+            goToBattle();
+        }
+    }
+
+    private boolean w3InInterDialogue = false;
+    private Runnable w3ResumeAfterDialogue = null;
+    private String[] w3InterChunks;
+    private int w3InterChunkIndex = 0;
+
+    private void showWorld3InterDialogue(int interIndex, Runnable resumeFight) {
+        if (interIndex < 0 || interIndex >= WORLD3_INTER_DIALOGUES.length) {
+            resumeFight.run(); return;
+        }
+        w3ResumeAfterDialogue = resumeFight;
+        w3InInterDialogue = true;
+        w3InterChunks = WORLD3_INTER_DIALOGUES[interIndex];
+        w3InterChunkIndex = 0;
+
+        if (w3KhaiLabel != null) {
+            w3KhaiLabel.setIcon(null);
+            w3KhaiAlpha[0] = 0f;
+            w3KhaiLabel.putClientProperty("prevImage", null);
+            w3KhaiLabel.putClientProperty("prevAlpha", 0f);
+            w3KhaiLabel.repaint();
+        }
+        if (w3SceneAlpha != null) w3SceneAlpha[0] = 0f;
+        if (w3WorldAlpha != null) w3WorldAlpha[0] = 1.0f;
+        if (w3SceneBg != null) w3SceneBg.repaint();
+        if (w3WorldLabel != null) w3WorldLabel.setVisible(false);
+
+        cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
+        w3ContinueBtn.setEnabled(true);
+        typeW3InterChunk();
+    }
+
+    private void typeW3InterChunk() {
+        if (w3InterChunks == null || w3InterChunkIndex >= w3InterChunks.length) {
+            finishW3InterDialogue(); return;
+        }
+        if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+        String text = w3InterChunks[w3InterChunkIndex];
+        w3DialogueBox.setText("");
+        w3ContinueBtn.setEnabled(false);
+        int[] ci = {0};
+        w3TypingTimer = new Timer(25, null);
+        w3TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w3DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w3TypingTimer.stop();
+                w3ContinueBtn.setEnabled(true);
+            }
+        });
+        w3TypingTimer.start();
+    }
+
+    private void finishW3InterDialogue() {
+        w3InInterDialogue = false;
+        w3DialogueBox.setText("");
+        Runnable resume = w3ResumeAfterDialogue;
+        w3ResumeAfterDialogue = null;
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        if (resume != null) resume.run();
+    }
+
+    private void startFinalBossTransition() {
+        cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
+
+        if (w3SceneBg != null) {
+            w3SceneBg.setBackground(Color.BLACK);
+            w3SceneBg.setOpaque(true);
+            w3SceneBg.repaint();
+        }
+        if (w3WorldLabel != null) w3WorldLabel.setVisible(false);
+        if (w3KhaiLabel != null) w3KhaiLabel.setIcon(null);
+
+        w3ContinueBtn.setEnabled(false);
+
+        final int[] idx = {0};
+        Runnable[] typeNext = {null};
+
+        typeNext[0] = () -> {
+            if (idx[0] >= KHAI_BETRAYAL_DIALOGUE.length) {
+                w3ContinueBtn.setEnabled(false);
+                cardLayout.show(cardPanel, SCREEN_BATTLE);
+                battlePanel.startEnemySequence(
+                        confirmedHero,
+                        GameGUI.model.HeroData.FINAL_BOSS_SEQUENCE,
+                        () -> System.out.println("GAME OVER - YOU BEAT THE GAME!")
+                );
+                return;
+            }
+
+            String text = KHAI_BETRAYAL_DIALOGUE[idx[0]];
+            w3DialogueBox.setText("");
+
+            if (idx[0] == 6) {
+                w3DialogueBox.setForeground(Color.RED);
+                w3DialogueBox.setFont(w3DialogueBox.getFont().deriveFont(28f));
+
+                Point origin = getLocation();
+                Timer shakeTimer = new Timer(50, ev -> {
+                    int dx = (Math.random() > 0.5 ? 5 : -5);
+                    int dy = (Math.random() > 0.5 ? 5 : -5);
+                    setLocation(origin.x + dx, origin.y + dy);
+                });
+                shakeTimer.start();
+                delay(1000, () -> {
+                    shakeTimer.stop();
+                    setLocation(origin);
+                });
+            } else {
+                w3DialogueBox.setForeground(Color.WHITE);
+            }
+
+            int[] ci = {0};
+            if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+            final Runnable next = typeNext[0];
+
+            w3TypingTimer = new Timer(35, e -> {
+                if (ci[0] < text.length()) {
+                    w3DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+                } else {
+                    w3TypingTimer.stop();
+                    idx[0]++;
+                    w3ContinueBtn.setEnabled(true);
+
+                    for (ActionListener l : w3ContinueBtn.getActionListeners()) w3ContinueBtn.removeActionListener(l);
+                    w3ContinueBtn.addActionListener(ev -> {
+                        w3ContinueBtn.setEnabled(false);
+                        for (ActionListener l : w3ContinueBtn.getActionListeners()) w3ContinueBtn.removeActionListener(l);
+                        next.run();
+                    });
+                }
+            });
+            w3TypingTimer.start();
+        };
+
+        typeNext[0].run();
     }
 }

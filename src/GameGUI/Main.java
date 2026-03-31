@@ -9,7 +9,7 @@ public class Main {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1280, 720);
             frame.setResizable(false);
-            frame.setLocationRelativeTo(null);
+            frame.setLocationRelativeTo(null);      
 
             // TitleScreen handles its own transition to GameScreen
             frame.getContentPane().add(new TitleScreen());
