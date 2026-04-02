@@ -156,6 +156,17 @@ public class GameScreen extends JPanel {
     //  DEV TOOLS / TESTER WARPS
     // =========================================================================
 
+    public void enableDevTools() {
+        battlePanel.enableDevTools();
+    }
+
+    public void debugSkipToWorld1Battle(HeroDefinition hero) {
+        this.confirmedHero = hero;
+        this.currentWorld = 1;
+        if (typingTimer != null) typingTimer.stop();
+        goToWorld1Intro();
+    }
+
     public void debugSkipToWorld2(HeroDefinition hero) {
         this.confirmedHero = hero;
         this.currentWorld = 2;
@@ -189,6 +200,47 @@ public class GameScreen extends JPanel {
         cardLayout.show(cardPanel, SCREEN_SHOP);
     }
 
+    public void debugSkipToHollowStag(HeroDefinition hero) {
+        this.confirmedHero = hero;
+        this.currentWorld = 1;
+        if (typingTimer != null) typingTimer.stop();
+
+        // Find the Hollow Stag entry from WORLD1_ENEMIES and wrap it in a single-item list
+        java.util.List<GameGUI.model.HeroData.EnemyDefinition> stagOnly =
+                HeroData.WORLD1_ENEMIES.stream()
+                        .filter(e -> e.name.equals("The Hollow Stag"))
+                        .collect(java.util.stream.Collectors.toList());
+
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> resumeFight.run());
+        battlePanel.startEnemySequence(hero, stagOnly, this::startWorld2Transition);
+    }
+
+    public void debugSkipToEnemy(HeroData.HeroDefinition hero, String enemyName, int currentWorld) {
+        this.confirmedHero = hero;
+        this.currentWorld = currentWorld;
+        if (typingTimer != null) typingTimer.stop();
+
+        // Search all enemy lists for the matching enemy
+        java.util.List<HeroData.EnemyDefinition> allEnemies = new java.util.ArrayList<>();
+        allEnemies.addAll(HeroData.WORLD1_ENEMIES);
+        allEnemies.addAll(HeroData.WORLD2_ENEMIES);
+        allEnemies.addAll(HeroData.WORLD3_ENEMIES);
+
+        java.util.List<HeroData.EnemyDefinition> match = allEnemies.stream()
+                .filter(e -> e.name.equals(enemyName))
+                .collect(java.util.stream.Collectors.toList());
+
+        if (match.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Enemy not found: " + enemyName);
+            return;
+        }
+
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> resumeFight.run());
+        battlePanel.startEnemySequence(hero, match, () ->
+                System.out.println("[DEV] Finished fighting: " + enemyName));
+    }
 
     private void goToIntro() { cardLayout.show(cardPanel, SCREEN_INTRO); }
 
@@ -284,6 +336,7 @@ public class GameScreen extends JPanel {
             resumeFight.run(); return;
         }
         w1ResumeAfterDialogue = resumeFight;
+        w1InterDialogueIndex = interIndex;
         w1InInterDialogue = true;
         w1InterChunks = WORLD1_INTER_DIALOGUES[interIndex];
         w1InterChunkIndex = 0;
@@ -300,7 +353,9 @@ public class GameScreen extends JPanel {
         if (world1SceneBg != null) world1SceneBg.repaint();
         if (w1WorldLabel != null) w1WorldLabel.setVisible(false);
 
+        w1DialogueBox.setText("");
         cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
+
         w1ContinueBtn.setEnabled(true);
         typeInterChunk();
     }
@@ -310,6 +365,127 @@ public class GameScreen extends JPanel {
             finishInterDialogue(); return;
         }
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+
+        // ★ INTER-DIALOGUE 0 logic
+        if (w1InterDialogueIndex == 0 && w1InterChunkIndex == 1) {
+            w1ContinueBtn.setEnabled(false);
+            showW1InterBg("/assets/Backgrounds/World1BattleBackgroundFog.png");
+            delay(1500, () -> {
+                showW1InterBg("/assets/Backgrounds/World1BattleBackgroundFogHands.png");
+                delay(1500, () -> {
+                    showW1InterBg("/assets/Backgrounds/World1BattleBackgroundFog.png");
+                    w1ContinueBtn.setEnabled(true);
+                    typeW1InterChunkNow();
+                });
+            });
+            return;
+        }
+
+        if (w1InterDialogueIndex == 0 && w1InterChunkIndex == 2) {
+            showW1InterBg("/assets/Backgrounds/World1BattleBackgroundShadowsDetached.png");
+        }
+
+        if (w1InterDialogueIndex == 0 && w1InterChunkIndex == 3) {
+            showW1InterBg("/assets/Backgrounds/World1ShadeSprite.png");
+        }
+
+        // ★ INTER-DIALOGUE 1 logic
+        // After chunk 0 ("The whispering finally stops"), play chunk 1 normally
+        // After chunk 1 ("The ground shudders"), show World1Cracks.png then type
+        if (w1InterDialogueIndex == 1 && w1InterChunkIndex == 1) {
+            showW1InterBg("/assets/Backgrounds/World1Cracks.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        // After chunk 1 is done and continue pressed, show treant image then type chunk 2
+        if (w1InterDialogueIndex == 1 && w1InterChunkIndex == 2) {
+            showW1InterBg("/assets/Backgrounds/World1DreadBarkTreants.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        // ★ INTER-DIALOGUE 2 logic
+        if (w1InterDialogueIndex == 2 && w1InterChunkIndex == 0) {
+            showW1InterBg("/assets/Backgrounds/World1DreadbarkTreantsDefeated.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        if (w1InterDialogueIndex == 2 && w1InterChunkIndex == 1) {
+            w1ContinueBtn.setEnabled(false);
+            showW1InterBg("/assets/Backgrounds/World1CarrionBatsCircle.png");
+            delay(1500, () -> {
+                showW1InterBg("/assets/Backgrounds/World1CarrionBatsSpread.png");
+                w1ContinueBtn.setEnabled(true);
+                typeW1InterChunkNow();
+            });
+            return;
+        }
+
+        if (w1InterDialogueIndex == 2 && w1InterChunkIndex == 2) {
+            showW1InterBg("/assets/Backgrounds/World1CarrionBats.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        // ★ INTER-DIALOGUE 3 logic
+        if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 0) {
+            showW1InterBg("/assets/Backgrounds/World1CarrionBatsDefeat.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 1) {
+            showW1InterBg("/assets/Backgrounds/World1Moonlight.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 2) {
+            showW1InterBg("/assets/Backgrounds/World1HollowStagEncounter.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 3) {
+            w1ContinueBtn.setEnabled(false);
+            showW1InterBg("/assets/Backgrounds/World1HollowStagEncounter2.png");
+            delay(1500, () -> {
+                showW1InterBg("/assets/Backgrounds/World1HollowStagEncounter3.png");
+                w1ContinueBtn.setEnabled(true);
+                typeW1InterChunkNow();
+            });
+            return;
+        }
+
+        if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 4) {
+            typeW1InterChunkNow();
+            return;
+        }
+
+        if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 5) {
+            showW1InterBg("/assets/Backgrounds/World1HollowStag.png");
+            typeW1InterChunkNow();
+            return;
+        }
+
+        typeW1InterChunkNow();
+    }
+
+    private void showW1InterBg(String path) {
+        if (world1KhaiLabel == null) return;
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) return;
+        world1KhaiLabel.setIcon(new ImageIcon(
+                new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+        world1KhaiLabel.putClientProperty("prevImage", null);
+        world1KhaiLabel.putClientProperty("prevAlpha", 0f);
+        world1KhaiAlpha[0] = 1.0f;
+        world1KhaiLabel.repaint();
+    }
+
+    private void typeW1InterChunkNow() {
         String text = w1InterChunks[w1InterChunkIndex];
         w1DialogueBox.setText("");
         w1ContinueBtn.setEnabled(false);
@@ -1399,16 +1575,22 @@ public class GameScreen extends JPanel {
             },
             {
                     "The whispering finally stops.\nThe mist recedes, revealing faint lights hovering among the dead trees.",
-                    "The ground shudders beneath your feet.\nAncient roots crack through the soil."
+                    "The ground shudders beneath your feet.\nAncient roots crack through the soil.",
+                    "Two DREADBARK TREANTS pull themselves free from the earth."
             },
             {
                     "The Treants collapse in a shower of rotting bark.\nWhere they fall, small green sprouts push through the ash.",
-                    "A foul stench drifts down from above.\nSomething vast circles in the dead canopy overhead."
+                    "A foul stench drifts down from above.\nSomething vast circles in the dead canopy overhead.",
+                    "Four CARRION BATS, each the size of a man, dive-bomb from the dead branches above."
             },
             {
                     "The last bat crashes into the earth.\nThe forest holds its breath.",
-                    "Ahead, pale moonlight breaks through the canopy.\nA clearing opens — and within it, something stirs."
-            }
+                    "Ahead, pale moonlight breaks through the canopy.\nA clearing opens — and within it, something stirs.",
+                    "The trees twist around a great blackened oak.\nFrom behind it steps a massive stag, twelve feet tall at the shoulder.",
+                    "Its antlers are cracked and glow with faint white fire.\nIts eyes burn not with anger, but with an ancient, crushing sadness.",
+                    "Once a noble guardian of this forest, the Hollow Stag is now corrupted by the darkness.\nIts hooves scorch the ground. It lowers its head, seeking peace through battle.",
+                    "Free him. Khai's voice echoes in your mind.\n\"Break the chains of the Necromancer.\""
+            },
     };
 
     private static final String[] WORLD1_DIALOGUES = {
@@ -1567,7 +1749,7 @@ public class GameScreen extends JPanel {
         world1SceneAlpha = sceneAlpha;
         world1WorldAlpha = worldAlpha;
 
-        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF ENDINGS", SwingConstants.CENTER);
+        w1WorldLabel = new JLabel("WORLD 1 : THE FOREST OF SILENCE", SwingConstants.CENTER);
         w1WorldLabel.setBounds(0, 220, 1280, 50);
         w1WorldLabel.setForeground(Color.WHITE);
         w1WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
