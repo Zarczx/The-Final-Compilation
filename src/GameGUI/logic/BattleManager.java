@@ -36,6 +36,7 @@ public class BattleManager {
     private HeroDefinition heroDef;
     private WeaponDef weaponDef;
     private int s1Cost = 5, s2Cost = 10, ultCost = 20;
+    private String lastEnemySkillName = "";
 
     private final Random rng = new Random();
 
@@ -57,10 +58,12 @@ public class BattleManager {
     public Combatant getEnemy() { return enemy; }
     public int getRound() { return round; }
     public TurnOwner getCurrentTurn() { return currentTurn; }
+    public String getLastEnemySkillName() { return lastEnemySkillName; }
 
     public boolean canUseSkill1() { return hero.energy >= s1Cost; }
     public boolean canUseSkill2() { return hero.energy >= s2Cost; }
     public boolean canUseUltimate() { return hero.energy >= ultCost && hero.specialCooldown == 0; }
+
 
     public ActionResult playerAction(BattleAction action) {
         if (currentTurn != TurnOwner.PLAYER) return null;
@@ -130,13 +133,21 @@ public class BattleManager {
             return new ActionResult(enemy.name + " is incapacitated! Turn skipped.", 0, 0, false, false, "STUNNED");
         }
 
+        // Pick skill name for enemies that have named attacks
+        lastEnemySkillName = switch (enemy.name) {
+            case "Rotfang Wolf"    -> "Savage Howl";
+            case "Shade Sprite"    -> "Trickster Strike";
+            case "The Hollow Stag" -> rng.nextBoolean() ? "Deathly Charge" : "Blackened Howl";
+            default                -> "Attack";
+        };
+
         int damage = DamageCalculator.calculateDamage(enemy, hero, 1.0, false);
         hero.currentHp = Math.max(0, hero.currentHp - damage);
 
         int dot = DamageCalculator.applyDoT(enemy);
         advanceRound();
 
-        return new ActionResult(enemy.name + " strikes for " + damage + " damage!", damage, dot, false, false, null);
+        return new ActionResult(enemy.name + " uses " + lastEnemySkillName + " for " + damage + " damage!", damage, dot, false, false, null);
     }
 
     private void advanceRound() {

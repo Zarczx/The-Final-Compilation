@@ -97,16 +97,40 @@ public class BattlePanel extends JPanel {
     private BufferedImage[] spriteDefeatFrames;
     private BufferedImage[] spriteEntranceFrames;
 
-    private static final int SPRITE_IDLE_COUNT      = 2;
-    private static final int SPRITE_HURT_COUNT      = 2;
-    private static final int SPRITE_TRICKSTER_COUNT = 6;
-    private static final int SPRITE_DEFEAT_COUNT    = 8;
-    private static final int SPRITE_ENTRANCE_COUNT  = 9;
+    private static final int SPRITE_IDLE_COUNT = 5;
+    private static final int SPRITE_HURT_COUNT      = 5;
+    private static final int SPRITE_TRICKSTER_COUNT = 5;
+    private static final int SPRITE_DEFEAT_COUNT    = 5;
+    private static final int SPRITE_ENTRANCE_COUNT  = 5;
+    private static final int SPRITE_ENTRANCE_SPEED  = 3000; // ADD THIS
 
     private boolean isPlayingSpriteHurt      = false;
     private boolean isPlayingSpriteTrickster = false;
     private boolean isPlayingSpriteDefeat    = false;
     private boolean isPlayingSpriteEntrance  = false;
+
+    // Hollow Stag
+    private BufferedImage[] stagIdleFrames;
+    private BufferedImage[] stagHurtFrames;
+    private BufferedImage[] stagDeathlyChargeFrames;
+    private BufferedImage[] stagBlackenedHowlFrames;
+    private BufferedImage[] stagEntranceFrames;
+
+    private static final int STAG_IDLE_FRAME_COUNT     = 5;
+    private static final int STAG_HURT_FRAME_COUNT      = 5;
+    private static final int STAG_CHARGE_FRAME_COUNT    = 5;
+    private static final int STAG_HOWL_FRAME_COUNT      = 5;
+    private static final int STAG_ENTRANCE_FRAME_COUNT  = 5;
+    private static final int STAG_SPEED                 = 250; // slower than wolf (170)
+    private static final int STAG_ENTRANCE_START_X      = 850;
+    private static final int STAG_X                     = ENEMY_X - 120;
+    private static final int STAG_Y                     = ENEMY_Y - 170;
+
+    private boolean isPlayingStagHurt        = false;
+    private boolean isPlayingStagCharge      = false;
+    private boolean isPlayingStagHowl        = false;
+    private boolean isPlayingStagDefeat      = false;
+    private boolean isPlayingStagEntrance    = false;
 
     // ════════════════════════════════════════════
     // ★ POSITION CONSTANTS
@@ -222,14 +246,50 @@ public class BattlePanel extends JPanel {
         addLog(eDef.name.toUpperCase() + " " + fightNum + "/" + eDef.count + " — FIGHT!", GOLD);
 
         resultOverlay.setVisible(false);
-        setActionsEnabled(true);
-        animating = false;
+        setActionsEnabled(false);
+        animating = true;
         postVictoryStep = PostVictoryStep.NONE;
         setLogFontNormal();
         if (battleContinueBtn != null) battleContinueBtn.setEnabled(false);
         setTurnLabel(true);
         startHeroIdleAnimation();
-        startEnemyIdleAnimation(eDef);
+
+        boolean isStagFight = eDef.name.equals("The Hollow Stag");
+
+        if (isStagFight) {
+            JLabel minibossLabel = new JLabel("MINIBOSS ENCOUNTER : THE HOLLOW STAG", SwingConstants.CENTER);
+            minibossLabel.setBounds(0, 220, 1280, 50);
+            minibossLabel.setForeground(new Color(220, 20, 20));
+            minibossLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
+            add(minibossLabel);
+            setComponentZOrder(minibossLabel, 0);
+            repaint();
+
+            delay(2500, () -> {
+                // fade out
+                float[] alpha = {1.0f};
+                javax.swing.Timer fadeOut = new javax.swing.Timer(16, null);
+                fadeOut.addActionListener(ev -> {
+                    alpha[0] = Math.max(0f, alpha[0] - 0.03f);
+                    minibossLabel.setForeground(new Color(220/255f, 20/255f, 20/255f, alpha[0]));
+                    if (alpha[0] <= 0f) {
+                        fadeOut.stop();
+                        remove(minibossLabel);
+                        repaint();
+                        playEnemyEntrance(() -> {
+                            setActionsEnabled(true);
+                            animating = false;
+                        });
+                    }
+                });
+                fadeOut.start();
+            });
+        } else {
+            playEnemyEntrance(() -> {
+                setActionsEnabled(true);
+                animating = false;
+            });
+        }
     }
 
     private void buildUI() {
@@ -302,7 +362,7 @@ public class BattlePanel extends JPanel {
         add(battleContinueBtn); add(menuBtn); add(backBtn); add(exitBtn);
 
         // Updated sizes for a rounder, balanced button!
-        int btnY = 460, btnW = 150, btnH = 65, btnGap = 24;
+        int btnY = 453, btnW = 78, btnH = 78, btnGap = 24;
         int startX = (1280 - (4 * btnW + 3 * btnGap)) / 2;
 
         skill1Btn   = makeSkillBtn("Skill 1", new Color(60, 30, 90), new Color(130, 60, 200), startX, btnY, btnW, btnH);
@@ -371,9 +431,10 @@ public class BattlePanel extends JPanel {
         } else if (skillName.equals("Eternal Cross Slash")) {
             normalPath = "/assets/KaelAssets/EternalCrossSlash.png";
             hoverPath = "/assets/KaelAssets/EternalCrossSlashHovered.png";
-            disabledPath = "/assets/KaelAssets/EternalCrossSlashCooldown.png";
+            disabledPath = null;
         } else if (skillName.equals("Skip Turn")) {
             normalPath = "/assets/KaelAssets/SkipTurn.png";
+            hoverPath  = "/assets/KaelAssets/SkipTurnHovered.png";
         }
 
         java.net.URL nUrl = (normalPath != null) ? getClass().getResource(normalPath) : null;
@@ -385,15 +446,19 @@ public class BattlePanel extends JPanel {
             btn.setOpaque(false);
 
             try {
-                btn.setIcon(new ImageIcon(new ImageIcon(nUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
+                btn.setIcon(new ImageIcon(new ImageIcon(nUrl).getImage().getScaledInstance(73, 73, Image.SCALE_SMOOTH)));
+                java.net.URL hUrl = null;
                 if (hoverPath != null) {
-                    java.net.URL hUrl = getClass().getResource(hoverPath);
-                    if (hUrl != null) btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
-                } else btn.setRolloverIcon(null);
+                    hUrl = getClass().getResource(hoverPath);
+                    if (hUrl != null)
+                        btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(78, 78, Image.SCALE_SMOOTH)));
+                } else
+                    btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(73, 73, Image.SCALE_SMOOTH)));
 
                 if (disabledPath != null) {
                     java.net.URL dUrl = getClass().getResource(disabledPath);
-                    if (dUrl != null) btn.setDisabledIcon(new ImageIcon(new ImageIcon(dUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
+                    if (dUrl != null)
+                        btn.setDisabledIcon(new ImageIcon(new ImageIcon(dUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
                 } else btn.setDisabledIcon(null);
             } catch (Exception e) {
                 System.out.println("Error loading image for " + skillName);
@@ -401,7 +466,16 @@ public class BattlePanel extends JPanel {
         } else {
             btn.setIcon(null);
             btn.setRolloverIcon(null);
-            btn.setDisabledIcon(null);
+            try {
+                java.awt.image.BufferedImage base = ImageIO.read(nUrl);
+                java.awt.image.BufferedImage out = new java.awt.image.BufferedImage(73, 73, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+                Graphics2D gx = out.createGraphics();
+                gx.drawImage(base, 0, 0, 73, 73, null);
+                gx.setColor(new Color(255, 255, 255, 140));
+                gx.fillRect(0, 0, 150, 65);
+                gx.dispose();
+                btn.setDisabledIcon(new ImageIcon(out));
+            } catch (Exception ex) { btn.setDisabledIcon(null); }
             btn.setContentAreaFilled(true);
             btn.setBorderPainted(true);
             btn.setOpaque(true);
@@ -483,6 +557,27 @@ public class BattlePanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.drawImage(frame, 0, 0, (int)(frame.getWidth() * SPRITE_SCALE), (int)(frame.getHeight() * SPRITE_SCALE), null);
                 g2.dispose();
+
+                boolean isShade = enemyDef != null && enemyDef.name.equals("Shade Sprite");
+                boolean isStag  = enemyDef != null && enemyDef.name.equals("The Hollow Stag");
+
+                if      (isPlayingWolfHurt)        frames = wolfHurtFrames;
+                else if (isPlayingWolfSavageHowl)  frames = wolfSavageHowlFrames;
+                else if (isPlayingWolfDefeat)      frames = wolfDefeatFrames;
+                else if (isPlayingWolfEntrance)    frames = wolfEntranceFrames;
+                else if (isPlayingSpriteHurt)      frames = spriteHurtFrames;
+                else if (isPlayingSpriteTrickster) frames = spriteTricksterFrames;
+                else if (isPlayingSpriteDefeat)    frames = spriteDefeatFrames;
+                else if (isPlayingSpriteEntrance)  frames = spriteEntranceFrames;
+                else if (isPlayingStagHurt)        frames = stagHurtFrames;
+                else if (isPlayingStagCharge)      frames = stagDeathlyChargeFrames;
+                else if (isPlayingStagHowl)        frames = stagBlackenedHowlFrames;
+                else if (isPlayingStagEntrance)    frames = stagEntranceFrames;
+                else if (isStag)                   frames = stagIdleFrames;
+                else if (isShade)                  frames = spriteIdleFrames;
+                else                               frames = wolfIdleFrames;
+
+                double scale = (isShade || isStag) ? SPRITE_SCALE : ENEMY_SCALE;
             }
         };
 
@@ -594,11 +689,63 @@ public class BattlePanel extends JPanel {
             }
         } catch (Exception ex) {}
 
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/HollowStagEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / STAG_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                stagEntranceFrames = new BufferedImage[STAG_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < STAG_ENTRANCE_FRAME_COUNT; i++) stagEntranceFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/HollowStagIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / STAG_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                stagIdleFrames = new BufferedImage[STAG_IDLE_FRAME_COUNT];
+                for (int i = 0; i < STAG_IDLE_FRAME_COUNT; i++) stagIdleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/HollowStagHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / STAG_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                stagHurtFrames = new BufferedImage[STAG_HURT_FRAME_COUNT];
+                for (int i = 0; i < STAG_HURT_FRAME_COUNT; i++) stagHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/HollowStagDeathlyCharge.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / STAG_CHARGE_FRAME_COUNT, fh = sheet.getHeight();
+                stagDeathlyChargeFrames = new BufferedImage[STAG_CHARGE_FRAME_COUNT];
+                for (int i = 0; i < STAG_CHARGE_FRAME_COUNT; i++) stagDeathlyChargeFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/HollowStagBlackenedHowl.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / STAG_HOWL_FRAME_COUNT, fh = sheet.getHeight();
+                stagBlackenedHowlFrames = new BufferedImage[STAG_HOWL_FRAME_COUNT];
+                for (int i = 0; i < STAG_HOWL_FRAME_COUNT; i++) stagBlackenedHowlFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
         JLabel sprite = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 BufferedImage[] frames;
                 boolean isShade = enemyDef != null && enemyDef.name.equals("Shade Sprite");
+                boolean isStag  = enemyDef != null && enemyDef.name.equals("The Hollow Stag");
+
                 if      (isPlayingWolfHurt)        frames = wolfHurtFrames;
                 else if (isPlayingWolfSavageHowl)  frames = wolfSavageHowlFrames;
                 else if (isPlayingWolfDefeat)      frames = wolfDefeatFrames;
@@ -607,6 +754,12 @@ public class BattlePanel extends JPanel {
                 else if (isPlayingSpriteTrickster) frames = spriteTricksterFrames;
                 else if (isPlayingSpriteDefeat)    frames = spriteDefeatFrames;
                 else if (isPlayingSpriteEntrance)  frames = spriteEntranceFrames;
+                else if (isPlayingStagHurt)        frames = stagHurtFrames;
+                else if (isPlayingStagCharge)      frames = stagDeathlyChargeFrames;
+                else if (isPlayingStagHowl)        frames = stagBlackenedHowlFrames;
+                else if (isPlayingStagEntrance)    frames = stagEntranceFrames;
+                else if (isPlayingStagDefeat)      frames = stagHurtFrames;
+                else if (isStag)                   frames = stagIdleFrames;
                 else if (isShade)                  frames = spriteIdleFrames;
                 else                               frames = wolfIdleFrames;
 
@@ -616,14 +769,29 @@ public class BattlePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  RenderingHints.VALUE_ANTIALIAS_ON);
-                double scale = isShade ? SPRITE_SCALE : ENEMY_SCALE;
+                double scale = ENEMY_SCALE;
                 g2.drawImage(frame, 0, 0, (int)(frame.getWidth() * scale), (int)(frame.getHeight() * scale), null);
                 g2.dispose();
             }
         };
 
-        int labelW = wolfIdleFrames != null ? (int)(wolfIdleFrames[0].getWidth()  * ENEMY_SCALE) : SPRITE_W;
-        int labelH = wolfIdleFrames != null ? (int)(wolfIdleFrames[0].getHeight() * ENEMY_SCALE) : SPRITE_H;
+        // Size the label to the largest frame across all enemies so nothing overflows
+        int labelW = 0, labelH = 0;
+        if (wolfIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(wolfIdleFrames[0].getWidth()  * ENEMY_SCALE));
+            labelH = Math.max(labelH, (int)(wolfIdleFrames[0].getHeight() * ENEMY_SCALE));
+        }
+        if (spriteIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(spriteIdleFrames[0].getWidth()  * ENEMY_SCALE));
+            labelH = Math.max(labelH, (int)(spriteIdleFrames[0].getHeight() * ENEMY_SCALE));
+        }
+        if (stagIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(stagIdleFrames[0].getWidth()  * ENEMY_SCALE));
+            labelH = Math.max(labelH, (int)(stagIdleFrames[0].getHeight() * ENEMY_SCALE));
+        }
+        if (labelW == 0) labelW = SPRITE_W;
+        if (labelH == 0) labelH = SPRITE_H;
+
         sprite.setBounds(ENEMY_X, ENEMY_Y, labelW, labelH);
         sprite.setOpaque(false);
         sprite.setVisible(false);
@@ -635,8 +803,13 @@ public class BattlePanel extends JPanel {
         for (int x = 0; x < src.getWidth(); x++)
             for (int y = 0; y < src.getHeight(); y++) {
                 int px = src.getRGB(x, y);
-                int r = (px >> 16) & 0xFF, g = (px >> 8) & 0xFF, b = px & 0xFF;
-                out.setRGB(x, y, (r < 30 && g < 30 && b < 30) ? 0x00000000 : px);
+                int r = (px >> 16) & 0xFF;
+                int g = (px >> 8)  & 0xFF;
+                int b =  px        & 0xFF;
+                // Only remove pixels that are very close to pure black
+                // AND are near the border or surrounded by other black pixels
+                boolean isPureBlack = r < 15 && g < 15 && b < 15;
+                out.setRGB(x, y, isPureBlack ? 0x00000000 : px);
             }
         return out;
     }
@@ -667,6 +840,8 @@ public class BattlePanel extends JPanel {
         isPlayingWolfDefeat = false; isPlayingWolfEntrance = false;
         isPlayingSpriteHurt = false; isPlayingSpriteTrickster = false;
         isPlayingSpriteDefeat = false; isPlayingSpriteEntrance = false;
+        isPlayingStagHurt = false; isPlayingStagCharge = false;
+        isPlayingStagHowl = false; isPlayingStagDefeat = false; isPlayingStagEntrance = false;
         enemySpriteFrame = 0;
 
         if (eDef.name.equals("Rotfang Wolf") && wolfIdleFrames != null) {
@@ -680,12 +855,22 @@ public class BattlePanel extends JPanel {
             });
             enemyIdleTimer.start();
         } else if (eDef.name.equals("Shade Sprite") && spriteIdleFrames != null) {
-            int w = (int)(spriteIdleFrames[0].getWidth()  * SPRITE_SCALE);
-            int h = (int)(spriteIdleFrames[0].getHeight() * SPRITE_SCALE);
-            enemySpriteLabel.setBounds(SHADE_X, SHADE_Y + 8, w, h);
+            int w = (int)(spriteIdleFrames[0].getWidth()  * ENEMY_SCALE);
+            int h = (int)(spriteIdleFrames[0].getHeight() * ENEMY_SCALE);
+            enemySpriteLabel.setBounds(SHADE_X, SHADE_Y, w, h);
             enemySpriteLabel.setVisible(true);
             enemyIdleTimer = new javax.swing.Timer(220, e -> {
                 enemySpriteFrame = (enemySpriteFrame + 1) % SPRITE_IDLE_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("The Hollow Stag") && stagIdleFrames != null) {
+            int w = (int)(stagIdleFrames[0].getWidth()  * ENEMY_SCALE);
+            int h = (int)(stagIdleFrames[0].getHeight() * ENEMY_SCALE);
+            enemySpriteLabel.setBounds(STAG_X, STAG_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(STAG_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % STAG_IDLE_FRAME_COUNT;
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
@@ -701,10 +886,35 @@ public class BattlePanel extends JPanel {
 
     private boolean isShadeSprite() { return enemyDef != null && enemyDef.name.equals("Shade Sprite"); }
 
-    private void playEnemyHurt(Runnable onDone)    { if (isShadeSprite()) playSpriteHurtAnimation(onDone);      else playWolfHurtAnimation(onDone); }
-    private void playEnemyAttack(Runnable onDone)  { if (isShadeSprite()) playSpriteTricksterAnimation(onDone); else playWolfSavageHowlAnimation(onDone); }
-    private void playEnemyDefeat(Runnable onDone)  { if (isShadeSprite()) playSpriteDefeatAnimation(onDone);    else playWolfDefeatAnimation(onDone); }
-    private void playEnemyEntrance(Runnable onDone){ if (isShadeSprite()) playSpriteEntranceAnimation(onDone);  else playWolfEntranceAnimation(onDone); }
+    private boolean isStag() { return enemyDef != null && enemyDef.name.equals("The Hollow Stag"); }
+
+    private void playEnemyHurt(Runnable onDone) {
+        if (isStag())        playStagHurtAnimation(onDone);
+        else if (isShadeSprite()) playSpriteHurtAnimation(onDone);
+        else                 playWolfHurtAnimation(onDone);
+    }
+
+    private void playEnemyAttack(Runnable onDone) {
+        if (isStag()) {
+            String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
+            if ("Blackened Howl".equals(lastSkill)) playStagBlackenedHowlAnimation(onDone);
+            else                                     playStagDeathlyChargeAnimation(onDone);
+        } else if (isShadeSprite()) playSpriteTricksterAnimation(onDone);
+        else                        playWolfSavageHowlAnimation(onDone);
+    }
+
+    private void playEnemyDefeat(Runnable onDone) {
+        if (isStag())             playStagDefeatAnimation(onDone);
+        else if (isShadeSprite()) playSpriteDefeatAnimation(onDone);
+        else                      playWolfDefeatAnimation(onDone);
+    }
+
+    private void playEnemyEntrance(Runnable onDone) {
+        if (isStag())             playStagEntranceAnimation(onDone);
+        else if (isShadeSprite()) playSpriteEntranceAnimation(onDone);
+        else                      playWolfEntranceAnimation(onDone);
+    }
+
 
     // WOLF
     private void playWolfDefeatAnimation(Runnable onDone) {
@@ -775,7 +985,8 @@ public class BattlePanel extends JPanel {
         if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
         if (spriteHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
         isPlayingSpriteHurt = true; enemySpriteFrame = 0;
-        int w = (int)(spriteHurtFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteHurtFrames[0].getHeight() * SPRITE_SCALE);
+        int w = (int)(spriteHurtFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(spriteHurtFrames[0].getHeight() * ENEMY_SCALE);
         enemySpriteLabel.setBounds(SHADE_X, SHADE_Y, w, h); enemySpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(170, e -> {
@@ -789,7 +1000,8 @@ public class BattlePanel extends JPanel {
         if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
         if (spriteTricksterFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
         isPlayingSpriteTrickster = true; enemySpriteFrame = 0;
-        int w = (int)(spriteTricksterFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteTricksterFrames[0].getHeight() * SPRITE_SCALE);
+        int w = (int)(spriteTricksterFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(spriteTricksterFrames[0].getHeight() * ENEMY_SCALE);
         enemySpriteLabel.setBounds(SHADE_X - 20, SHADE_Y - 15, w, h); enemySpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(170, e -> {
@@ -803,7 +1015,8 @@ public class BattlePanel extends JPanel {
         if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
         if (spriteDefeatFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
         isPlayingSpriteDefeat = true; enemySpriteFrame = 0;
-        int w = (int)(spriteDefeatFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteDefeatFrames[0].getHeight() * SPRITE_SCALE);
+        int w = (int)(spriteDefeatFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(spriteDefeatFrames[0].getHeight() * ENEMY_SCALE);
         enemySpriteLabel.setBounds(SHADE_X, SHADE_Y, w, h); enemySpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(300, e -> {
@@ -816,13 +1029,18 @@ public class BattlePanel extends JPanel {
     private void playSpriteEntranceAnimation(Runnable onDone) {
         if (spriteEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
         isPlayingSpriteEntrance = true; enemySpriteFrame = 0;
-        int w = (int)(spriteEntranceFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(spriteEntranceFrames[0].getHeight() * SPRITE_SCALE);
-        enemySpriteLabel.setBounds(WOLF_ENTRANCE_START_X, SHADE_Y, w, h); enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
-        javax.swing.Timer frameTimer = new javax.swing.Timer(120, e -> { enemySpriteFrame = (enemySpriteFrame + 1) % SPRITE_ENTRANCE_COUNT; enemySpriteLabel.repaint(); });
+        int w = (int)(spriteEntranceFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(spriteEntranceFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(STAG_ENTRANCE_START_X, SHADE_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(SPRITE_ENTRANCE_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % SPRITE_ENTRANCE_COUNT;
+            enemySpriteLabel.repaint();
+        });
         frameTimer.start();
-        int[] currentX = {WOLF_ENTRANCE_START_X};
-        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
-            currentX[0] -= 10;
+        int[] currentX = {STAG_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(40, e -> {
+            currentX[0] -= 3;
             if (currentX[0] <= SHADE_X) {
                 enemySpriteLabel.setLocation(SHADE_X, SHADE_Y);
                 ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
@@ -832,6 +1050,93 @@ public class BattlePanel extends JPanel {
             } else { enemySpriteLabel.setLocation(currentX[0], SHADE_Y); }
         });
         slideTimer.start();
+    }
+
+    //HOLLOW STAG
+    private void playStagEntranceAnimation(Runnable onDone) {
+        if (stagEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingStagEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(stagEntranceFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(stagEntranceFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(STAG_ENTRANCE_START_X, STAG_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(STAG_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % STAG_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {STAG_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(40, e -> {
+            currentX[0] -= 3;
+            if (currentX[0] <= STAG_X) {
+                enemySpriteLabel.setLocation(STAG_X, STAG_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingStagEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], STAG_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playStagHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (stagHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingStagHurt = true; enemySpriteFrame = 0;
+        int w = (int)(stagHurtFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(stagHurtFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(STAG_X, STAG_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < STAG_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingStagHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playStagDeathlyChargeAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (stagDeathlyChargeFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingStagCharge = true; enemySpriteFrame = 0;
+        int w = (int)(stagDeathlyChargeFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(stagDeathlyChargeFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(STAG_X, STAG_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < STAG_CHARGE_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingStagCharge = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playStagBlackenedHowlAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (stagBlackenedHowlFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingStagHowl = true; enemySpriteFrame = 0;
+        int w = (int)(stagBlackenedHowlFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(stagBlackenedHowlFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(STAG_X, STAG_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < STAG_HOWL_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingStagHowl = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playStagDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (stagHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingStagDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(stagHurtFrames[0].getWidth()  * ENEMY_SCALE);
+        int h = (int)(stagHurtFrames[0].getHeight() * ENEMY_SCALE);
+        enemySpriteLabel.setBounds(STAG_X, STAG_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < STAG_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingStagDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
     }
 
     // HERO ACTIONS
@@ -980,16 +1285,27 @@ public class BattlePanel extends JPanel {
 
     private void addEnemyAttackLog(BattleManager.ActionResult r) {
         if (enemyDef == null) { addLogFromResult(r, false); return; }
-        String msg = switch (enemyDef.name) {
-            case "Rotfang Wolf"  -> "Rotfang Wolf uses Savage Howl";
-            case "Shade Sprite"  -> "Shade Sprite uses Trickster Strike";
-            default              -> null;
-        };
+
+        String msg;
+        if (enemyDef.name.equals("The Hollow Stag")) {
+            String skillUsed = engine.getLastEnemySkillName();
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage != null ? r.logMessage : "");
+            msg = "The Hollow Stag uses " + skillUsed + (m.find() ? " and dealt " + m.group() + " damage!" : "!");
+        } else {
+            msg = switch (enemyDef.name) {
+                case "Rotfang Wolf" -> "Rotfang Wolf uses Savage Howl";
+                case "Shade Sprite" -> "Shade Sprite uses Trickster Strike";
+                default             -> null;
+            };
+            if (msg != null) {
+                if (r.logMessage != null && !r.logMessage.isEmpty()) {
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
+                    msg += m.find() ? " and dealt " + m.group() + " damage!" : "!";
+                } else { msg += "!"; }
+            }
+        }
+
         if (msg != null) {
-            if (r.logMessage != null && !r.logMessage.isEmpty()) {
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
-                msg += m.find() ? " and dealt " + m.group() + " damage!" : "!";
-            } else { msg += "!"; }
             addLog(msg, RED);
             if (r.dotDamageApplied > 0) addLog("Burn tick: " + r.dotDamageApplied, new Color(150, 60, 0));
         } else {
@@ -1008,7 +1324,11 @@ public class BattlePanel extends JPanel {
                 delay(1500, () -> {
                     clearLog();
                     addLog(getNextApproachMessage(eDef, enemyFightIndex), GOLD);
-                    delay(800, () -> playEnemyEntrance(() -> startNextFight()));
+                    delay(800, () -> {
+                        // startNextFight sets up the new enemy then plays entrance itself,
+                        // so just call it directly — no extra entrance here
+                        startNextFight();
+                    });
                 });
             } else {
                 savedHeroCombatant = engine.getHero();
@@ -1628,5 +1948,70 @@ public class BattlePanel extends JPanel {
         overlay.add(card);
 
         return overlay;
+    }
+
+    public void enableDevTools() {
+        JPanel devPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        devPanel.setBackground(new Color(0, 0, 0, 0));
+        devPanel.setOpaque(false);
+        devPanel.setBounds(0, 100, 550, 28);
+
+        JLabel lbl = new JLabel("DEV DMG:");
+        lbl.setFont(new Font("Monospaced", Font.BOLD, 11));
+        lbl.setForeground(new Color(255, 200, 0));
+        devPanel.add(lbl);
+
+        // Spinner — multiples of 50, range 50–5000
+        SpinnerNumberModel spinModel = new SpinnerNumberModel(50, 50, 5000, 50);
+        JSpinner dmgSpinner = new JSpinner(spinModel);
+        dmgSpinner.setPreferredSize(new Dimension(80, 22));
+        dmgSpinner.setFont(new Font("Monospaced", Font.BOLD, 11));
+        devPanel.add(dmgSpinner);
+
+        JButton hitHeroBtn = new JButton("Hit Hero");
+        hitHeroBtn.setFont(new Font("Monospaced", Font.BOLD, 10));
+        hitHeroBtn.setForeground(Color.WHITE);
+        hitHeroBtn.setBackground(new Color(140, 30, 30));
+        hitHeroBtn.setFocusPainted(false);
+        hitHeroBtn.addActionListener(e -> {
+            if (currentHero == null) return;
+            int dmg = (int) dmgSpinner.getValue();
+            currentHero.currentHp = Math.max(0, currentHero.currentHp - dmg);
+            refreshBattleUI();
+            addLog("[DEV] Hero hit for " + dmg + " damage!", new Color(255, 80, 80));
+        });
+        devPanel.add(hitHeroBtn);
+
+        JButton hitEnemyBtn = new JButton("Hit Enemy");
+        hitEnemyBtn.setFont(new Font("Monospaced", Font.BOLD, 10));
+        hitEnemyBtn.setForeground(Color.WHITE);
+        hitEnemyBtn.setBackground(new Color(30, 100, 140));
+        hitEnemyBtn.setFocusPainted(false);
+        hitEnemyBtn.addActionListener(e -> {
+            if (currentEnemy == null) return;
+            int dmg = (int) dmgSpinner.getValue();
+            currentEnemy.currentHp = Math.max(0, currentEnemy.currentHp - dmg);
+            refreshBattleUI();
+            addLog("[DEV] Enemy hit for " + dmg + " damage!", new Color(80, 180, 255));
+        });
+        devPanel.add(hitEnemyBtn);
+
+        JButton killEnemyBtn = new JButton("Kill Enemy");
+        killEnemyBtn.setFont(new Font("Monospaced", Font.BOLD, 10));
+        killEnemyBtn.setForeground(Color.WHITE);
+        killEnemyBtn.setBackground(new Color(80, 30, 120));
+        killEnemyBtn.setFocusPainted(false);
+        killEnemyBtn.addActionListener(e -> {
+            if (currentEnemy == null) return;
+            currentEnemy.currentHp = 0;
+            refreshBattleUI();
+            addLog("[DEV] Enemy instantly killed!", new Color(200, 100, 255));
+        });
+        devPanel.add(killEnemyBtn);
+
+        add(devPanel);
+        setComponentZOrder(devPanel, 0);
+        revalidate();
+        repaint();
     }
 }
