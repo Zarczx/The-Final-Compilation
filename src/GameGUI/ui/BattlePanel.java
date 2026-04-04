@@ -109,6 +109,50 @@ public class BattlePanel extends JPanel {
     private boolean isPlayingSpriteDefeat    = false;
     private boolean isPlayingSpriteEntrance  = false;
 
+    //Dreadbark Treant
+    private static final int TREANT_IDLE_FRAME_COUNT     = 4;
+    private static final int TREANT_HURT_FRAME_COUNT     = 4;
+    private static final int TREANT_ATTACK_FRAME_COUNT   = 4;
+    private static final int TREANT_ENTRANCE_FRAME_COUNT = 4;
+    private static final int TREANT_SPEED                = 250;
+    private static final int TREANT_ENTRANCE_START_X = 950; // was 850
+    private static final int TREANT_X = ENEMY_X - 90;  // same value as STAG_X
+    private static final int TREANT_Y = ENEMY_Y - 110;  // same value as STAG_Y
+    private static final double TREANT_SCALE      = 0.57; // entrance only
+    private static final double TREANT_IDLE_SCALE = 0.40; // idle, hurt, attack
+    private static final double TREANT_ATTACK_SCALE = 0.65; // attack - tune this
+
+    private BufferedImage[] treantIdleFrames;
+    private BufferedImage[] treantHurtFrames;
+    private BufferedImage[] treantAttackFrames;
+    private BufferedImage[] treantEntranceFrames;
+
+    private boolean isPlayingTreantHurt     = false;
+    private boolean isPlayingTreantAttack   = false;
+    private boolean isPlayingTreantDefeat   = false;
+    private boolean isPlayingTreantEntrance = false;
+
+    // Carrion Bat
+    private static final int BAT_IDLE_FRAME_COUNT     = 4;
+    private static final int BAT_HURT_FRAME_COUNT     = 4;
+    private static final int BAT_ATTACK_FRAME_COUNT   = 4;
+    private static final int BAT_ENTRANCE_FRAME_COUNT = 4;
+    private static final int BAT_SPEED                = 150;
+    private static final int BAT_ENTRANCE_START_X     = 1300;
+    private static final int BAT_X                    = TREANT_X;
+    private static final int BAT_Y                    = TREANT_Y;
+    private static final double BAT_SCALE             = 0.40; // tune this
+
+    private BufferedImage[] batIdleFrames;
+    private BufferedImage[] batHurtFrames;
+    private BufferedImage[] batAttackFrames;
+    private BufferedImage[] batEntranceFrames;
+
+    private boolean isPlayingBatHurt     = false;
+    private boolean isPlayingBatAttack   = false;
+    private boolean isPlayingBatDefeat   = false;
+    private boolean isPlayingBatEntrance = false;
+
     // Hollow Stag
     private BufferedImage[] stagIdleFrames;
     private BufferedImage[] stagHurtFrames;
@@ -690,6 +734,123 @@ public class BattlePanel extends JPanel {
         } catch (Exception ex) {}
 
         try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/DreadbarkTreantIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / TREANT_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                treantIdleFrames = new BufferedImage[TREANT_IDLE_FRAME_COUNT];
+                for (int i = 0; i < TREANT_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    treantIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/DreadbarkTreantHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / TREANT_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                treantHurtFrames = new BufferedImage[TREANT_HURT_FRAME_COUNT];
+                for (int i = 0; i < TREANT_HURT_FRAME_COUNT; i++) treantHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/DreadbarkTreantRootSnare.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / TREANT_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                treantAttackFrames = new BufferedImage[TREANT_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < TREANT_ATTACK_FRAME_COUNT; i++) {
+                    // Convert to ARGB without removing black bg
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    treantAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/DreadbarkTreantEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / TREANT_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                treantEntranceFrames = new BufferedImage[TREANT_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < TREANT_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    treantEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/CarrionBatsIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BAT_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                batIdleFrames = new BufferedImage[BAT_IDLE_FRAME_COUNT];
+                for (int i = 0; i < BAT_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    batIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/CarrionBatsHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BAT_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                batHurtFrames = new BufferedImage[BAT_HURT_FRAME_COUNT];
+                for (int i = 0; i < BAT_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    batHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/CarrionBatsScreech.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BAT_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                batAttackFrames = new BufferedImage[BAT_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < BAT_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    batAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/CarrionBatsEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BAT_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                batEntranceFrames = new BufferedImage[BAT_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < BAT_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    batEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+
+        try {
             java.net.URL url = getClass().getResource("/assets/World1EnemyAssets/HollowStagEntrance.png");
             if (url != null) {
                 BufferedImage sheet = ImageIO.read(url);
@@ -743,8 +904,9 @@ public class BattlePanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 BufferedImage[] frames;
-                boolean isShade = enemyDef != null && enemyDef.name.equals("Shade Sprite");
-                boolean isStag  = enemyDef != null && enemyDef.name.equals("The Hollow Stag");
+                boolean isShade  = enemyDef != null && enemyDef.name.equals("Shade Sprite");
+                boolean isStag   = enemyDef != null && enemyDef.name.equals("The Hollow Stag");
+                boolean isTreant = enemyDef != null && enemyDef.name.equals("Dreadbark Treant");
 
                 if      (isPlayingWolfHurt)        frames = wolfHurtFrames;
                 else if (isPlayingWolfSavageHowl)  frames = wolfSavageHowlFrames;
@@ -759,7 +921,17 @@ public class BattlePanel extends JPanel {
                 else if (isPlayingStagHowl)        frames = stagBlackenedHowlFrames;
                 else if (isPlayingStagEntrance)    frames = stagEntranceFrames;
                 else if (isPlayingStagDefeat)      frames = stagHurtFrames;
+                else if (isPlayingTreantHurt)      frames = treantHurtFrames;
+                else if (isPlayingTreantAttack)    frames = treantAttackFrames;
+                else if (isPlayingTreantDefeat)    frames = treantHurtFrames;
+                else if (isPlayingTreantEntrance)  frames = treantEntranceFrames;
+                else if (isPlayingBatHurt)      frames = batHurtFrames;
+                else if (isPlayingBatAttack)    frames = batAttackFrames;
+                else if (isPlayingBatDefeat)    frames = batHurtFrames;
+                else if (isPlayingBatEntrance)  frames = batEntranceFrames;
                 else if (isStag)                   frames = stagIdleFrames;
+                else if (isTreant)                 frames = treantIdleFrames;
+                else if (isBat())                  frames = batIdleFrames;   // ADD
                 else if (isShade)                  frames = spriteIdleFrames;
                 else                               frames = wolfIdleFrames;
 
@@ -769,9 +941,18 @@ public class BattlePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  RenderingHints.VALUE_ANTIALIAS_ON);
-                double scale = ENEMY_SCALE;
+                boolean isTreantEnemy    = enemyDef != null && enemyDef.name.equals("Dreadbark Treant");
+                boolean isTreantEntrance = isTreantEnemy && isPlayingTreantEntrance;
+                boolean isTreantAttack   = isTreantEnemy && isPlayingTreantAttack;
+                boolean isBatEnemy = enemyDef != null && enemyDef.name.equals("Carrion Bat");
+                double scale = isTreantEntrance ? TREANT_SCALE
+                        : isTreantAttack   ? TREANT_ATTACK_SCALE
+                        : isTreantEnemy    ? TREANT_IDLE_SCALE
+                        : isBatEnemy       ? BAT_SCALE
+                        : ENEMY_SCALE;
                 g2.drawImage(frame, 0, 0, (int)(frame.getWidth() * scale), (int)(frame.getHeight() * scale), null);
-                g2.dispose();
+
+
             }
         };
 
@@ -785,6 +966,15 @@ public class BattlePanel extends JPanel {
             labelW = Math.max(labelW, (int)(spriteIdleFrames[0].getWidth()  * ENEMY_SCALE));
             labelH = Math.max(labelH, (int)(spriteIdleFrames[0].getHeight() * ENEMY_SCALE));
         }
+        if (treantIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(treantIdleFrames[0].getWidth()  * TREANT_IDLE_SCALE));
+            labelH = Math.max(labelH, (int)(treantIdleFrames[0].getHeight() * TREANT_IDLE_SCALE));
+        }
+        if (batIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(batIdleFrames[0].getWidth()  * BAT_SCALE));
+            labelH = Math.max(labelH, (int)(batIdleFrames[0].getHeight() * BAT_SCALE));
+        }
+
         if (stagIdleFrames != null) {
             labelW = Math.max(labelW, (int)(stagIdleFrames[0].getWidth()  * ENEMY_SCALE));
             labelH = Math.max(labelH, (int)(stagIdleFrames[0].getHeight() * ENEMY_SCALE));
@@ -840,6 +1030,10 @@ public class BattlePanel extends JPanel {
         isPlayingWolfDefeat = false; isPlayingWolfEntrance = false;
         isPlayingSpriteHurt = false; isPlayingSpriteTrickster = false;
         isPlayingSpriteDefeat = false; isPlayingSpriteEntrance = false;
+        isPlayingTreantHurt = false; isPlayingTreantAttack = false;
+        isPlayingTreantDefeat = false; isPlayingTreantEntrance = false;
+        isPlayingBatHurt = false; isPlayingBatAttack = false;
+        isPlayingBatDefeat = false; isPlayingBatEntrance = false;
         isPlayingStagHurt = false; isPlayingStagCharge = false;
         isPlayingStagHowl = false; isPlayingStagDefeat = false; isPlayingStagEntrance = false;
         enemySpriteFrame = 0;
@@ -873,6 +1067,26 @@ public class BattlePanel extends JPanel {
                 enemySpriteFrame = (enemySpriteFrame + 1) % STAG_IDLE_FRAME_COUNT;
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
+            enemyIdleTimer.start(); // THIS WAS MISSING
+        } else if (eDef.name.equals("Dreadbark Treant") && treantIdleFrames != null) {
+            int w = (int)(treantIdleFrames[0].getWidth()  * TREANT_IDLE_SCALE);
+            int h = (int)(treantIdleFrames[0].getHeight() * TREANT_IDLE_SCALE);
+            enemySpriteLabel.setBounds(TREANT_X, TREANT_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(TREANT_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % TREANT_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Carrion Bat") && batIdleFrames != null) {
+            int w = (int)(batIdleFrames[0].getWidth()  * BAT_SCALE);
+            int h = (int)(batIdleFrames[0].getHeight() * BAT_SCALE);
+            enemySpriteLabel.setBounds(BAT_X, BAT_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(BAT_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % BAT_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
             enemyIdleTimer.start();
         } else {
             enemySpriteLabel.setVisible(false);
@@ -885,13 +1099,17 @@ public class BattlePanel extends JPanel {
     }
 
     private boolean isShadeSprite() { return enemyDef != null && enemyDef.name.equals("Shade Sprite"); }
+    private boolean isTreant() { return enemyDef != null && enemyDef.name.equals("Dreadbark Treant"); }
+    private boolean isBat() { return enemyDef != null && enemyDef.name.equals("Carrion Bat"); }
 
     private boolean isStag() { return enemyDef != null && enemyDef.name.equals("The Hollow Stag"); }
 
     private void playEnemyHurt(Runnable onDone) {
-        if (isStag())        playStagHurtAnimation(onDone);
+        if (isStag())             playStagHurtAnimation(onDone);
+        else if (isTreant())      playTreantHurtAnimation(onDone);
+        else if (isBat())         playBatHurtAnimation(onDone);
         else if (isShadeSprite()) playSpriteHurtAnimation(onDone);
-        else                 playWolfHurtAnimation(onDone);
+        else                      playWolfHurtAnimation(onDone);
     }
 
     private void playEnemyAttack(Runnable onDone) {
@@ -899,18 +1117,24 @@ public class BattlePanel extends JPanel {
             String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
             if ("Blackened Howl".equals(lastSkill)) playStagBlackenedHowlAnimation(onDone);
             else                                     playStagDeathlyChargeAnimation(onDone);
-        } else if (isShadeSprite()) playSpriteTricksterAnimation(onDone);
-        else                        playWolfSavageHowlAnimation(onDone);
+        } else if (isTreant())        playTreantAttackAnimation(onDone);
+        else if (isBat())             playBatAttackAnimation(onDone);
+        else if (isShadeSprite())     playSpriteTricksterAnimation(onDone);
+        else                          playWolfSavageHowlAnimation(onDone);
     }
 
     private void playEnemyDefeat(Runnable onDone) {
         if (isStag())             playStagDefeatAnimation(onDone);
+        else if (isTreant())      playTreantDefeatAnimation(onDone);
+        else if (isBat())         playBatDefeatAnimation(onDone);
         else if (isShadeSprite()) playSpriteDefeatAnimation(onDone);
         else                      playWolfDefeatAnimation(onDone);
     }
 
     private void playEnemyEntrance(Runnable onDone) {
         if (isStag())             playStagEntranceAnimation(onDone);
+        else if (isTreant())      playTreantEntranceAnimation(onDone);
+        else if (isBat())         playBatEntranceAnimation(onDone);
         else if (isShadeSprite()) playSpriteEntranceAnimation(onDone);
         else                      playWolfEntranceAnimation(onDone);
     }
@@ -930,6 +1154,7 @@ public class BattlePanel extends JPanel {
         });
         t.start();
     }
+
 
     private void playWolfEntranceAnimation(Runnable onDone) {
         if (wolfEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
@@ -1050,6 +1275,149 @@ public class BattlePanel extends JPanel {
             } else { enemySpriteLabel.setLocation(currentX[0], SHADE_Y); }
         });
         slideTimer.start();
+    }
+
+    //DREADBARK TREANT
+    private void playTreantEntranceAnimation(Runnable onDone) {
+        if (treantEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingTreantEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(treantEntranceFrames[0].getWidth()  * TREANT_SCALE);
+        int h = (int)(treantEntranceFrames[0].getHeight() * TREANT_SCALE);
+        enemySpriteLabel.setBounds(TREANT_ENTRANCE_START_X, TREANT_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(TREANT_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % TREANT_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {TREANT_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(40, e -> {
+            currentX[0] -= 3;
+            if (currentX[0] <= TREANT_X) {
+                enemySpriteLabel.setLocation(TREANT_X, TREANT_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingTreantEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], TREANT_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playTreantHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (treantHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingTreantHurt = true; enemySpriteFrame = 0;
+        int w = (int)(treantHurtFrames[0].getWidth()  * TREANT_IDLE_SCALE);
+        int h = (int)(treantHurtFrames[0].getHeight() * TREANT_IDLE_SCALE);
+        enemySpriteLabel.setBounds(TREANT_X, TREANT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < TREANT_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingTreantHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playTreantAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (treantAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingTreantAttack = true; enemySpriteFrame = 0;
+        int w = (int)(treantAttackFrames[0].getWidth()  * TREANT_ATTACK_SCALE);
+        int h = (int)(treantAttackFrames[0].getHeight() * TREANT_ATTACK_SCALE);
+        enemySpriteLabel.setBounds(TREANT_X, TREANT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < TREANT_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingTreantAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playTreantDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (treantHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingTreantDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(treantHurtFrames[0].getWidth()  * TREANT_IDLE_SCALE);
+        int h = (int)(treantHurtFrames[0].getHeight() * TREANT_IDLE_SCALE);
+        enemySpriteLabel.setBounds(TREANT_X, TREANT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < TREANT_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingTreantDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playBatEntranceAnimation(Runnable onDone) {
+        if (batEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingBatEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(batEntranceFrames[0].getWidth()  * BAT_SCALE);
+        int h = (int)(batEntranceFrames[0].getHeight() * BAT_SCALE);
+        enemySpriteLabel.setBounds(BAT_ENTRANCE_START_X, BAT_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(200, e -> {  // 200ms = faster
+            enemySpriteFrame = (enemySpriteFrame + 1) % BAT_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {BAT_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12; // faster slide
+            if (currentX[0] <= BAT_X) {
+                enemySpriteLabel.setLocation(BAT_X, BAT_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingBatEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], BAT_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playBatHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (batHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBatHurt = true; enemySpriteFrame = 0;
+        int w = (int)(batHurtFrames[0].getWidth()  * BAT_SCALE);
+        int h = (int)(batHurtFrames[0].getHeight() * BAT_SCALE);
+        enemySpriteLabel.setBounds(BAT_X, BAT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BAT_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBatHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBatAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (batAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBatAttack = true; enemySpriteFrame = 0;
+        int w = (int)(batAttackFrames[0].getWidth()  * BAT_SCALE);
+        int h = (int)(batAttackFrames[0].getHeight() * BAT_SCALE);
+        enemySpriteLabel.setBounds(BAT_X, BAT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BAT_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBatAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBatDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (batHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingBatDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(batHurtFrames[0].getWidth()  * BAT_SCALE);
+        int h = (int)(batHurtFrames[0].getHeight() * BAT_SCALE);
+        enemySpriteLabel.setBounds(BAT_X, BAT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < BAT_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingBatDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
     }
 
     //HOLLOW STAG
@@ -1236,9 +1604,9 @@ public class BattlePanel extends JPanel {
                     Timer t1 = new Timer(900, e -> {
                         engine.advanceToEnemyTurn();
                         setTurnLabel(false);
-                        playEnemyAttack(() -> {
-                            BattleManager.ActionResult er = engine.enemyTurn();
-                            refreshBattleUI();
+                        BattleManager.ActionResult er = engine.enemyTurn(); // run first
+                        refreshBattleUI();
+                        playEnemyAttack(() -> {                             // then animate
                             playKaelHurtAnimation(() -> {
                                 clearLog();
                                 if (er != null) addEnemyAttackLog(er);
@@ -1267,8 +1635,9 @@ public class BattlePanel extends JPanel {
             if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) { handleVictory(); animating = false; return; }
             Timer t1 = new Timer(900, e -> {
                 engine.advanceToEnemyTurn(); setTurnLabel(false);
-                playEnemyAttack(() -> {
-                    BattleManager.ActionResult er = engine.enemyTurn(); refreshBattleUI();
+                BattleManager.ActionResult er = engine.enemyTurn(); // run first
+                refreshBattleUI();
+                playEnemyAttack(() -> {                             // then animate
                     playKaelHurtAnimation(() -> {
                         clearLog(); if (er != null) addEnemyAttackLog(er);
                         if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
@@ -1287,23 +1656,20 @@ public class BattlePanel extends JPanel {
         if (enemyDef == null) { addLogFromResult(r, false); return; }
 
         String msg;
-        if (enemyDef.name.equals("The Hollow Stag")) {
-            String skillUsed = engine.getLastEnemySkillName();
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage != null ? r.logMessage : "");
-            msg = "The Hollow Stag uses " + skillUsed + (m.find() ? " and dealt " + m.group() + " damage!" : "!");
-        } else {
-            msg = switch (enemyDef.name) {
-                case "Rotfang Wolf" -> "Rotfang Wolf uses Savage Howl";
-                case "Shade Sprite" -> "Shade Sprite uses Trickster Strike";
-                default             -> null;
-            };
-            if (msg != null) {
-                if (r.logMessage != null && !r.logMessage.isEmpty()) {
-                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
-                    msg += m.find() ? " and dealt " + m.group() + " damage!" : "!";
-                } else { msg += "!"; }
-            }
-        }
+        String damage = "";
+        if (r.logMessage != null && !r.logMessage.isEmpty()) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
+            damage = m.find() ? " and dealt " + m.group() + " damage!" : "!";
+        } else { damage = "!"; }
+
+        msg = switch (enemyDef.name) {
+            case "Rotfang Wolf"     -> "Rotfang Wolf uses Savage Howl" + damage;
+            case "Shade Sprite"     -> "Shade Sprite uses Trickster Strike" + damage;
+            case "Dreadbark Treant" -> "Dreadbark Treant uses Root Snare" + damage;
+            case "Carrion Bat" -> "Carrion Bat uses Screech" + damage;
+            case "The Hollow Stag"  -> "The Hollow Stag uses " + engine.getLastEnemySkillName() + damage;
+            default                 -> null;
+        };
 
         if (msg != null) {
             addLog(msg, RED);
