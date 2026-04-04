@@ -102,7 +102,7 @@ public class HeroData {
                     "Kael Saint Laurent", "Swordsman", "⚔️",
                     "Born in the shadow of the Black Castle, Kael seeks to avenge his fallen brethren. His blade is sworn to eradicate the darkness.",
                     "Blade Swift",
-                    99999, 50, 5, 9999,
+                    99999, 20, 5, 9999,
                     new SkillDef[]{
                             new SkillDef("⚔", "Blade Rush", "A quick, standard slash.", 1.15, false, 0, 5),
                             new SkillDef("X", "Piercing Slash", "An armor-piercing strike.", 1.35, true, 0, 10),
