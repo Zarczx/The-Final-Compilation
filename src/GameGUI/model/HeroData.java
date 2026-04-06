@@ -100,7 +100,7 @@ public class HeroData {
     public static final List<HeroDefinition> HEROES = List.of(
             new HeroDefinition(
                     "Kael Saint Laurent", "Swordsman", "⚔️",
-                    "Born in the shadow of the Black Castle, Kael seeks to avenge his fallen brethren. His blade is sworn to eradicate the darkness.",
+                    "Born in the shadow of the Black Castle, Kael seeks to avenge his fallen brethren. \nHis blade is sworn to eradicate the darkness.",
                     "Blade Swift",
                     99999, 20, 5, 9999,
                     new SkillDef[]{
