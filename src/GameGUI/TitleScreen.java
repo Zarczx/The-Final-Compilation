@@ -17,25 +17,46 @@ public class TitleScreen extends JPanel {
 
     public TitleScreen(){
 
-        backgrounds = new BufferedImage[3];
+        backgrounds = new BufferedImage[26];
 
         try{
-            backgrounds[0] = ImageIO.read(getClass().getResource("/assets/titleScreen/title_screen.jpg"));
-            backgrounds[1] = ImageIO.read(getClass().getResource("/assets/titleScreen/title_screen2.png"));
-            backgrounds[2] = ImageIO.read(getClass().getResource("/assets/titleScreen/title_screen3.jpg"));
+            backgrounds[0]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_1.png"));
+            backgrounds[1]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_2.png"));
+            backgrounds[2]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_3.png"));
+            backgrounds[3]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_4.png"));
+            backgrounds[4]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_5.png"));
+            backgrounds[5]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_6.png"));
+            backgrounds[6]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_7.png"));
+            backgrounds[7]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_8.png"));
+            backgrounds[8]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_9.png"));
+            backgrounds[9]  = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_10.png"));
+            backgrounds[10] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_11.png"));
+            backgrounds[11] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_12.png"));
+            backgrounds[12] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_13.png"));
+            backgrounds[13] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_14.png"));
+            backgrounds[14] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_15.png"));
+            backgrounds[15] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_16.png"));
+            backgrounds[16] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_17.png"));
+            backgrounds[17] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_18.png"));
+            backgrounds[18] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_19.png"));
+            backgrounds[19] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_20.png"));
+            backgrounds[20] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_21.png"));
+            backgrounds[21] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_22.png"));
+            backgrounds[22] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_23.png"));
+            backgrounds[23] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_24.png"));
+            backgrounds[24] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_25.png"));
+            backgrounds[25] = ImageIO.read(getClass().getResource("/assets/titleScreen/NewTitleScreen_26.png"));
         }catch(IOException e){
             e.printStackTrace();
         }
 
-        timer = new Timer(400, e -> {
-            frame++;
-            if(frame >= backgrounds.length){
-                frame = 0;
-            }
+        timer = new Timer(120, e -> {  // ~12fps — smooth animated feel
+            frame = (frame + 1) % backgrounds.length;
             repaint();
         });
 
         timer.start();
+
 
         setLayout(new GridBagLayout());
 

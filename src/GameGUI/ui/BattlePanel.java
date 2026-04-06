@@ -30,6 +30,8 @@ public class BattlePanel extends JPanel {
     private EnemyDefinition enemyDef;
     private boolean animating = false;
 
+    private JLabel battleBg;
+
     // ════════════════════════════════════════════
     // ★ HERO SPRITE FIELDS
     // ════════════════════════════════════════════
@@ -48,6 +50,8 @@ public class BattlePanel extends JPanel {
     private static final double SPRITE_SCALE = 1.5;
     private static final int SHADE_X = 900;
     private static final int SHADE_Y = 340;
+
+
 
     private BufferedImage[] idleFrames;
     private BufferedImage[] bladeRushFrames;
@@ -183,6 +187,14 @@ public class BattlePanel extends JPanel {
     private static final int IDLE_Y        = 340;
     private static final int ACTION_X_BASE = 210;
     private static final int ACTION_Y      = 280;
+    private static final int IDLE_Y_W2     = 260;
+    private static final int ACTION_Y_W2   = 200;
+    private static final int ENEMY_Y_W2    = 285;
+    private static final int SHADE_Y_W2    = 260;
+    private static final int STAG_Y_W2     = 115;
+    private static final int TREANT_Y_W2   = 175;
+    private static final int BAT_Y_W2      = 175;
+    private boolean isWorld2Battle = false;
 
     // Colors
     private static final Color BG_DARK    = new Color(12, 10, 22);
@@ -336,7 +348,19 @@ public class BattlePanel extends JPanel {
         }
     }
 
+    public void setBattleBackground(String resourcePath) {
+        if (battleBg == null) return;
+        java.net.URL url = getClass().getResource(resourcePath);
+        if (url != null) {
+            battleBg.setIcon(new ImageIcon(
+                    new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+        }
+        isWorld2Battle = resourcePath.contains("World2Battle");
+        battleBg.repaint();
+    }
+
     private void buildUI() {
+
         JLabel theBg = new JLabel();
         theBg.setBounds(0, 0, 1280, 720);
         theBg.setOpaque(true);
@@ -345,7 +369,7 @@ public class BattlePanel extends JPanel {
         if (theBgUrl != null) theBg.setIcon(new ImageIcon(new ImageIcon(theBgUrl).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH)));
         add(theBg);
 
-        JLabel battleBg = new JLabel();
+        battleBg = new JLabel();
         battleBg.setBounds(0, 0, 1280, 520);
         battleBg.setOpaque(false);
         java.net.URL battleBgUrl = getClass().getResource("/assets/Backgrounds/World1BattleBackground.png");
@@ -1015,7 +1039,7 @@ public class BattlePanel extends JPanel {
         if (idleFrames != null) {
             int w = (int)(idleFrames[0].getWidth()  * SPRITE_SCALE);
             int h = (int)(idleFrames[0].getHeight() * SPRITE_SCALE);
-            heroSpriteLabel.setBounds(IDLE_X, IDLE_Y, w, h);
+            heroSpriteLabel.setBounds(IDLE_X, isWorld2Battle ? IDLE_Y_W2 : IDLE_Y, w, h);
         }
         heroIdleTimer = new javax.swing.Timer(220, e -> {
             heroSpriteFrame = (heroSpriteFrame + 1) % SPRITE_FRAME_COUNT;
@@ -1513,7 +1537,7 @@ public class BattlePanel extends JPanel {
         if (kaelHurtFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
         isPlayingKaelHurt = true; heroSpriteFrame = 0;
         int w = (int)(kaelHurtFrames[0].getWidth()  * SPRITE_SCALE), h = (int)(kaelHurtFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(IDLE_X, IDLE_Y, w, h); heroSpriteLabel.repaint();
+        heroSpriteLabel.setBounds(IDLE_X, isWorld2Battle ? IDLE_Y_W2 : IDLE_Y, w, h); heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(150, e -> {
             if (frame[0] < KAEL_HURT_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
@@ -1533,7 +1557,7 @@ public class BattlePanel extends JPanel {
         if (bladeRushFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
         isPlayingBladeRush = true; heroSpriteFrame = 0;
         int lW = (int)(bladeRushFrames[0].getWidth()  * SPRITE_SCALE), lH = (int)(bladeRushFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(getActionX(bladeRushFrames), ACTION_Y, lW, lH); heroSpriteLabel.repaint();
+        heroSpriteLabel.setBounds(getActionX(bladeRushFrames), isWorld2Battle ? ACTION_Y_W2 : ACTION_Y, lW, lH); heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(130, e -> {
             if (frame[0] < BLADE_RUSH_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
@@ -1547,7 +1571,7 @@ public class BattlePanel extends JPanel {
         if (piercingSlashFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
         isPlayingPiercingSlash = true; heroSpriteFrame = 0;
         int lW = (int)(piercingSlashFrames[0].getWidth()  * SPRITE_SCALE), lH = (int)(piercingSlashFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(getActionX(piercingSlashFrames), ACTION_Y, lW, lH); heroSpriteLabel.repaint();
+        heroSpriteLabel.setBounds(getActionX(piercingSlashFrames), isWorld2Battle ? ACTION_Y_W2 : ACTION_Y, lW, lH); heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(110, e -> {
             if (frame[0] < PIERCING_SLASH_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
@@ -1561,7 +1585,7 @@ public class BattlePanel extends JPanel {
         if (eternalCrossFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
         isPlayingEternalCross = true; heroSpriteFrame = 0;
         int lW = (int)(eternalCrossFrames[0].getWidth()  * SPRITE_SCALE), lH = (int)(eternalCrossFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(getActionX(eternalCrossFrames), ACTION_Y, lW, lH); heroSpriteLabel.repaint();
+        heroSpriteLabel.setBounds(getActionX(eternalCrossFrames), isWorld2Battle ? ACTION_Y_W2 : ACTION_Y, lW, lH); heroSpriteLabel.repaint();
         int[] frame = {0}, repeat = {0};
         javax.swing.Timer t = new javax.swing.Timer(60, e -> {
             if (frame[0] < ETERNAL_CROSS_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }

@@ -102,6 +102,85 @@ public class GameScreen extends JPanel {
     private boolean pendingSelection = false;
     private int currentWorld = 1;
 
+    private javax.swing.Timer pendingMusicTimer = null;
+
+    private void switchMusic(String fileName, float volume) {
+        if (pendingMusicTimer != null && pendingMusicTimer.isRunning()) {
+            pendingMusicTimer.stop();
+            pendingMusicTimer = null;
+        }
+        utils.SoundUtil.stopLoop();
+        utils.SoundUtil.playLoop(fileName, volume);
+    }
+
+
+    private void playBattleMusic() {
+        switchMusic("BattleBackgroundMusic.wav", 0.7f);
+    }
+
+    private void playWorldMusic() {
+        if (currentWorld == 1) {
+            switchMusic("TheForestOfSilence.wav", 0.5f);
+        } else if (currentWorld == 2) {
+            switchMusic("World2BackgroundMusic.wav", 0.5f);
+        } else {
+            switchMusic("TheForestOfSilence.wav", 0.5f);
+        }
+    }
+
+    private void showWorld1TransitionImage(String fileName) {
+        showW1InterBg("/assets/Backgrounds/" + fileName);
+    }
+
+    private void typeW1TransitionText(String text, Runnable onDone) {
+        w1DialogueBox.setText("");
+        w1ContinueBtn.setEnabled(false);
+        int[] ci = {0};
+        if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+        w1TypingTimer = new Timer(25, null);
+        w1TypingTimer.addActionListener(e -> {
+            if (ci[0] < text.length()) {
+                w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w1TypingTimer.stop();
+                w1ContinueBtn.setEnabled(true);
+                for (ActionListener l : w1ContinueBtn.getActionListeners()) {
+                    w1ContinueBtn.removeActionListener(l);
+                }
+                w1ContinueBtn.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent ev) {
+                        w1ContinueBtn.setEnabled(false);
+                        w1ContinueBtn.removeActionListener(this);
+                        w1ContinueBtn.addActionListener(e2 -> continueW1Dialogue());
+                        if (onDone != null) onDone.run();
+                    }
+                });
+            }
+        });
+        w1TypingTimer.start();
+    }
+
+    private void playW1TimedSequence(String[] imageFiles, int durationMs, Runnable onDone) {
+        if (imageFiles == null || imageFiles.length == 0) {
+            if (onDone != null) onDone.run();
+            return;
+        }
+        final int[] idx = {0};
+        Runnable[] step = {null};
+        step[0] = () -> {
+            if (idx[0] >= imageFiles.length) {
+                if (onDone != null) onDone.run();
+                return;
+            }
+            showWorld1TransitionImage(imageFiles[idx[0]]);
+            idx[0]++;
+            delay(durationMs, step[0]);
+        };
+        step[0].run();
+    }
+
+
     String[] dialogues = {
             "It's just another Tuesday, you come in for your Java examination.",
 
@@ -112,6 +191,7 @@ public class GameScreen extends JPanel {
 
             "Enter your Username, password, and click Sign in.",
     };
+
 
     public GameScreen() {
         setLayout(new BorderLayout());
@@ -164,6 +244,7 @@ public class GameScreen extends JPanel {
         this.confirmedHero = hero;
         this.currentWorld = 1;
         if (typingTimer != null) typingTimer.stop();
+        playWorldMusic();
         goToWorld1Intro();
     }
 
@@ -171,6 +252,19 @@ public class GameScreen extends JPanel {
         this.confirmedHero = hero;
         this.currentWorld = 2;
         if (typingTimer != null) typingTimer.stop();
+        playWorldMusic();
+
+        // Paint cardPanel black immediately before any card switch
+        cardPanel.setBackground(Color.BLACK);
+        cardPanel.setOpaque(true);
+
+        // Also hide the current intro screen's scene image to kill NGEBackground
+        if (sceneBgLabel != null) {
+            sceneBgLabel.setIcon(null);
+            sceneBgLabel.setOpaque(true);
+            sceneBgLabel.setBackground(Color.BLACK);
+        }
+
         goToWorld2Intro();
     }
 
@@ -236,10 +330,33 @@ public class GameScreen extends JPanel {
             return;
         }
 
+        // Set correct background and music before starting
+        if (currentWorld == 2) {
+            battlePanel.setBattleBackground("/assets/Backgrounds/World2Battle1Background.png");
+        }
+        utils.SoundUtil.stopLoop();
+        utils.SoundUtil.playLoop("BattleBackgroundMusic.wav", 0.7f);
+
         cardLayout.show(cardPanel, SCREEN_BATTLE);
-        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> resumeFight.run());
-        battlePanel.startEnemySequence(hero, match, () ->
-                System.out.println("[DEV] Finished fighting: " + enemyName));
+        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
+            if (currentWorld == 1) showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+            else if (currentWorld == 2) showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+            else if (currentWorld == 3) showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+            else resumeFight.run();
+        });
+        battlePanel.startEnemySequence(hero, match, () -> {
+            if (currentWorld == 1) {
+                playWorldMusic();
+                startWorld2Transition();
+            } else if (currentWorld == 2) {
+                playWorldMusic();
+                magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
+                cardLayout.show(cardPanel, SCREEN_SHOP);
+            } else if (currentWorld == 3) {
+                playWorldMusic();
+                startFinalBossTransition();
+            }
+        });
     }
 
     private void goToIntro() { cardLayout.show(cardPanel, SCREEN_INTRO); }
@@ -293,7 +410,9 @@ public class GameScreen extends JPanel {
 
     private void goToBattle() {
         if (confirmedHero == null) return;
+        utils.SoundUtil.stopLoop(); // stop immediately before switching
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        playBattleMusic();
 
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
             if (currentWorld == 1) {
@@ -311,22 +430,30 @@ public class GameScreen extends JPanel {
             battlePanel.startEnemySequence(
                     confirmedHero,
                     HeroData.WORLD1_ENEMIES,
-                    this::startWorld2Transition
+                    () -> {
+                        playWorldMusic();
+                        startWorld2Transition();
+                    }
             );
         } else if (currentWorld == 2) {
+            battlePanel.setBattleBackground("/assets/Backgrounds/World2Battle1Background.png");
             battlePanel.startEnemySequence(
                     confirmedHero,
                     HeroData.WORLD2_ENEMIES,
                     () -> {
+                        playWorldMusic();
                         magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
                         cardLayout.show(cardPanel, SCREEN_SHOP);
                     }
             );
-        } else if (currentWorld == 3) {
+        }else if (currentWorld == 3) {
             battlePanel.startEnemySequence(
                     confirmedHero,
                     HeroData.WORLD3_ENEMIES,
-                    this::startFinalBossTransition
+                    () -> {
+                        playWorldMusic();
+                        startFinalBossTransition();
+                    }
             );
         }
     }
@@ -508,6 +635,7 @@ public class GameScreen extends JPanel {
         Runnable resume = w1ResumeAfterDialogue;
         w1ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        playBattleMusic();
         if (resume != null) resume.run();
     }
 
@@ -800,6 +928,14 @@ public class GameScreen extends JPanel {
         examStartBtn.addActionListener(e -> {
             examPopup.setVisible(false);
             continueBtn.setEnabled(false);
+            utils.SoundUtil.fadeOutLoop(1500);
+            Timer startWorld1Music = new Timer(1600, null); // ← 1600ms, after fade completes
+            startWorld1Music.setRepeats(false);
+            startWorld1Music.addActionListener(ev -> {
+                startWorld1Music.stop();
+                switchMusic("TheForestOfSilence.wav", 0.5f);
+            });
+            startWorld1Music.start();
             runLightsSequence();
         });
 
@@ -1289,6 +1425,8 @@ public class GameScreen extends JPanel {
 
     private void startWorld2Transition() {
         currentWorld = 2;
+        switchMusic("TheForestOfSilence.wav", 0.5f);
+
         if (world1KhaiLabel != null) {
             world1KhaiLabel.setIcon(null);
             world1KhaiAlpha[0] = 0f;
@@ -1304,84 +1442,171 @@ public class GameScreen extends JPanel {
         cardLayout.show(cardPanel, SCREEN_WORLD1_INTRO);
         w1ContinueBtn.setEnabled(false);
 
-        String[] transitionChunks = {
-                "Sir Khai's staff strikes the scorched earth with a resonant hum.",
-                "The forest around you shudders — not in pain, but in relief.\n" +
-                        "Gray bark cracks to reveal rich brown wood.\nThe ash on the ground blooms into lush green moss.",
-                "The corruption fades, leaving behind faint sparks of life glowing in the air.",
-                "\"This forest is saved. Life is beautiful,\" Sir Khai murmurs, watching a small flower bloom.\n" +
-                        "\"But our journey is far from over. Two more Stones remain… and darkness gathers ahead.\"",
-                "A path begins to part through the trees, leading out of the forest...\n" +
-                        "It winds toward a valley shrouded in a wall of thick fog\nand the sound of distant thunder."
+        typeW1TransitionText("Sir Khai's staff strikes the scorched earth with a resonant hum.", () ->
+                playW1TimedSequence(
+                        new String[]{
+                                "World1Transition.png",
+                                "World1Transition2.png",
+                                "World1Transition3.png",
+                                "World1Transition4.png"
+                        },
+                        2000,
+                        () -> typeW1TransitionText(
+                                "The forest around you shudders — not in pain, but in relief.\nGray bark cracks to reveal rich brown wood.",
+                                () -> typeW1TransitionText(
+                                        "The ash on the ground blooms into lush green moss.\nThe corruption fades, leaving behind faint sparks of life glowing in the air.",
+                                        () -> {
+                                            showWorld1TransitionImage("World1Transition5.png");
+                                            typeW1TransitionText(
+                                                    "\"This forest is saved. Life is beautiful,\"\nSir Khai murmurs, watching a small flower bloom.",
+                                                    () -> typeW1TransitionText(
+                                                            "\"But our journey is far from over.\nTwo more Stones remain… and darkness gathers ahead.\"",
+                                                            () -> playW1TimedSequence(
+                                                                    new String[]{
+                                                                            "World1Transition6.png",
+                                                                            "World1Transition7.png",
+                                                                            "World1Transition8.png"
+                                                                    },
+                                                                    2000,
+                                                                    () -> typeW1TransitionText(
+                                                                            "A path begins to part through the trees, leading out of the forest...\nIt winds toward a valley shrouded in a wall of thick fog.",
+                                                                            () -> playW1TimedSequence(
+                                                                                    new String[]{
+                                                                                            "World1Transition9.png",
+                                                                                            "World1Transition10.png",
+                                                                                            "World1Transition11.png"
+                                                                                    },
+                                                                                    2000,
+                                                                                    () -> typeW1TransitionText(
+                                                                                            "The sound of distant thunder echoes ahead.",
+                                                                                            () -> {
+                                                                                                utils.SoundUtil.stopLoop();
+                                                                                                utils.SoundUtil.playLoop("World2BackgroundMusic.wav", 0.5f);
+                                                                                                fadeToBlackThenWorld2();
+                                                                                            }
+                                                                                    )
+                                                                            )
+                                                                    )
+                                                            )
+                                                    )
+                                            );
+                                        }
+                                )
+                        )
+                )
+        );
+    }
+
+    private void fadeToBlackThenWorld2() {
+        JPanel blackOverlay = new JPanel() {
+            final float[] alpha = {0f};
+            {
+                setOpaque(false);
+                setBounds(0, 0, 1280, 720);
+                Timer fadeIn = new Timer(16, null);
+                fadeIn.addActionListener(ev -> {
+                    alpha[0] = Math.min(1f, alpha[0] + 0.025f);
+                    repaint();
+                    if (alpha[0] >= 1f) {
+                        fadeIn.stop();
+                        // Fully black — now switch screens
+                        goToWorld2Intro();
+                        // Remove this overlay after a short delay
+                        // (goToWorld2Intro will show its own crossfade from black)
+                        Timer remove = new Timer(100, e2 -> {
+                            Container p = this.getParent();
+                            if (p != null) { p.remove(this); p.repaint(); }
+                        });
+                        remove.setRepeats(false);
+                        remove.start();
+                    }
+                });
+                fadeIn.start();
+            }
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha[0]));
+                g2.setColor(Color.BLACK);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
         };
 
-        final int[] idx = {0};
-        Runnable[] typeNext = {null};
-        typeNext[0] = () -> {
-            if (idx[0] >= transitionChunks.length) {
-                w1ContinueBtn.setEnabled(false);
-                delay(600, this::goToWorld2Intro);
-                return;
-            }
-            String text = transitionChunks[idx[0]];
-            w1DialogueBox.setText("");
-            int[] ci = {0};
-            if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
-            final Runnable next = typeNext[0];
-            w1TypingTimer = new Timer(25, null);
-            w1TypingTimer.addActionListener(e -> {
-                if (ci[0] < text.length()) {
-                    w1DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
-                } else {
-                    w1TypingTimer.stop();
-                    idx[0]++;
-                    w1ContinueBtn.setEnabled(true);
-                    java.awt.event.ActionListener[] existing = w1ContinueBtn.getActionListeners();
-                    for (java.awt.event.ActionListener l : existing) w1ContinueBtn.removeActionListener(l);
-                    w1ContinueBtn.addActionListener(ev -> {
-                        w1ContinueBtn.setEnabled(false);
-                        for (java.awt.event.ActionListener l : existing) w1ContinueBtn.removeActionListener(l);
-                        w1ContinueBtn.addActionListener(e2 -> continueW1Dialogue());
-                        next.run();
-                    });
-                }
-            });
-            w1TypingTimer.start();
-        };
-        typeNext[0].run();
+        // Add on top of everything using GameScreen itself
+        add(blackOverlay);
+        setComponentZOrder(blackOverlay, 0);
+        revalidate();
+        repaint();// Add on top of cardPanel
+
     }
 
     private void goToWorld2Intro() {
+        switchMusic("World2BackgroundMusic.wav", 0.5f);
         w2DialogueIndex = 0;
+
+        // ── Step 1: slam a black panel over cardPanel immediately to kill any flash ──
+        JPanel instantBlack = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        instantBlack.setBounds(0, 0, 1280, 720);
+        instantBlack.setOpaque(false);
+        cardPanel.add(instantBlack);
+        cardPanel.setComponentZOrder(instantBlack, 0);
+        cardPanel.revalidate();
+        cardPanel.repaint();
+
+        // ── Step 2: setup World 2 screen state while hidden behind black ──
         if (w2WorldLabel != null) {
             w2WorldLabel.setVisible(true);
             w2WorldLabel.setForeground(Color.WHITE);
         }
         if (w2KhaiLabel != null) {
-            w2KhaiLabel.setIcon(null);
+            java.net.URL t12url = getClass().getResource("/assets/Backgrounds/World1Transition12.png");
+            if (t12url != null) {
+                w2KhaiLabel.setIcon(new ImageIcon(
+                        new ImageIcon(t12url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+            } else {
+                w2KhaiLabel.setIcon(null);
+            }
             w2KhaiAlpha[0] = 0f;
             w2KhaiLabel.putClientProperty("prevImage", null);
             w2KhaiLabel.putClientProperty("prevAlpha", 0f);
         }
-        if (w2SceneAlpha != null) w2SceneAlpha[0] = 1.0f;
-        if (w2WorldAlpha != null) w2WorldAlpha[0] = 0.0f;
-        if (w2SceneBg != null) w2SceneBg.repaint();
+        if (w2SceneAlpha != null) w2SceneAlpha[0] = 0f;
+        if (w2WorldAlpha != null) w2WorldAlpha[0] = 0f;
+        if (w2SceneBg != null) {
+            w2SceneBg.setOpaque(true);
+            w2SceneBg.setBackground(Color.BLACK);
+            w2SceneBg.repaint();
+        }
+
+        // Switch card while still hidden behind instantBlack
         cardLayout.show(cardPanel, SCREEN_WORLD2_INTRO);
 
-        delay(800, () -> {
-            Timer crossfade = new Timer(16, null);
-            crossfade.addActionListener(ev -> {
-                if (w2SceneBg == null) { crossfade.stop(); return; }
-                w2SceneAlpha[0] = Math.max(0f, w2SceneAlpha[0] - 0.02f);
-                w2WorldAlpha[0] = Math.min(1f, w2WorldAlpha[0] + 0.02f);
-                w2SceneBg.repaint();
-                if (w2SceneAlpha[0] <= 0f && w2WorldAlpha[0] >= 1f) {
-                    crossfade.stop();
-                    delay(600, () -> fadeW2Label());
-                    delay(1400, () -> startW2Typing());
+        // ── Step 3: hold on black, then slowly fade in World1Transition12.png ──
+        delay(1000, () -> {
+            // Remove the instant black cover now that we're on the right card
+            cardPanel.remove(instantBlack);
+            cardPanel.revalidate();
+            cardPanel.repaint();
+
+            // Slow fade in — 0.008f per tick at 16ms = ~2 seconds to full opacity
+            Timer fadeIn = new Timer(16, null);
+            fadeIn.addActionListener(ev -> {
+                if (w2KhaiLabel == null) { fadeIn.stop(); return; }
+                w2KhaiAlpha[0] = Math.min(1f, w2KhaiAlpha[0] + 0.008f);
+                w2KhaiLabel.repaint();
+                if (w2KhaiAlpha[0] >= 1f) {
+                    fadeIn.stop();
+                    // Hold on image for a moment, then fade title and start dialogue
+                    delay(800, () -> fadeW2Label());
+                    delay(1600, () -> startW2Typing());
                 }
             });
-            crossfade.start();
+            fadeIn.start();
         });
     }
 
@@ -1442,6 +1667,43 @@ public class GameScreen extends JPanel {
             else finishW2InterDialogue();
             return;
         }
+
+        if (w2DialogueIndex == 0) {
+            showW2SceneImage("/assets/Backgrounds/World1Transition13.png");
+        } else if (w2DialogueIndex == 5) {
+            showW2SceneImage("/assets/Backgrounds/World1Transition14.png");
+        } else if (w2DialogueIndex == 6) {
+            showW2SceneImage("/assets/Backgrounds/World1Transition15.png");
+        } else if (w2DialogueIndex == 9) {
+            w2ContinueBtn.setEnabled(false);
+            playW2TimedSequence(
+                    new String[]{"World1Transition16.png", "World1Transition17.png"},
+                    2000,
+                    () -> {
+                        w2DialogueIndex = 10;
+                        w2ContinueBtn.setEnabled(true);
+                        startW2Typing();
+                    }
+            );
+            return;
+        } else if (w2DialogueIndex == 10) {
+            w2ContinueBtn.setEnabled(false);
+            playW2TimedSequence(
+                    new String[]{"World1Transition18.png", "World1Transition19.png"},
+                    2000,
+                    () -> {
+                        w2DialogueIndex = 11;
+                        w2ContinueBtn.setEnabled(true);
+                        startW2Typing();
+                    }
+            );
+            return;
+        } else if (w2DialogueIndex == 11) {
+            showW2SceneImage("/assets/Backgrounds/World1Transition20.png");
+        } else if (w2DialogueIndex == 12) {
+            showW2SceneImage("/assets/Backgrounds/World2Battle1Background.png");
+        }
+
         w2DialogueIndex++;
         if (w2DialogueIndex < WORLD2_DIALOGUES.length) {
             startW2Typing();
@@ -1509,8 +1771,41 @@ public class GameScreen extends JPanel {
         Runnable resume = w2ResumeAfterDialogue;
         w2ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        playBattleMusic();
         if (resume != null) resume.run();
     }
+
+    private void showW2SceneImage(String path) {
+        if (w2KhaiLabel == null) return;
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) return;
+        w2KhaiLabel.setIcon(new ImageIcon(
+                new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+        w2KhaiLabel.putClientProperty("prevImage", null);
+        w2KhaiLabel.putClientProperty("prevAlpha", 0f);
+        w2KhaiAlpha[0] = 1.0f;
+        w2KhaiLabel.repaint();
+    }
+
+    private void playW2TimedSequence(String[] imageFiles, int durationMs, Runnable onDone) {
+        if (imageFiles == null || imageFiles.length == 0) {
+            if (onDone != null) onDone.run();
+            return;
+        }
+        final int[] idx = {0};
+        Runnable[] step = {null};
+        step[0] = () -> {
+            if (idx[0] >= imageFiles.length) {
+                if (onDone != null) onDone.run();
+                return;
+            }
+            showW2SceneImage("/assets/Backgrounds/" + imageFiles[idx[0]]);
+            idx[0]++;
+            delay(durationMs, step[0]);
+        };
+        step[0].run();
+    }
+
 
     // ─── Dialogues ──────────────────────────────────────────────
 
@@ -1548,22 +1843,19 @@ public class GameScreen extends JPanel {
     };
 
     private static final String[] WORLD2_DIALOGUES = {
-            "You emerge from the forest's edge, gasping as the clean air turns heavy and sour.",
-            "Ahead lies a town, huddled against the gray sky.\n" +
-                    "Relief surges for a moment — until the wind changes.\n" +
-                    "It carries the copper scent of blood and the sickly sweet smell of rot.",
-            "You walk through the broken gates. The mud is thick and black.\n" +
-                    "This place is diseased. The buildings lean like dying men.\n" +
-                    "The silence is broken only by wet, hacking coughs.",
-            "Khai stops, his face twisting in grief.\n" +
-                    "\"Look at them.\" he whispers.\n" +
-                    "\"Children cough in alleys. Hollow-eyed guards demand bribes just to look the other way.\"",
-            "\"This town used to be the epitome of peace and unity,\" Khai continues, gripping his staff.\n" +
-                    "\"Now, every face tells the same story:\nsomething has poisoned the very heart of this world.\"",
+            "You emerge from the forest's edge, \nbreathing as the clean air turns heavy and sour.",
+            "Ahead lies a town, huddled against the gray sky.\nRelief surges for a moment — until the wind changes.",
+            "It carries the copper scent of blood and the sickly sweet smell of rot.",
+            "You walk through the broken gates. The mud is thick and black.",
+            "This place is diseased. The buildings lean like dying men.",
+            "The silence is broken only by wet, hacking coughs.",
+            "Khai stops, his face twisting in grief.\n\"Look at them,\" he whispers.",
+            "\"Children cough in alleys. \nHollow-eyed guards demand bribes just to look the other way.\"",
+            "\"This town used to be the epitome of peace and unity,\" \nKhai continues, gripping his staff.",
+            "\"Now, every face tells the same story:\nsomething has poisoned the very heart of this world.\"",
             "A scratching sound echoes from the gutters.\nThe shadows near your feet begin to move.",
-            "The stench of rot suddenly intensifies.\n" +
-                    "From the sewers and piles of filth, three PLAGUE VERMINS scuttle out.\n" +
-                    "They hiss — claws dripping with venomous filth. They do not flee. They charge."
+            "The stench of rot suddenly intensifies.\nFrom the sewers and piles of filth, three PLAGUE VERMINS scuttle out.",
+            "They hiss — claws dripping with venomous filth. \nThey do not flee. They charge."
     };
 
     private static final String[][] WORLD1_INTER_DIALOGUES = {
@@ -1571,7 +1863,7 @@ public class GameScreen extends JPanel {
                     "The path narrows. The mist becomes so thick\nyou can barely see your hand in front of your face.",
                     "The air grows icy. The silence is broken by a sound like static,\nor perhaps whispering voices overlapping until they become noise.",
                     "Shadows detach themselves from the trees.\nThey twist and contort, forming vague human-like shapes.",
-                    "SHADE SPRITES.\nThey are the lost souls of travelers who died in this woods, now jealous of your life."
+                    "SHADE SPRITES.\nThey are the lost souls of travelers who died in this woods,\n now jealous of your life."
             },
             {
                     "The whispering finally stops.\nThe mist recedes, revealing faint lights hovering among the dead trees.",
@@ -1581,38 +1873,34 @@ public class GameScreen extends JPanel {
             {
                     "The Treants collapse in a shower of rotting bark.\nWhere they fall, small green sprouts push through the ash.",
                     "A foul stench drifts down from above.\nSomething vast circles in the dead canopy overhead.",
-                    "Four CARRION BATS, each the size of a man, dive-bomb from the dead branches above."
+                    "Four CARRION BATS, each the size of a man, \ndive-bomb from the dead branches above."
             },
             {
                     "The last bat crashes into the earth.\nThe forest holds its breath.",
-                    "Ahead, pale moonlight breaks through the canopy.\nA clearing opens — and within it, something stirs.",
+                    "Ahead, pale moonlight breaks through the canopy.\nA clearing opens - and within it, something stirs.",
                     "The trees twist around a great blackened oak.\nFrom behind it steps a massive stag, twelve feet tall at the shoulder.",
                     "Its antlers are cracked and glow with faint white fire.\nIts eyes burn not with anger, but with an ancient, crushing sadness.",
-                    "Once a noble guardian of this forest, the Hollow Stag is now corrupted by the darkness.\nIts hooves scorch the ground. It lowers its head, seeking peace through battle.",
+                    "Once a noble guardian of this forest, the Hollow Stag is corrupted by the darkness. Its hooves scorch the ground. \nIt lowers its head, seeking peace through battle.",
                     "Free him. Khai's voice echoes in your mind.\n\"Break the chains of the Necromancer.\""
             },
     };
 
     private static final String[] WORLD1_DIALOGUES = {
-            "You wake up gasping for air. The world is drained of color.",
-            "You are lying on a bed of gray moss in a dead forest. The trees are skeletal\n"+
-                    "giants, stripped to bone-white wood. A cold mist coils around your ankles,\n"+
-                    "and silence presses from every side watching, waiting.",
-            "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",
-            "From the mist steps a figure cloaked in tattered robes.\n"+
-                    "He leans heavily on a staff. As he lifts his hood, you jolt back \n"+
-                    "the face is familiar. It looks exactly like your professor, Khai.\n"+
-                    "But his eyes are weary, holding the weight of centuries.",
-            "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n\n"+
+            "You wake up gasping for air. The world is drained of color.",          // index 0
+            "You are lying on a bed of gray moss in a dead forest.\nThe trees are skeletal giants, stripped to bone-white wood.", // index 1
+            "A cold mist coils around your ankles,\nand silence presses from every side watching, waiting.", // index 2
+            "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",           // index 3
+            "From the mist steps a figure cloaked in tattered robes.\nHe leans heavily on a staff. As he lifts his hood, you jolt back,\nthe face is familiar. It looks exactly like your professor, Khai.", // index 4
+            "But his eyes are weary, holding the weight of centuries.",             // index 5
+            "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n"+
                     "\"We suffer because an evil Necromancer has corrupted these lands.\n"+
                     "He has drained the nature itself. We must find the Three Stones of Life\n"+
-                    "that hold this reality together. Only then will your path home reveal itself.\"",
-            "Khai fades back into the mist.",
-            "Three Rodtfang Wolves emerge from the tree line.",
-            "Their glowing red eyes",
-            "fixate on you. They do not hunt for food they hunt to kill."
+                    "that hold this reality together. \nOnly then will your path home reveal itself.\"", // index 6
+            "Khai fades back into the mist.",                                       // index 7
+            "Three Rodtfang Wolves emerge from the tree line.",                     // index 8
+            "Their glowing red eyes—",                                              // index 9
+            "—fixate on you. They do not hunt for food — they hunt to kill."        // index 10
     };
-
     // ─── WORLD 3 DIALOGUES ──────────────────────────────────────────────
     private static final String[] WORLD3_DIALOGUES = {
             "You have been travelling for days, leaving the green world far behind.\n" +
@@ -1919,16 +2207,19 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        if (w1DialogueIndex == 1 && w1WorldLabel != null) {
+        // index 2 — fade world label, show SilhouetteSirKhai
+        if (w1DialogueIndex == 2 && w1WorldLabel != null) {
             fadeW1Label();
             delay(1000, () -> crossfadeW1ToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {}));
         }
 
-        if (w1DialogueIndex == 2) {
+        // index 3 — SilhouetteSirKhai2
+        if (w1DialogueIndex == 3) {
             transitionW1Scene("/assets/Backgrounds/SilhouetteSirKhai2.jpg");
         }
 
-        if (w1DialogueIndex == 3) {
+        // index 4 — SilhouetteSirKhai3
+        if (w1DialogueIndex == 4) {
             try {
                 java.net.URL u = getClass().getResource("/assets/Backgrounds/SilhouetteSirKhai3.png");
                 if (u != null) {
@@ -1941,16 +2232,22 @@ public class GameScreen extends JPanel {
             } catch (Exception ex) {}
         }
 
-        if (w1DialogueIndex == 4) {
+        // index 5 — "But his eyes are weary" — DO NOTHING, image stays as SilhouetteSirKhai3
+
+        // index 6 — "Be calm Traveler" — press continue → crossfade sequence → World1Background
+        if (w1DialogueIndex == 6) {
             w1ContinueBtn.setEnabled(false);
             crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai2.jpg", () -> {
                 crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {
                     delay(1000, () -> {
                         world1KhaiAlpha[0] = 0f;
+                        world1KhaiLabel.setIcon(null);
+                        world1KhaiLabel.putClientProperty("prevImage", null);
+                        world1KhaiLabel.putClientProperty("prevAlpha", 0f);
                         world1KhaiLabel.repaint();
                         world1WorldAlpha[0] = 1.0f;
                         world1SceneBg.repaint();
-                        w1DialogueIndex = 5;
+                        w1DialogueIndex = 7;
                         w1ContinueBtn.setEnabled(true);
                         startW1Typing();
                     });
@@ -1959,7 +2256,9 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        if (w1DialogueIndex == 6) {
+        // index 7 — "Khai fades back into the mist" — forest already showing, nothing to do
+        // index 8 — "Three Rodtfang Wolves..." — Wolf1 crossfade
+        if (w1DialogueIndex == 8) {
             w1ContinueBtn.setEnabled(false);
             crossfadeKhaiToKhai("/assets/Backgrounds/World1RodtfangWolf1.png", () -> {
                 delay(1000, () -> {
@@ -1974,7 +2273,7 @@ public class GameScreen extends JPanel {
                         }
                     } catch (Exception ex) {}
                     delay(1000, () -> {
-                        w1DialogueIndex = 7;
+                        w1DialogueIndex = 9;
                         w1ContinueBtn.setEnabled(true);
                         startW1Typing();
                     });
@@ -1983,7 +2282,8 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        if (w1DialogueIndex == 7) {
+        // index 9 — Wolf3 image
+        if (w1DialogueIndex == 9) {
             try {
                 java.net.URL u = getClass().getResource("/assets/Backgrounds/World1RodtfangWolf3.png");
                 if (u != null) {
@@ -2160,6 +2460,9 @@ public class GameScreen extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
+                // Always fill black first so there is never a transparent/flicker frame
+                g2.setColor(Color.BLACK);
+                g2.fillRect(0, 0, getWidth(), getHeight());
                 if (fDark != null && sceneAlpha[0] > 0) {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sceneAlpha[0]));
                     g2.drawImage(fDark, 0, 0, getWidth(), getHeight(), null);
@@ -2172,7 +2475,8 @@ public class GameScreen extends JPanel {
             }
         };
         w2Scene.setBounds(0, 0, 1280, 520);
-        w2Scene.setOpaque(false);
+        w2Scene.setOpaque(true);
+        w2Scene.setBackground(Color.BLACK);
 
         w2SceneBg    = w2Scene;
         w2SceneAlpha = sceneAlpha;
@@ -2424,6 +2728,8 @@ public class GameScreen extends JPanel {
     // =========================================================================
 
     private void startWorld3Transition() {
+        utils.SoundUtil.stopLoop();                                    // ← ADD THIS
+        utils.SoundUtil.playLoop("TheForestOfSilence.wav", 0.5f);     // ← ADD THIS
         currentWorld = 3;
         w3DialogueIndex = 0;
         if (w3WorldLabel != null) {
@@ -2583,6 +2889,7 @@ public class GameScreen extends JPanel {
         Runnable resume = w3ResumeAfterDialogue;
         w3ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        playBattleMusic(); // ← this was missing, unlike finishW2InterDialogue
         if (resume != null) resume.run();
     }
 
