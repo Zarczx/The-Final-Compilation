@@ -75,9 +75,9 @@ public class BattleManager {
         }
 
         ActionResult result = switch (action) {
-            case SKILL1 -> resolveAttack(heroDef.skills[0].name, heroDef.skills[0].multiplier, heroDef.skills[0].pierceArmor, s1Cost, false);
-            case SKILL2 -> resolveAttack(heroDef.skills[1].name, heroDef.skills[1].multiplier, heroDef.skills[1].pierceArmor, s2Cost, false);
-            case ULTIMATE -> resolveAttack(heroDef.skills[2].name, heroDef.skills[2].multiplier, heroDef.skills[2].pierceArmor, ultCost, true);
+            case SKILL1 -> resolveAttack(heroDef.skills[0].name, heroDef.skills[0].minMultiplier, heroDef.skills[0].maxMultiplier, heroDef.skills[0].pierceArmor, s1Cost, false);
+            case SKILL2 -> resolveAttack(heroDef.skills[1].name, heroDef.skills[1].minMultiplier, heroDef.skills[1].maxMultiplier, heroDef.skills[1].pierceArmor, s2Cost, false);
+            case ULTIMATE -> resolveAttack(heroDef.skills[2].name, heroDef.skills[2].minMultiplier, heroDef.skills[2].maxMultiplier, heroDef.skills[2].pierceArmor, ultCost, true);
             case SKIP_TURN -> resolveSkipTurn();
         };
 
@@ -85,9 +85,12 @@ public class BattleManager {
         return new ActionResult(result.logMessage, result.damageDealt, dot, result.isSpecial, result.wasDefend, result.statusEffect);
     }
 
-    private ActionResult resolveAttack(String skillName, double mult, boolean pierce, int cost, boolean isUlt) {
+    private ActionResult resolveAttack(String skillName, double minMult, double maxMult, boolean pierce, int cost, boolean isUlt) {
         hero.energy -= cost;
-        int damage = DamageCalculator.calculateDamage(hero, enemy, mult, pierce);
+
+        // Calculate a random multiplier between min and max
+        double actualMult = minMult + (maxMult - minMult) * rng.nextDouble();
+        int damage = DamageCalculator.calculateDamage(hero, enemy, actualMult, pierce);
 
         // Swordsman passive (Crit)
         if ("Swordsman".equals(heroDef.role) && rng.nextDouble() < 0.15) {
@@ -108,7 +111,7 @@ public class BattleManager {
             hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
         }
 
-        String weaponFx = DamageCalculator.applyWeaponEffects(hero, enemy, weaponDef, damage);
+        String weaponFx = DamageCalculator.applyWeaponEffects(hero, enemy, hero.inventory.getEquippedWeapon(), damage);
         String msg = hero.name + " uses " + skillName + " for " + damage + " damage!";
         return new ActionResult(msg, damage, 0, isUlt, false, weaponFx);
     }

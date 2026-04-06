@@ -23,39 +23,56 @@ public class DamageCalculator {
         return defender.defending ? Math.max(1, damage / 2) : damage;
     }
 
-    public static String applyWeaponEffects(Combatant hero, Combatant enemy, WeaponDef weaponDef, int damageDealt) {
-        if (weaponDef == null || damageDealt <= 0) return null;
-        StringBuilder effects = new StringBuilder();
+    public static String applyWeaponEffects(Combatant hero, Combatant enemy, Combatant.Weapon weapon, int baseDamage) {
+        if (weapon == null) return null;
 
-        // Lifesteal
-        if (weaponDef.lifestealPercent > 0) {
-            int heal = Math.max(1, (int)(damageDealt * weaponDef.lifestealPercent / 100.0));
-            heal = Math.min(heal, hero.maxHp - hero.currentHp);
-            if (heal > 0) {
-                hero.currentHp += heal;
-                effects.append("Lifesteal +").append(heal).append("HP ");
-            }
+        java.util.Random rng = new java.util.Random();
+        StringBuilder fxLog = new StringBuilder();
+
+        // 💖 Lifesteal
+        if (weapon.lifestealPercent > 0) {
+            int heal = (int) (baseDamage * (weapon.lifestealPercent / 100.0));
+            hero.currentHp = Math.min(hero.maxHp, hero.currentHp + heal);
+            fxLog.append("Lifesteal +").append(heal).append("HP. ");
         }
 
-        // Energy Restore
-        if (weaponDef.energyPerAttack > 0) {
-            hero.energy = Math.min(hero.maxEnergy, hero.energy + weaponDef.energyPerAttack);
+        // ⚡ Arc Surge / Energy Restore
+        if (weapon.energyPerAttack > 0) {
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + weapon.energyPerAttack);
+            fxLog.append("Restored ").append(weapon.energyPerAttack).append(" Energy. ");
         }
 
-        // Confuse
-        if (weaponDef.confuseChance > 0 && rng.nextInt(100) < weaponDef.confuseChance) {
+        // ☠️ Poison & 🩸 Bleed
+        if (weapon.poisonChance > 0 && rng.nextInt(100) < weapon.poisonChance) {
+            // Apply your poison logic here (e.g. enemy.dotDamage += ...)
+            fxLog.append("Poisoned! ");
+        }
+        if (weapon.bleedChance > 0 && rng.nextInt(100) < weapon.bleedChance) {
+            fxLog.append("Bleeding! ");
+        }
+
+        // ⛓️ Crowd Control (Stun, Freeze, Confuse)
+        if (weapon.stunChance > 0 && rng.nextInt(100) < weapon.stunChance) {
+            enemy.stunned = true;
+            fxLog.append("Stunned! ");
+        }
+        if (weapon.freezeChance > 0 && rng.nextInt(100) < weapon.freezeChance) {
+            enemy.frozen = true;
+            fxLog.append("Frozen! ");
+        }
+        if (weapon.confuseChance > 0 && rng.nextInt(100) < weapon.confuseChance) {
             enemy.confused = true;
-            effects.append("CONFUSE ");
+            fxLog.append("Confused! ");
         }
 
-        // Poison
-        if (weaponDef.poisonChance > 0 && rng.nextInt(100) < weaponDef.poisonChance) {
-            enemy.dotDamage = Math.max(enemy.dotDamage, Math.max(1, (int)(enemy.maxHp * 0.03)));
-            enemy.dotTurnsLeft += 2;
-            effects.append("POISON");
+        // ⚡ Extra Hit
+        if (weapon.extraHitChance > 0 && rng.nextInt(100) < weapon.extraHitChance) {
+            int extraDmg = (int) (baseDamage * (0.2 + (0.2 * rng.nextDouble()))); // 20% to 40% of base
+            enemy.currentHp = Math.max(0, enemy.currentHp - extraDmg);
+            fxLog.append("Extra Hit (").append(extraDmg).append(" DMG)! ");
         }
 
-        return effects.length() > 0 ? effects.toString().trim() : null;
+        return fxLog.length() > 0 ? fxLog.toString().trim() : null;
     }
 
     public static int applyDoT(Combatant c) {

@@ -2,16 +2,8 @@ package GameGUI.model;
 
 import GameGUI.logic.BattleLogic;
 
-/**
- * HeroFactory — Handles the "How" of creating game objects.
- * Separates instantiation logic from data storage.
- */
 public class HeroFactory {
 
-    /**
-     * Builds a playable Hero Combatant from a definition.
-     * Maps skills to the special cooldown system and applies equipment buffs.
-     */
     public static Combatant createHero(HeroData.HeroDefinition def) {
         BattleLogic.Special special = null;
 
@@ -20,7 +12,7 @@ public class HeroFactory {
             HeroData.SkillDef ult = def.skills[2];
             special = new BattleLogic.Special(
                     ult.name, ult.icon, ult.description,
-                    ult.multiplier, ult.pierceArmor, ult.cooldown
+                    ult.maxMultiplier, ult.pierceArmor, ult.cooldown // <-- Changed here
             );
         }
 
@@ -36,15 +28,11 @@ public class HeroFactory {
                 special
         );
 
-        // Ultimate locked for first 3 turns (matches console reference)
         hero.specialCooldown = 3;
 
         return hero;
     }
 
-    /**
-     * Builds an Enemy Combatant from a definition.
-     */
     public static Combatant createEnemy(HeroData.EnemyDefinition def) {
         return new Combatant(
                 def.name, def.role, def.emoji,
