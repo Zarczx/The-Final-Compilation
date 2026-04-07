@@ -214,10 +214,15 @@ public class BattleLogic {
 
         String heroName = heroDef != null ? heroDef.name : hero.name;
         String skillName = heroDef != null ? heroDef.skills[0].name : "Skill 1";
-        double mult = heroDef != null ? heroDef.skills[0].multiplier : 1.15;
+
+        // NEW: Dynamic Damage Range
+        double minMult = heroDef != null ? heroDef.skills[0].minMultiplier : 1.15;
+        double maxMult = heroDef != null ? heroDef.skills[0].maxMultiplier : 1.35;
+        double actualMult = minMult + (maxMult - minMult) * rng.nextDouble();
+
         boolean pierce = heroDef != null && heroDef.skills[0].pierceArmor;
 
-        int dmg = calcDamage(hero, enemy, mult, pierce);
+        int dmg = calcDamage(hero, enemy, actualMult, pierce);
 
         // Passive: Blade Swift (Kael) — 15% crit chance gives +5% stamina
         if (heroDef != null && heroDef.role.equals("Swordsman") && rng.nextDouble() < 0.15) {
@@ -229,6 +234,11 @@ public class BattleLogic {
         // Passive: Hunter's Instinct (Karl) — +20% if enemy < 30% HP
         if (heroDef != null && heroDef.role.equals("Archer")) {
             if ((double)enemy.currentHp / enemy.maxHp < 0.3) dmg = (int)(dmg * 1.2);
+        }
+
+        // Passive: Arcane Flow (Simon/Null) — Restores 5% of max energy on cast
+        if (heroDef != null && heroDef.role.equals("Mage")) {
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + (int)(hero.maxEnergy * 0.05));
         }
 
         enemy.currentHp = clamp(enemy.currentHp - dmg, 0, enemy.maxHp);
@@ -265,10 +275,15 @@ public class BattleLogic {
         hero.energy -= skill2Cost;
 
         String skillName = heroDef != null ? heroDef.skills[1].name : "Skill 2";
-        double mult = heroDef != null ? heroDef.skills[1].multiplier : 1.35;
+
+        // NEW: Dynamic Damage Range
+        double minMult = heroDef != null ? heroDef.skills[1].minMultiplier : 1.35;
+        double maxMult = heroDef != null ? heroDef.skills[1].maxMultiplier : 1.55;
+        double actualMult = minMult + (maxMult - minMult) * rng.nextDouble();
+
         boolean pierce = heroDef != null && heroDef.skills[1].pierceArmor;
 
-        int dmg = calcDamage(hero, enemy, mult, pierce);
+        int dmg = calcDamage(hero, enemy, actualMult, pierce);
 
         // Blade Swift passive for Kael skill 2
         if (heroDef != null && heroDef.role.equals("Swordsman") && rng.nextDouble() < 0.15) {
@@ -276,11 +291,17 @@ public class BattleLogic {
             int gain = (int)(hero.maxEnergy * 0.05);
             hero.energy = Math.min(hero.maxEnergy, hero.energy + gain);
         }
+
         // Hunter's Instinct for Karl
         if (heroDef != null && heroDef.role.equals("Archer")) {
             if ((double)enemy.currentHp / enemy.maxHp < 0.3) dmg = (int)(dmg * 1.2);
             // Bullseye — guaranteed crit
             dmg = (int)(dmg * 1.5);
+        }
+
+        // Passive: Arcane Flow (Simon/Null) — Restores 5% of max energy on cast
+        if (heroDef != null && heroDef.role.equals("Mage")) {
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + (int)(hero.maxEnergy * 0.05));
         }
 
         enemy.currentHp = clamp(enemy.currentHp - dmg, 0, enemy.maxHp);
@@ -321,8 +342,17 @@ public class BattleLogic {
                 ? heroDef.skills[2].cooldown : 3;
 
         String skillName = heroDef != null ? heroDef.skills[2].name : "Ultimate";
-        double mult = heroDef != null ? heroDef.skills[2].multiplier : 1.40;
+
+        // NEW: Dynamic Damage Range
+        double minMult = heroDef != null ? heroDef.skills[2].minMultiplier : 1.40;
+        double maxMult = heroDef != null ? heroDef.skills[2].maxMultiplier : 1.80;
+
         boolean pierce = heroDef != null && heroDef.skills[2].pierceArmor;
+
+        // Passive: Arcane Flow (Simon/Null) — Applied once per cast, not per hit
+        if (heroDef != null && heroDef.role.equals("Mage")) {
+            hero.energy = Math.min(hero.maxEnergy, hero.energy + (int)(hero.maxEnergy * 0.05));
+        }
 
         // Multi-hit ultimates
         int hits = 1;
@@ -335,8 +365,11 @@ public class BattleLogic {
         int totalDmg = 0;
         StringBuilder hitLog = new StringBuilder();
         for (int i = 1; i <= hits; i++) {
-            int dmg = calcDamage(hero, enemy, mult, pierce);
-            // Blade Swift passive
+            // Roll a unique multiplier for each hit in the combo!
+            double actualMult = minMult + (maxMult - minMult) * rng.nextDouble();
+            int dmg = calcDamage(hero, enemy, actualMult, pierce);
+
+            // Blade Swift passive (can trigger on individual hits)
             if (heroDef != null && heroDef.role.equals("Swordsman") && rng.nextDouble() < 0.15) {
                 dmg = (int)(dmg * 1.5);
                 int gain = (int)(hero.maxEnergy * 0.05);
@@ -383,7 +416,6 @@ public class BattleLogic {
         log(msg);
         return new ActionResult(msg, false, totalDmg, 0, "enemy", true, false, hits > 1, fullStatusU);
     }
-
     // ─── Skip Turn ───────────────────────────────────────────────────────────
     private ActionResult resolveSkipTurn() {
         int restoreHp = (int)(hero.maxHp * 0.10);
