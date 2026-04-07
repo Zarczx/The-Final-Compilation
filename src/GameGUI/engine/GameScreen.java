@@ -223,7 +223,7 @@ public class GameScreen extends JPanel {
         cardPanel.add(battlePanel, SCREEN_BATTLE);
 
         magicShopPanel = new GameGUI.ui.MagicShopPanel();
-        magicShopPanel.setOnLeaveShop(this::startWorld3Transition);
+        magicShopPanel.setOnLeaveShop(this::showPostShopDialogue);
         cardPanel.add(magicShopPanel, SCREEN_SHOP);
 
         add(cardPanel, BorderLayout.CENTER);
@@ -359,6 +359,10 @@ public class GameScreen extends JPanel {
         });
     }
 
+    private void showPostShopDialogue() {
+        showWorld2InterDialogue(WORLD2_INTER_DIALOGUES.length - 1, this::startWorld3Transition);
+    }
+
     private void goToIntro() { cardLayout.show(cardPanel, SCREEN_INTRO); }
 
     public void skipToWorld1(HeroDefinition hero) {
@@ -442,8 +446,7 @@ public class GameScreen extends JPanel {
                     HeroData.WORLD2_ENEMIES,
                     () -> {
                         playWorldMusic();
-                        magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
-                        cardLayout.show(cardPanel, SCREEN_SHOP);
+                        showKingVictoryDialogue();
                     }
             );
         }else if (currentWorld == 3) {
@@ -456,6 +459,53 @@ public class GameScreen extends JPanel {
                     }
             );
         }
+    }
+
+    private void showKingVictoryDialogue() {
+        String[] kingVictory = {
+                "FINAL VICTORY - BOSS DEFEATED!\n" +
+                        "The King screams as the corruption tears free — he crumbles to dust,\n" +
+                        "leaving only his rusted crown and a pulsing stone upon the throne.",
+                "His breath rattles. A faint glimmer of humanity returns to his hollow eyes.",
+                "\"It's… It's you!!! NO!!!…\"",
+                "He screams with his dying breath as his body crumbles into dust.",
+                "He leaves behind only a pile of ash… and confusion about who he was referring to.",
+                "You lift the SECOND STONE from the ash, feeling its dark energy pulse in your hands.",
+                "The room falls into silence, whispering secrets of the past.",
+                "As you step forward, a strange pull brushes against your soul.\n" +
+                        "The world itself feels like it is shifting around you.",
+                "Something… or someone… is calling to you.",
+                "A BRILLIANT FLASH LIGHTS UP THE ROOM!",
+                "From the shattered shadows, a glowing arcane doorway forms before you.",
+                "A calm, ancient voice echoes:\n" +
+                        "\"Hero… you are granted one chance to reshape your fate.\"",
+                "\"I appear only to those who have conquered great darkness.\"\n" +
+                        "\"Stock up now — once you leave, I will vanish forever.\""
+        };
+
+        w2InInterDialogue = true;
+        w2InterChunks = kingVictory;
+        w2InterChunkIndex = 0;
+        w2ResumeAfterDialogue = () -> {
+            magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
+            cardLayout.show(cardPanel, SCREEN_SHOP);
+        };
+
+        if (w2KhaiLabel != null) {
+            w2KhaiLabel.setIcon(null);
+            w2KhaiAlpha[0] = 0f;
+            w2KhaiLabel.putClientProperty("prevImage", null);
+            w2KhaiLabel.putClientProperty("prevAlpha", 0f);
+            w2KhaiLabel.repaint();
+        }
+        if (w2SceneAlpha != null) w2SceneAlpha[0] = 0f;
+        if (w2WorldAlpha != null) w2WorldAlpha[0] = 1.0f;
+        if (w2SceneBg != null) w2SceneBg.repaint();
+        if (w2WorldLabel != null) w2WorldLabel.setVisible(false);
+
+        cardLayout.show(cardPanel, SCREEN_WORLD2_INTRO);
+        w2ContinueBtn.setEnabled(true);
+        typeW2InterChunk();
     }
 
     private void showInterEnemyDialogue(int interIndex, Runnable resumeFight) {
@@ -1811,35 +1861,52 @@ public class GameScreen extends JPanel {
 
     private static final String[][] WORLD2_INTER_DIALOGUES = {
             {
-                    "The last Vermin goes still. The stench of rot clings to your clothes.",
-                    "Further in, you hear a rhythmic chanting — low, guttural, wrong.\n" +
-                            "The shadows ahead pulse with violet light.",
-                    "FORSAKEN CULTISTS.\nThey have surrendered their souls for power. Now they serve the darkness without question."
+                    "The last Vermin goes still.\nThe stench of rot clings to your clothes.",
+                    "You wander through the town's crumbling streets.\nThe air is thick with despair.",
+                    "You stop to help a beggar, offering a small kindness in a cruel world.\nHe grabs your wrist, his eyes wide with fear.",
+                    "\"Beware the Black Castle,\" he rasps.\n\"The Corrupted King hoards the Second Stone there.\"",
+                    "\"But the real master... is the Necromancer.\nHe is a phantom who rules from the shadows.\"",
+                    "Following the beggar's warning, you investigate a ruined chapel at the edge of town.\nInside, the air hums with dark energy.",
+                    "Two FORSAKEN CULTISTS stand before a defiled altar.\nThey turn slowly, their eyes glowing with fanatic light.",
             },
             {
-                    "The chanting dies. The cultists crumple — their pact finally, mercifully broken.",
+                    "The chanting dies.\nThe cultists crumple — their pact finally, mercifully broken.",
+                    "You leave the ruined chapel and head toward the castle outskirts.\nThe air grows heavy with sulfur.",
                     "The silence that follows is not peaceful.\nSomething low and wet breathes in the dark ahead.",
-                    "Two shapes detach from the fog.\nBlight Hounds — their bodies wrong, their eyes hollow, driven by hunger and rot."
+                    "Two shapes detach from the fog.\nBlight Hounds — hollow-eyed, driven by hunger and rot."
             },
             {
-                    "The Hounds collapse. Their corruption bleeds into the mud beneath them.",
-                    "Khai places a hand on your shoulder.\n\"The town garrison has fallen. What marches ahead were once its defenders.\"",
-                    "GHOUL FOOTMEN — four of them.\nThey were soldiers once. Now they obey a master who does not care if they survive."
+                    "The Hounds collapse.\nTheir corruption bleeds into the mud beneath them.",
+                    "You stand before the towering iron gates.\nThe metal is cold to the touch.",
+                    "Thunder cracks overhead as you push open the heavy gates.",
+                    "Inside, the halls are silent except for the scrape of metal on stone.\nFigures lurch from the darkness — once knights, now twisted by plague.",
+                    "Two GHOUL FOOTMEN emerge.\nTheir armor is cracked, their eyes bleed darkness."
             },
             {
-                    "The last Footman falls with a hollow clatter. The silence after is heavy.",
-                    "From somewhere deep in the town, a door of iron groans open.\n" +
-                            "Something massive steps through — chains dragging on stone.",
-                    "\"The Black Jailer,\" Khai breathes. \"He keeps the Second Stone locked away.\"\n" +
-                            "\"No one who has faced him has ever walked free.\""
+                    "The last Footman falls with a hollow clatter.\nThe silence after is heavy.",
+                    "You descend into the castle's damp underbelly.\nThe air grows cold.",
+                    "The sound of dripping water is drowned out by the heavy dragging of iron.",
+                    "Clank... Drag... Clank...",
+                    "In the flickering torchlight, a massive figure blocks the path.\nThe Black Jailer steps from the shadows, his face hidden behind an iron mask.",
             },
             {
-                    "The Black Jailer staggers. His chains go slack — the first time they have ever rested.",
-                    "His iron mask cracks. Behind it: a face that was once human.\n\"Free…\" he rasps. Then he is still.",
-                    "A slow clap echoes through the hall. A figure descends a crumbling staircase.",
-                    "LUTHER VON.\nThe Corrupted King. He who let this town rot from within while he sat on his throne.\n" +
-                            "\"Impressive,\" he says. \"Now face something worthy of that title.\""
-            }
+                    "The Black Jailer drops to his knees.\nHis iron mask falls away to reveal nothing but ash.",
+                    "The chains that bound the dungeon fall silent.\nYou have broken his tyranny.",
+                    "You find a key on the Jailer's belt and a surge of new power.",
+                    "You ascend the spiral staircase.\nThe air grows thin and smells of ancient dust.",
+                    "At the top, the massive doors to the Throne Room stand slightly ajar.",
+                    "In the center of the room, on a throne of jagged iron, sits the King.\nHe is slumped forward, his body fused to the chair by the corruption.",
+                    "Embedded in his rusted crown, pulsating with a sickly green light, is the SECOND STONE.",
+                    "The King slowly lifts his head.\nHis eyes are hollow voids.",
+                    "\"YOU DARE CHALLENGE MY AUTHORITY?!\"",
+                    "\"YOUR SKULL WILL BECOME BUT ANOTHER TROPHY IN MY HALLS!\""
+            },
+            {
+                    "🌟 The glow of the Magic Shop fades, leaving only silence behind.",
+                    "The doorway vanishes as suddenly as it appeared.\nYou stand alone in the quiet halls of the castle.",
+                    "Whatever choices you made within… will echo in the battles to come.\nThe castle seems to hold its breath.",
+                    "The choices you've made, the treasures you've claimed…\nall will shape the path ahead."
+            },
     };
 
     private static final String[] WORLD2_DIALOGUES = {

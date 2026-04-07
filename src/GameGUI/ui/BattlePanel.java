@@ -180,6 +180,29 @@ public class BattlePanel extends JPanel {
     private boolean isPlayingStagDefeat      = false;
     private boolean isPlayingStagEntrance    = false;
 
+    //World2
+
+    // Plague Vermin (World 2)
+    private static final int PLAGUE_VERMIN_IDLE_FRAME_COUNT     = 4;
+    private static final int PLAGUE_VERMIN_HURT_FRAME_COUNT     = 4;
+    private static final int PLAGUE_VERMIN_ATTACK_FRAME_COUNT   = 4;
+    private static final int PLAGUE_VERMIN_ENTRANCE_FRAME_COUNT = 4;
+    private static final int PLAGUE_VERMIN_SPEED                = 200;
+    private static final int PLAGUE_VERMIN_ENTRANCE_START_X     = 1300;
+    private static final int PLAGUE_VERMIN_X                    = TREANT_X;
+    private static final int PLAGUE_VERMIN_Y = 80; // IDLE_Y_W2, World 2 row
+    private static final double PLAGUE_VERMIN_SCALE             = 0.40;
+
+    private BufferedImage[] plagueVerminIdleFrames;
+    private BufferedImage[] plagueVerminHurtFrames;
+    private BufferedImage[] plagueVerminAttackFrames;
+    private BufferedImage[] plagueVerminEntranceFrames;
+
+    private boolean isPlayingPlagueVerminHurt     = false;
+    private boolean isPlayingPlagueVerminAttack   = false;
+    private boolean isPlayingPlagueVerminDefeat   = false;
+    private boolean isPlayingPlagueVerminEntrance = false;
+
     // ════════════════════════════════════════════
     // ★ POSITION CONSTANTS
     // ════════════════════════════════════════════
@@ -310,10 +333,18 @@ public class BattlePanel extends JPanel {
         setTurnLabel(true);
         startHeroIdleAnimation();
 
-        boolean isStagFight = eDef.name.equals("The Hollow Stag");
+        // MINIBOSS CHECKS
+        boolean isStagFight   = eDef.name.equals("The Hollow Stag");
+        boolean isJailerFight = eDef.name.equals("The Black Jailer");
+        boolean isLutherFight = eDef.name.equals("Luther Von The Corrupted King");
 
-        if (isStagFight) {
-            JLabel minibossLabel = new JLabel("MINIBOSS ENCOUNTER : THE HOLLOW STAG", SwingConstants.CENTER);
+        if (isStagFight || isJailerFight || isLutherFight) {
+
+            String bannerText = isStagFight  ? "MINIBOSS ENCOUNTER : THE HOLLOW STAG"
+                    : isJailerFight ? "MINIBOSS ENCOUNTER : THE BLACK JAILER"
+                    :                 "MINIBOSS ENCOUNTER : LUTHER VON THE CORRUPTED KING";
+
+            JLabel minibossLabel = new JLabel(bannerText, SwingConstants.CENTER);
             minibossLabel.setBounds(0, 220, 1280, 50);
             minibossLabel.setForeground(new Color(220, 20, 20));
             minibossLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
@@ -322,16 +353,19 @@ public class BattlePanel extends JPanel {
             repaint();
 
             delay(2500, () -> {
-                // fade out
                 float[] alpha = {1.0f};
                 javax.swing.Timer fadeOut = new javax.swing.Timer(16, null);
                 fadeOut.addActionListener(ev -> {
                     alpha[0] = Math.max(0f, alpha[0] - 0.03f);
-                    minibossLabel.setForeground(new Color(220/255f, 20/255f, 20/255f, alpha[0]));
+                    minibossLabel.setForeground(
+                            new Color(220/255f, 20/255f, 20/255f, alpha[0])
+                    );
+
                     if (alpha[0] <= 0f) {
                         fadeOut.stop();
                         remove(minibossLabel);
                         repaint();
+
                         playEnemyEntrance(() -> {
                             setActionsEnabled(true);
                             animating = false;
@@ -340,6 +374,7 @@ public class BattlePanel extends JPanel {
                 });
                 fadeOut.start();
             });
+
         } else {
             playEnemyEntrance(() -> {
                 setActionsEnabled(true);
@@ -924,6 +959,67 @@ public class BattlePanel extends JPanel {
             }
         } catch (Exception ex) {}
 
+        // Plague Vermin
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/PlagueVerminIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / PLAGUE_VERMIN_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                plagueVerminIdleFrames = new BufferedImage[PLAGUE_VERMIN_IDLE_FRAME_COUNT];
+                for (int i = 0; i < PLAGUE_VERMIN_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    plagueVerminIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/PlagueVerminHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / PLAGUE_VERMIN_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                plagueVerminHurtFrames = new BufferedImage[PLAGUE_VERMIN_HURT_FRAME_COUNT];
+                for (int i = 0; i < PLAGUE_VERMIN_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    plagueVerminHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/PlagueVerminPlagueBite.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / PLAGUE_VERMIN_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                plagueVerminAttackFrames = new BufferedImage[PLAGUE_VERMIN_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < PLAGUE_VERMIN_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    plagueVerminAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/PlagueVerminEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / PLAGUE_VERMIN_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                plagueVerminEntranceFrames = new BufferedImage[PLAGUE_VERMIN_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < PLAGUE_VERMIN_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    plagueVerminEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
         JLabel sprite = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -953,9 +1049,14 @@ public class BattlePanel extends JPanel {
                 else if (isPlayingBatAttack)    frames = batAttackFrames;
                 else if (isPlayingBatDefeat)    frames = batHurtFrames;
                 else if (isPlayingBatEntrance)  frames = batEntranceFrames;
+                else if (isPlayingPlagueVerminHurt)     frames = plagueVerminHurtFrames;
+                else if (isPlayingPlagueVerminAttack)   frames = plagueVerminAttackFrames;
+                else if (isPlayingPlagueVerminDefeat)   frames = plagueVerminHurtFrames;
+                else if (isPlayingPlagueVerminEntrance) frames = plagueVerminEntranceFrames;
                 else if (isStag)                   frames = stagIdleFrames;
                 else if (isTreant)                 frames = treantIdleFrames;
                 else if (isBat())                  frames = batIdleFrames;   // ADD
+                else if (isPlagueVermin())         frames = plagueVerminIdleFrames;
                 else if (isShade)                  frames = spriteIdleFrames;
                 else                               frames = wolfIdleFrames;
 
@@ -968,11 +1069,13 @@ public class BattlePanel extends JPanel {
                 boolean isTreantEnemy    = enemyDef != null && enemyDef.name.equals("Dreadbark Treant");
                 boolean isTreantEntrance = isTreantEnemy && isPlayingTreantEntrance;
                 boolean isTreantAttack   = isTreantEnemy && isPlayingTreantAttack;
-                boolean isBatEnemy = enemyDef != null && enemyDef.name.equals("Carrion Bat");
-                double scale = isTreantEntrance ? TREANT_SCALE
-                        : isTreantAttack   ? TREANT_ATTACK_SCALE
-                        : isTreantEnemy    ? TREANT_IDLE_SCALE
-                        : isBatEnemy       ? BAT_SCALE
+                boolean isBatEnemy          = enemyDef != null && enemyDef.name.equals("Carrion Bat");
+                boolean isPlagueVerminEnemy = enemyDef != null && enemyDef.name.equals("Plague Vermin");
+                double scale = isTreantEntrance    ? TREANT_SCALE
+                        : isTreantAttack       ? TREANT_ATTACK_SCALE
+                        : isTreantEnemy        ? TREANT_IDLE_SCALE
+                        : isBatEnemy           ? BAT_SCALE
+                        : isPlagueVerminEnemy  ? PLAGUE_VERMIN_SCALE
                         : ENEMY_SCALE;
                 g2.drawImage(frame, 0, 0, (int)(frame.getWidth() * scale), (int)(frame.getHeight() * scale), null);
 
@@ -997,6 +1100,10 @@ public class BattlePanel extends JPanel {
         if (batIdleFrames != null) {
             labelW = Math.max(labelW, (int)(batIdleFrames[0].getWidth()  * BAT_SCALE));
             labelH = Math.max(labelH, (int)(batIdleFrames[0].getHeight() * BAT_SCALE));
+        }
+        if (plagueVerminIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(plagueVerminIdleFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE));
+            labelH = Math.max(labelH, (int)(plagueVerminIdleFrames[0].getHeight() * PLAGUE_VERMIN_SCALE));
         }
 
         if (stagIdleFrames != null) {
@@ -1060,6 +1167,8 @@ public class BattlePanel extends JPanel {
         isPlayingBatDefeat = false; isPlayingBatEntrance = false;
         isPlayingStagHurt = false; isPlayingStagCharge = false;
         isPlayingStagHowl = false; isPlayingStagDefeat = false; isPlayingStagEntrance = false;
+        isPlayingPlagueVerminHurt = false; isPlayingPlagueVerminAttack = false;
+        isPlayingPlagueVerminDefeat = false; isPlayingPlagueVerminEntrance = false;
         enemySpriteFrame = 0;
 
         if (eDef.name.equals("Rotfang Wolf") && wolfIdleFrames != null) {
@@ -1112,6 +1221,16 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
+        } else if (eDef.name.equals("Plague Vermin") && plagueVerminIdleFrames != null) {
+            int w = (int)(plagueVerminIdleFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE);
+            int h = (int)(plagueVerminIdleFrames[0].getHeight() * PLAGUE_VERMIN_SCALE);
+            enemySpriteLabel.setBounds(PLAGUE_VERMIN_X, PLAGUE_VERMIN_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(PLAGUE_VERMIN_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % PLAGUE_VERMIN_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
         } else {
             enemySpriteLabel.setVisible(false);
         }
@@ -1125,6 +1244,7 @@ public class BattlePanel extends JPanel {
     private boolean isShadeSprite() { return enemyDef != null && enemyDef.name.equals("Shade Sprite"); }
     private boolean isTreant() { return enemyDef != null && enemyDef.name.equals("Dreadbark Treant"); }
     private boolean isBat() { return enemyDef != null && enemyDef.name.equals("Carrion Bat"); }
+    private boolean isPlagueVermin() { return enemyDef != null && enemyDef.name.equals("Plague Vermin"); }
 
     private boolean isStag() { return enemyDef != null && enemyDef.name.equals("The Hollow Stag"); }
 
@@ -1132,6 +1252,7 @@ public class BattlePanel extends JPanel {
         if (isStag())             playStagHurtAnimation(onDone);
         else if (isTreant())      playTreantHurtAnimation(onDone);
         else if (isBat())         playBatHurtAnimation(onDone);
+        else if (isPlagueVermin()) playPlagueVerminHurtAnimation(onDone);
         else if (isShadeSprite()) playSpriteHurtAnimation(onDone);
         else                      playWolfHurtAnimation(onDone);
     }
@@ -1143,6 +1264,7 @@ public class BattlePanel extends JPanel {
             else                                     playStagDeathlyChargeAnimation(onDone);
         } else if (isTreant())        playTreantAttackAnimation(onDone);
         else if (isBat())             playBatAttackAnimation(onDone);
+        else if (isPlagueVermin())    playPlagueVerminAttackAnimation(onDone);
         else if (isShadeSprite())     playSpriteTricksterAnimation(onDone);
         else                          playWolfSavageHowlAnimation(onDone);
     }
@@ -1151,6 +1273,7 @@ public class BattlePanel extends JPanel {
         if (isStag())             playStagDefeatAnimation(onDone);
         else if (isTreant())      playTreantDefeatAnimation(onDone);
         else if (isBat())         playBatDefeatAnimation(onDone);
+        else if (isPlagueVermin()) playPlagueVerminDefeatAnimation(onDone);
         else if (isShadeSprite()) playSpriteDefeatAnimation(onDone);
         else                      playWolfDefeatAnimation(onDone);
     }
@@ -1159,6 +1282,7 @@ public class BattlePanel extends JPanel {
         if (isStag())             playStagEntranceAnimation(onDone);
         else if (isTreant())      playTreantEntranceAnimation(onDone);
         else if (isBat())         playBatEntranceAnimation(onDone);
+        else if (isPlagueVermin()) playPlagueVerminEntranceAnimation(onDone);
         else if (isShadeSprite()) playSpriteEntranceAnimation(onDone);
         else                      playWolfEntranceAnimation(onDone);
     }
@@ -1531,6 +1655,78 @@ public class BattlePanel extends JPanel {
         t.start();
     }
 
+    // PLAGUE VERMIN
+    private void playPlagueVerminEntranceAnimation(Runnable onDone) {
+        if (plagueVerminEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingPlagueVerminEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(plagueVerminEntranceFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE);
+        int h = (int)(plagueVerminEntranceFrames[0].getHeight() * PLAGUE_VERMIN_SCALE);
+        enemySpriteLabel.setBounds(PLAGUE_VERMIN_ENTRANCE_START_X, PLAGUE_VERMIN_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(PLAGUE_VERMIN_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % PLAGUE_VERMIN_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {PLAGUE_VERMIN_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= PLAGUE_VERMIN_X) {
+                enemySpriteLabel.setLocation(PLAGUE_VERMIN_X, PLAGUE_VERMIN_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingPlagueVerminEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], PLAGUE_VERMIN_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playPlagueVerminHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (plagueVerminHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingPlagueVerminHurt = true; enemySpriteFrame = 0;
+        int w = (int)(plagueVerminHurtFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE);
+        int h = (int)(plagueVerminHurtFrames[0].getHeight() * PLAGUE_VERMIN_SCALE);
+        enemySpriteLabel.setBounds(PLAGUE_VERMIN_X, PLAGUE_VERMIN_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < PLAGUE_VERMIN_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingPlagueVerminHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playPlagueVerminAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (plagueVerminAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingPlagueVerminAttack = true; enemySpriteFrame = 0;
+        int w = (int)(plagueVerminAttackFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE);
+        int h = (int)(plagueVerminAttackFrames[0].getHeight() * PLAGUE_VERMIN_SCALE);
+        enemySpriteLabel.setBounds(PLAGUE_VERMIN_X, PLAGUE_VERMIN_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < PLAGUE_VERMIN_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingPlagueVerminAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playPlagueVerminDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (plagueVerminHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingPlagueVerminDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(plagueVerminHurtFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE);
+        int h = (int)(plagueVerminHurtFrames[0].getHeight() * PLAGUE_VERMIN_SCALE);
+        enemySpriteLabel.setBounds(PLAGUE_VERMIN_X, PLAGUE_VERMIN_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < PLAGUE_VERMIN_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingPlagueVerminDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
     // HERO ACTIONS
     private void playKaelHurtAnimation(Runnable onDone) {
         if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
@@ -1692,6 +1888,7 @@ public class BattlePanel extends JPanel {
             case "Dreadbark Treant" -> "Dreadbark Treant uses Root Snare" + damage;
             case "Carrion Bat" -> "Carrion Bat uses Screech" + damage;
             case "The Hollow Stag"  -> "The Hollow Stag uses " + engine.getLastEnemySkillName() + damage;
+            case "Plague Vermin" -> "Plague Vermin uses Plague Bite" + damage;
             default                 -> null;
         };
 
