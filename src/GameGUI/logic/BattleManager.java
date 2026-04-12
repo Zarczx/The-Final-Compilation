@@ -138,10 +138,21 @@ public class BattleManager {
 
         // Pick skill name for enemies that have named attacks
         lastEnemySkillName = switch (enemy.name) {
-            case "Rotfang Wolf"    -> "Savage Howl";
-            case "Shade Sprite"    -> "Trickster Strike";
-            case "The Hollow Stag" -> rng.nextBoolean() ? "Deathly Charge" : "Blackened Howl";
-            default                -> "Attack";
+            case "Rotfang Wolf"      -> "Savage Howl";
+            case "Shade Sprite"      -> "Trickster Strike";
+            case "Dreadbark Treant"  -> "Root Snare";
+            case "Carrion Bat"       -> "Screech";
+            case "Plague Vermin"     -> "Plague Bite";
+            case "Forsaken Cultist"  -> "Shadow Bolt";
+            case "Blight Hound"      -> "Corpse Explosion";
+            case "Ghoul Footman"     -> "Rotten Cleave";
+            case "The Hollow Stag"   -> rng.nextBoolean() ? "Deathly Charge" : "Blackened Howl";
+            case "The Black Jailer"  -> rng.nextBoolean() ? "Tormenting Lash" : "Shackling Chains";
+            case "Luther Von" -> {
+                int roll = rng.nextInt(3);
+                yield roll == 0 ? "Crown of Despair" : roll == 1 ? "Dark Ascension" : "Kings Wrath";
+            }
+            default                  -> "Attack";
         };
 
         int damage = DamageCalculator.calculateDamage(enemy, hero, 1.0, false);
