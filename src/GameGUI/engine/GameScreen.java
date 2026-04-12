@@ -254,11 +254,9 @@ public class GameScreen extends JPanel {
         if (typingTimer != null) typingTimer.stop();
         playWorldMusic();
 
-        // Paint cardPanel black immediately before any card switch
         cardPanel.setBackground(Color.BLACK);
         cardPanel.setOpaque(true);
 
-        // Also hide the current intro screen's scene image to kill NGEBackground
         if (sceneBgLabel != null) {
             sceneBgLabel.setIcon(null);
             sceneBgLabel.setOpaque(true);
@@ -299,7 +297,6 @@ public class GameScreen extends JPanel {
         this.currentWorld = 1;
         if (typingTimer != null) typingTimer.stop();
 
-        // Find the Hollow Stag entry from WORLD1_ENEMIES and wrap it in a single-item list
         java.util.List<GameGUI.model.HeroData.EnemyDefinition> stagOnly =
                 HeroData.WORLD1_ENEMIES.stream()
                         .filter(e -> e.name.equals("The Hollow Stag"))
@@ -315,7 +312,6 @@ public class GameScreen extends JPanel {
         this.currentWorld = currentWorld;
         if (typingTimer != null) typingTimer.stop();
 
-        // Search all enemy lists for the matching enemy
         java.util.List<HeroData.EnemyDefinition> allEnemies = new java.util.ArrayList<>();
         allEnemies.addAll(HeroData.WORLD1_ENEMIES);
         allEnemies.addAll(HeroData.WORLD2_ENEMIES);
@@ -330,19 +326,34 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // Set correct background and music before starting
         if (currentWorld == 2) {
-            battlePanel.setBattleBackground("/assets/Backgrounds/World2Battle1Background.png");
+            java.util.List<String> secondHalfEnemies = java.util.List.of(
+                    "Forsaken Cultist", "Blight Hound", "Ghoul Footman", "Black Jailer", "Luther Von"
+            );
+            if (secondHalfEnemies.contains(enemyName)) {
+                battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+            } else {
+                battlePanel.setBattleBackground("/assets/Backgrounds/World2Battle1Background.png");
+            }
         }
+
         utils.SoundUtil.stopLoop();
         utils.SoundUtil.playLoop("BattleBackgroundMusic.wav", 0.7f);
 
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
-            if (currentWorld == 1) showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
-            else if (currentWorld == 2) showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
-            else if (currentWorld == 3) showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
-            else resumeFight.run();
+            if (currentWorld == 1) {
+                showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+            } else if (currentWorld == 2) {
+                if (nextGroupIndex == 1) {
+                    battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                }
+                showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+            } else if (currentWorld == 3) {
+                showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+            } else {
+                resumeFight.run();
+            }
         });
         battlePanel.startEnemySequence(hero, match, () -> {
             if (currentWorld == 1) {
@@ -350,8 +361,7 @@ public class GameScreen extends JPanel {
                 startWorld2Transition();
             } else if (currentWorld == 2) {
                 playWorldMusic();
-                magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
-                cardLayout.show(cardPanel, SCREEN_SHOP);
+                showKingVictoryDialogue();
             } else if (currentWorld == 3) {
                 playWorldMusic();
                 startFinalBossTransition();
@@ -414,7 +424,7 @@ public class GameScreen extends JPanel {
 
     private void goToBattle() {
         if (confirmedHero == null) return;
-        utils.SoundUtil.stopLoop(); // stop immediately before switching
+        utils.SoundUtil.stopLoop();
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         playBattleMusic();
 
@@ -422,6 +432,9 @@ public class GameScreen extends JPanel {
             if (currentWorld == 1) {
                 showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
             } else if (currentWorld == 2) {
+                if (nextGroupIndex == 1) {
+                    battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                }
                 showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
             } else if (currentWorld == 3) {
                 showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
@@ -449,7 +462,7 @@ public class GameScreen extends JPanel {
                         showKingVictoryDialogue();
                     }
             );
-        }else if (currentWorld == 3) {
+        } else if (currentWorld == 3) {
             battlePanel.startEnemySequence(
                     confirmedHero,
                     HeroData.WORLD3_ENEMIES,
@@ -566,23 +579,18 @@ public class GameScreen extends JPanel {
             showW1InterBg("/assets/Backgrounds/World1ShadeSprite.png");
         }
 
-        // ★ INTER-DIALOGUE 1 logic
-        // After chunk 0 ("The whispering finally stops"), play chunk 1 normally
-        // After chunk 1 ("The ground shudders"), show World1Cracks.png then type
         if (w1InterDialogueIndex == 1 && w1InterChunkIndex == 1) {
             showW1InterBg("/assets/Backgrounds/World1Cracks.png");
             typeW1InterChunkNow();
             return;
         }
 
-        // After chunk 1 is done and continue pressed, show treant image then type chunk 2
         if (w1InterDialogueIndex == 1 && w1InterChunkIndex == 2) {
             showW1InterBg("/assets/Backgrounds/World1DreadBarkTreants.png");
             typeW1InterChunkNow();
             return;
         }
 
-        // ★ INTER-DIALOGUE 2 logic
         if (w1InterDialogueIndex == 2 && w1InterChunkIndex == 0) {
             showW1InterBg("/assets/Backgrounds/World1DreadbarkTreantsDefeated.png");
             typeW1InterChunkNow();
@@ -606,7 +614,6 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // ★ INTER-DIALOGUE 3 logic
         if (w1InterDialogueIndex == 3 && w1InterChunkIndex == 0) {
             showW1InterBg("/assets/Backgrounds/World1CarrionBatsDefeat.png");
             typeW1InterChunkNow();
@@ -979,7 +986,7 @@ public class GameScreen extends JPanel {
             examPopup.setVisible(false);
             continueBtn.setEnabled(false);
             utils.SoundUtil.fadeOutLoop(1500);
-            Timer startWorld1Music = new Timer(1600, null); // ← 1600ms, after fade completes
+            Timer startWorld1Music = new Timer(1600, null);
             startWorld1Music.setRepeats(false);
             startWorld1Music.addActionListener(ev -> {
                 startWorld1Music.stop();
@@ -1559,10 +1566,7 @@ public class GameScreen extends JPanel {
                     repaint();
                     if (alpha[0] >= 1f) {
                         fadeIn.stop();
-                        // Fully black — now switch screens
                         goToWorld2Intro();
-                        // Remove this overlay after a short delay
-                        // (goToWorld2Intro will show its own crossfade from black)
                         Timer remove = new Timer(100, e2 -> {
                             Container p = this.getParent();
                             if (p != null) { p.remove(this); p.repaint(); }
@@ -1582,19 +1586,16 @@ public class GameScreen extends JPanel {
             }
         };
 
-        // Add on top of everything using GameScreen itself
         add(blackOverlay);
         setComponentZOrder(blackOverlay, 0);
         revalidate();
-        repaint();// Add on top of cardPanel
-
+        repaint();
     }
 
     private void goToWorld2Intro() {
         switchMusic("World2BackgroundMusic.wav", 0.5f);
         w2DialogueIndex = 0;
 
-        // ── Step 1: slam a black panel over cardPanel immediately to kill any flash ──
         JPanel instantBlack = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 g.setColor(Color.BLACK);
@@ -1608,7 +1609,6 @@ public class GameScreen extends JPanel {
         cardPanel.revalidate();
         cardPanel.repaint();
 
-        // ── Step 2: setup World 2 screen state while hidden behind black ──
         if (w2WorldLabel != null) {
             w2WorldLabel.setVisible(true);
             w2WorldLabel.setForeground(Color.WHITE);
@@ -1633,17 +1633,13 @@ public class GameScreen extends JPanel {
             w2SceneBg.repaint();
         }
 
-        // Switch card while still hidden behind instantBlack
         cardLayout.show(cardPanel, SCREEN_WORLD2_INTRO);
 
-        // ── Step 3: hold on black, then slowly fade in World1Transition12.png ──
         delay(1000, () -> {
-            // Remove the instant black cover now that we're on the right card
             cardPanel.remove(instantBlack);
             cardPanel.revalidate();
             cardPanel.repaint();
 
-            // Slow fade in — 0.008f per tick at 16ms = ~2 seconds to full opacity
             Timer fadeIn = new Timer(16, null);
             fadeIn.addActionListener(ev -> {
                 if (w2KhaiLabel == null) { fadeIn.stop(); return; }
@@ -1651,7 +1647,6 @@ public class GameScreen extends JPanel {
                 w2KhaiLabel.repaint();
                 if (w2KhaiAlpha[0] >= 1f) {
                     fadeIn.stop();
-                    // Hold on image for a moment, then fade title and start dialogue
                     delay(800, () -> fadeW2Label());
                     delay(1600, () -> startW2Typing());
                 }
@@ -1794,11 +1789,398 @@ public class GameScreen extends JPanel {
         typeW2InterChunk();
     }
 
+    // =========================================================================
+    //  WORLD 2 INTER-DIALOGUE TYPING
+    // =========================================================================
     private void typeW2InterChunk() {
         if (w2InterChunks == null || w2InterChunkIndex >= w2InterChunks.length) {
             finishW2InterDialogue(); return;
         }
         if (w2TypingTimer != null && w2TypingTimer.isRunning()) w2TypingTimer.stop();
+
+        int interIdx = resolveW2InterIndex();
+
+        // ── INTER 0: after Plague Vermin ──────────────────────────────────────
+        if (interIdx == 0) {
+            switch (w2InterChunkIndex) {
+                case 0 -> { showW2InterBg("/assets/Backgrounds/PlagueVerminDead.png"); typeW2InterChunkNow(); return; }
+                case 1 -> { showW2InterBg("/assets/Backgrounds/PlagueVerminDead2.png"); typeW2InterChunkNow(); return; }
+                case 2 -> { showW2InterBg("/assets/Backgrounds/WanderAround.png"); typeW2InterChunkNow(); return; }
+                case 3 -> {
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2Beggar.png");
+                    delay(2000, () -> { showW2InterBg("/assets/Backgrounds/World2Beggar2.png"); w2ContinueBtn.setEnabled(true); typeW2InterChunkNow(); });
+                    return;
+                }
+                case 4 -> { showW2InterBg("/assets/Backgrounds/World2Beggar3.png"); typeW2InterChunkNow(); return; }
+                case 5 -> { /* stay on World2Beggar3.png */ typeW2InterChunkNow(); return; }
+                case 6 -> { showW2InterBg("/assets/Backgrounds/WanderAround.png"); typeW2InterChunkNow(); return; }
+                case 7 -> { showW2InterBg("/assets/Backgrounds/World2Chapel.png"); typeW2InterChunkNow(); return; }
+                case 8 -> {
+                    // Show World2Chapel2.png, let player read, then on continue:
+                    // ForsakenCultist.png 2s → ForsakenCultist2.png, then type
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2Chapel2.png");
+                    w2ContinueBtn.setEnabled(true);
+                    for (ActionListener l : w2ContinueBtn.getActionListeners()) w2ContinueBtn.removeActionListener(l);
+                    w2ContinueBtn.addActionListener(new java.awt.event.ActionListener() {
+                        @Override public void actionPerformed(java.awt.event.ActionEvent ev) {
+                            w2ContinueBtn.removeActionListener(this);
+                            w2ContinueBtn.addActionListener(e2 -> continueW2Dialogue());
+                            w2ContinueBtn.setEnabled(false);
+                            showW2InterBg("/assets/Backgrounds/World2ForsakenCultist.png");
+                            delay(2000, () -> { showW2InterBg("/assets/Backgrounds/World2ForsakenCultist2.png"); w2ContinueBtn.setEnabled(true); typeW2InterChunkNow(); });
+                        }
+                    });
+                    return;
+                }
+            }
+        }
+
+        // ── INTER 1: after Forsaken Cultists ─────────────────────────────────
+        if (interIdx == 1) {
+            switch (w2InterChunkIndex) {
+                case 0 -> {
+                    // Immediately show ForsakenCultistDead.png, then type
+                    showW2InterBg("/assets/Backgrounds/World2ForsakenCultistDead.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 1 -> {
+                    // On continue: show World2ExitChapel.png for 2s → World2AfterChapel.png, then type
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2ExitChapel.png");
+                    delay(2000, () -> {
+                        showW2InterBg("/assets/Backgrounds/World2AfterChapel.png");
+                        w2ContinueBtn.setEnabled(true);
+                        typeW2InterChunkNow();
+                    });
+                    return;
+                }
+                case 2 -> {
+                    // Stay on World2AfterChapel.png, just type
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 3 -> {
+                    // Show World2BlighthoundSilhouette.png for 2s → World2BlightHoundEncounter.png, then type
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2BlightHoundSilhouette.png");
+                    delay(2000, () -> {
+                        showW2InterBg("/assets/Backgrounds/World2BlightHoundEncounter.png");
+                        w2ContinueBtn.setEnabled(true);
+                        typeW2InterChunkNow();
+                    });
+                    return;
+                }
+            }
+        }
+
+        // ── INTER 2: after Blight Hounds ─────────────────────────────────────
+        if (interIdx == 2) {
+            switch (w2InterChunkIndex) {
+                case 0 -> {
+                    // Immediately: World2BlightHoundDefeated.png for 2s → World2BattleBlackCastleGate.png
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2BlightHoundDefeated.png");
+                    delay(2000, () -> {
+                        showW2InterBg("/assets/Backgrounds/World2BlackCastleGate.png");
+                        w2ContinueBtn.setEnabled(true);
+                        typeW2InterChunkNow();
+                    });
+                    return;
+                }
+                case 1 -> {
+                    // Stay on World2BattleBlackCastleGate.png
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 2 -> {
+                    // Show World2BlackCastleDoor.png
+                    showW2InterBg("/assets/Backgrounds/World2BlackCastleDoor.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 3 -> {
+                    // Show World2BlackCastleInside.png
+                    showW2InterBg("/assets/Backgrounds/World2BlackCastleInside.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 4 -> {
+                    // Show World2GhoulFootman.png
+                    showW2InterBg("/assets/Backgrounds/World2GhoulFootman.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+            }
+        }
+
+        // ── INTER 3: after Ghoul Footmen ─────────────────────────────────────
+        if (interIdx == 3) {
+            switch (w2InterChunkIndex) {
+                case 0 -> {
+                    // Immediately: World2GhoulFootmanDefeated.png
+                    showW2InterBg("/assets/Backgrounds/World2GhoulFootmanDefeated.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 1 -> {
+                    // Show World2BlackCastleDescend.png
+                    showW2InterBg("/assets/Backgrounds/World2BlackCastleDescend.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 2 -> {
+                    // Show World2BlackJailer.png
+                    showW2InterBg("/assets/Backgrounds/World2BlackJailer.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 3 -> {
+                    // Show World2BlackJailer2.png
+                    showW2InterBg("/assets/Backgrounds/World2BlackJailer2.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 4 -> {
+                    // Show World2BlackJailer3.png
+                    showW2InterBg("/assets/Backgrounds/World2BlackJailer3.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+            }
+        }
+
+        // ── INTER 4: after Black Jailer ───────────────────────────────────────
+        if (interIdx == 4) {
+            switch (w2InterChunkIndex) {
+                case 0 -> {
+                    // Immediately: World2BlackJailerDefeated.png 2s → World2BlackJailerDefeated2.png 2s → World2BlackJailerDefeated3.png
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2BlackJailerDefeated.png");
+                    delay(2000, () -> {
+                        showW2InterBg("/assets/Backgrounds/World2BlackJailerDefeated2.png");
+                        delay(2000, () -> {
+                            showW2InterBg("/assets/Backgrounds/World2BlackJailerDefeated3.png");
+                            w2ContinueBtn.setEnabled(true);
+                            typeW2InterChunkNow();
+                        });
+                    });
+                    return;
+                }
+                case 1 -> {
+                    // Stay on World2BlackJailerDefeated3.png
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 2 -> {
+                    // Show World2Key.png for 2s → World2Key2.png
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/World2Key.png");
+                    delay(2000, () -> {
+                        showW2InterBg("/assets/Backgrounds/World2Key2.png");
+                        w2ContinueBtn.setEnabled(true);
+                        typeW2InterChunkNow();
+                    });
+                    return;
+                }
+                case 3 -> {
+                    // Show World2Ascend.png
+                    showW2InterBg("/assets/Backgrounds/World2Ascend.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 4 -> {
+                    // Show World2ThroneDoor.png
+                    showW2InterBg("/assets/Backgrounds/World2ThroneDoor.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 5 -> {
+                    // Show World2Throne.png
+                    showW2InterBg("/assets/Backgrounds/World2Throne.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 6 -> {
+                    // Stay on World2Throne.png
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 7 -> {
+                    // Show World2Throne2.png
+                    showW2InterBg("/assets/Backgrounds/World2Throne2.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 8 -> {
+                    // Show World2Throne3.png immediately, then type
+                    showW2InterBg("/assets/Backgrounds/World2Throne3.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 9 -> {
+                    // Stay on World2Throne3.png
+                    typeW2InterChunkNow();
+                    return;
+                }
+            }
+        }
+
+        // Default fallback (e.g. inter 5 / king-victory / shop outro)
+        // ── KING VICTORY / Magic Shop transition dialogue ─────────────────────
+        if (interIdx == -1) {
+            switch (w2InterChunkIndex) {
+                case 0 -> {
+                    // "FINAL VICTORY..." — TransitionMagicShop.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 1 -> {
+                    // "His breath rattles..." — TransitionMagicShop2.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop2.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 2 -> {
+                    // "It's… It's you!!!" — TransitionMagicShop3.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop3.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 3 -> {
+                    // "He screams..." — TransitionMagicShop4.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop4.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 4 -> {
+                    // "He leaves behind only a pile of ash..." — stay on TransitionMagicShop4.png
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 5 -> {
+                    // "You lift the SECOND STONE..." — TransitionMagicShop5 (2s) → TransitionMagicShop6
+                    w2ContinueBtn.setEnabled(false);
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop5.png");
+                    delay(2000, () -> {
+                        showW2InterBg("/assets/Backgrounds/TransitionMagicShop6.png");
+                        w2ContinueBtn.setEnabled(true);
+                        typeW2InterChunkNow();
+                    });
+                    return;
+                }
+                case 6 -> {
+                    // "The room falls into silence..." — TransitionMagicShop7.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop7.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 7 -> {
+                    // "As you step forward..." — TransitionMagicShop8.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop8.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 8 -> {
+                    // "Something… or someone…" — TransitionMagicShop9.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop9.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 9 -> {
+                    // "A BRILLIANT FLASH..." — TransitionMagicShop10.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop10.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 10 -> {
+                    // "From the shattered shadows..." — TransitionMagicShop11.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop11.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 11 -> {
+                    // "A calm, ancient voice echoes..." — TransitionMagicShop12.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop12.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 12 -> {
+                    // "I appear only to those..." — TransitionMagicShop13.png
+                    showW2InterBg("/assets/Backgrounds/TransitionMagicShop13.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+            }
+        }
+
+        // ── INTER 5: after Magic Shop ─────────────────────────────────────────
+        if (interIdx == 5) {
+            switch (w2InterChunkIndex) {
+                case 0 -> {
+                    showW2InterBg("/assets/Backgrounds/World2TransitionWorld3_1.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 1 -> {
+                    showW2InterBg("/assets/Backgrounds/World2TransitionWorld3_2.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 2 -> {
+                    showW2InterBg("/assets/Backgrounds/World2TransitionWorld3_3.png");
+                    typeW2InterChunkNow();
+                    return;
+                }
+                case 3 -> {
+                    // default black screen — clear the image
+                    if (w2KhaiLabel != null) {
+                        w2KhaiLabel.setIcon(null);
+                        w2KhaiAlpha[0] = 0f;
+                        w2KhaiLabel.putClientProperty("prevImage", null);
+                        w2KhaiLabel.putClientProperty("prevAlpha", 0f);
+                        w2KhaiLabel.repaint();
+                    }
+                    typeW2InterChunkNow();
+                    return;
+                }
+            }
+        }
+
+        // Default fallback (e.g. inter 5 / shop outro)
+        typeW2InterChunkNow();
+    }
+
+    /**
+     * Resolves which WORLD2_INTER_DIALOGUES index the current w2InterChunks belongs to.
+     * Returns -1 if not matched (e.g. king-victory dialogue).
+     */
+    private int resolveW2InterIndex() {
+        if (w2InterChunks == null) return -1;
+        for (int i = 0; i < WORLD2_INTER_DIALOGUES.length; i++) {
+            if (w2InterChunks == WORLD2_INTER_DIALOGUES[i]) return i;
+        }
+        return -1;
+    }
+
+    /** Shows an image in the w2KhaiLabel layer (same as showW2SceneImage but for inter-dialogues). */
+    private void showW2InterBg(String path) {
+        if (w2KhaiLabel == null) return;
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) return;
+        w2KhaiLabel.setIcon(new ImageIcon(
+                new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+        w2KhaiLabel.putClientProperty("prevImage", null);
+        w2KhaiLabel.putClientProperty("prevAlpha", 0f);
+        w2KhaiAlpha[0] = 1.0f;
+        w2KhaiLabel.repaint();
+    }
+
+    /** Types the current w2InterChunks[w2InterChunkIndex] text with the typewriter effect. */
+    private void typeW2InterChunkNow() {
         String text = w2InterChunks[w2InterChunkIndex];
         w2DialogueBox.setText("");
         w2ContinueBtn.setEnabled(false);
@@ -1856,51 +2238,91 @@ public class GameScreen extends JPanel {
         step[0].run();
     }
 
-
     // ─── Dialogues ──────────────────────────────────────────────
 
     private static final String[][] WORLD2_INTER_DIALOGUES = {
+            // ── INTER 0: after Plague Vermin ─────────────────────────────────────
             {
+                    // chunk 0 — PlagueVerminDead.png (auto-shown immediately)
                     "The last Vermin goes still.\nThe stench of rot clings to your clothes.",
+                    // chunk 1 — PlagueVerminDead2.png
+                    "The last Vermin goes still.\nThe stench of rot clings to your clothes.",
+                    // chunk 2 — WanderAround.png
                     "You wander through the town's crumbling streets.\nThe air is thick with despair.",
+                    // chunk 3 — World2Beggar.png (2s) → World2Beggar2.png
                     "You stop to help a beggar, offering a small kindness in a cruel world.\nHe grabs your wrist, his eyes wide with fear.",
+                    // chunk 4 — World2Beggar3.png
                     "\"Beware the Black Castle,\" he rasps.\n\"The Corrupted King hoards the Second Stone there.\"",
-                    "\"But the real master... is the Necromancer.\nHe is a phantom who rules from the shadows.\"",
-                    "Following the beggar's warning, you investigate a ruined chapel at the edge of town.\nInside, the air hums with dark energy.",
+                    // chunk 5 — still World2Beggar3.png
+                    "\"But the real master... is the Necromancer.\"\n\"He is a phantom who rules from the shadows.\"",
+                    // chunk 6 — WanderAround.png
+                    "Heeding the beggar's warning, you make your way\nto a ruined chapel at the edge of town.",
+                    // chunk 7 — World2Chapel.png
+                    "Inside, the air hums with dark energy.",
+                    // chunk 8 — World2Chapel2.png → continue → World2ForsakenCultist.png (2s) → World2ForsakenCultist2.png
                     "Two FORSAKEN CULTISTS stand before a defiled altar.\nThey turn slowly, their eyes glowing with fanatic light.",
             },
+            // ── INTER 1: after Forsaken Cultists ────────────────────────────────
             {
+                    // chunk 0 — ForsakenCultistDead.png (auto-shown immediately)
                     "The chanting dies.\nThe cultists crumple — their pact finally, mercifully broken.",
+                    // chunk 1 — World2ExitChapel.png (2s) → World2AfterChapel.png
                     "You leave the ruined chapel and head toward the castle outskirts.\nThe air grows heavy with sulfur.",
+                    // chunk 2 — image stays
                     "The silence that follows is not peaceful.\nSomething low and wet breathes in the dark ahead.",
+                    // chunk 3 — World2BlighthoundSlihouette.png (2s) → World2BlightHoundEncounter.png
                     "Two shapes detach from the fog.\nBlight Hounds — hollow-eyed, driven by hunger and rot."
             },
+            // ── INTER 2: after Blight Hounds ─────────────────────────────────────
             {
+                    // chunk 0 — World2BlightHoundDefeated.png (2s) → World2BattleBlackCastleGate.png (auto)
                     "The Hounds collapse.\nTheir corruption bleeds into the mud beneath them.",
+                    // chunk 1 — image stays
                     "You stand before the towering iron gates.\nThe metal is cold to the touch.",
+                    // chunk 2 — World2BlackCastleDoor.png
                     "Thunder cracks overhead as you push open the heavy gates.",
+                    // chunk 3 — World2BlackCastleInside.png
                     "Inside, the halls are silent except for the scrape of metal on stone.\nFigures lurch from the darkness — once knights, now twisted by plague.",
+                    // chunk 4 — World2GhoulFootman.png
                     "Two GHOUL FOOTMEN emerge.\nTheir armor is cracked, their eyes bleed darkness."
             },
+            // ── INTER 3: after Ghoul Footmen ─────────────────────────────────────
             {
+                    // chunk 0 — World2GhoulFootmanDefeated.png (auto-shown immediately)
                     "The last Footman falls with a hollow clatter.\nThe silence after is heavy.",
+                    // chunk 1 — World2BlackCastleDescend.png
                     "You descend into the castle's damp underbelly.\nThe air grows cold.",
+                    // chunk 2 — World2BlackJailer.png
                     "The sound of dripping water is drowned out by the heavy dragging of iron.",
+                    // chunk 3 — World2BlackJailer2.png
                     "Clank... Drag... Clank...",
+                    // chunk 4 — World2BlackJailer3.png
                     "In the flickering torchlight, a massive figure blocks the path.\nThe Black Jailer steps from the shadows, his face hidden behind an iron mask.",
             },
+            // ── INTER 4: after Black Jailer ───────────────────────────────────────
             {
+                    // chunk 0 — World2BlackJailerDefeated.png (2s) → World2BlackJailerDefeated2.png (2s) → World2BlackJailerDefeated3.png (auto)
                     "The Black Jailer drops to his knees.\nHis iron mask falls away to reveal nothing but ash.",
+                    // chunk 1 — stay on World2BlackJailerDefeated3.png
                     "The chains that bound the dungeon fall silent.\nYou have broken his tyranny.",
-                    "You find a key on the Jailer's belt and a surge of new power.",
+                    // chunk 2 — World2Key.png (2s) → World2Key2.png
+                    "The chains that bound the dungeon fall silent.\nYou have broken his tyranny.",
+                    // chunk 3 — World2Ascend.png
                     "You ascend the spiral staircase.\nThe air grows thin and smells of ancient dust.",
-                    "At the top, the massive doors to the Throne Room stand slightly ajar.",
+                    // chunk 4 — World2ThroneDoor.png
+                    "At the top, the massive doors to the Throne Room stand slightly a far.",
+                    // chunk 5 — World2Throne.png
                     "In the center of the room, on a throne of jagged iron, sits the King.\nHe is slumped forward, his body fused to the chair by the corruption.",
+                    // chunk 6 — stay on World2Throne.png
                     "Embedded in his rusted crown, pulsating with a sickly green light, is the SECOND STONE.",
+                    // chunk 7 — World2Throne2.png
                     "The King slowly lifts his head.\nHis eyes are hollow voids.",
+                    // chunk 8 — World2Throne3.png
                     "\"YOU DARE CHALLENGE MY AUTHORITY?!\"",
+                    // chunk 9 — stay on World2Throne3.png
                     "\"YOUR SKULL WILL BECOME BUT ANOTHER TROPHY IN MY HALLS!\""
             },
+            // ── INTER 5: after Magic Shop ─────────────────────────────────────────
             {
                     "🌟 The glow of the Magic Shop fades, leaving only silence behind.",
                     "The doorway vanishes as suddenly as it appeared.\nYou stand alone in the quiet halls of the castle.",
@@ -1953,21 +2375,22 @@ public class GameScreen extends JPanel {
     };
 
     private static final String[] WORLD1_DIALOGUES = {
-            "You wake up gasping for air. The world is drained of color.",          // index 0
-            "You are lying on a bed of gray moss in a dead forest.\nThe trees are skeletal giants, stripped to bone-white wood.", // index 1
-            "A cold mist coils around your ankles,\nand silence presses from every side watching, waiting.", // index 2
-            "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",           // index 3
-            "From the mist steps a figure cloaked in tattered robes.\nHe leans heavily on a staff. As he lifts his hood, you jolt back,\nthe face is familiar. It looks exactly like your professor, Khai.", // index 4
-            "But his eyes are weary, holding the weight of centuries.",             // index 5
+            "You wake up gasping for air. The world is drained of color.",
+            "You are lying on a bed of gray moss in a dead forest.\nThe trees are skeletal giants, stripped to bone-white wood.",
+            "A cold mist coils around your ankles,\nand silence presses from every side watching, waiting.",
+            "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",
+            "From the mist steps a figure cloaked in tattered robes.\nHe leans heavily on a staff. As he lifts his hood, you jolt back,\nthe face is familiar. It looks exactly like your professor, Khai.",
+            "But his eyes are weary, holding the weight of centuries.",
             "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n"+
                     "\"We suffer because an evil Necromancer has corrupted these lands.\n"+
                     "He has drained the nature itself. We must find the Three Stones of Life\n"+
-                    "that hold this reality together. \nOnly then will your path home reveal itself.\"", // index 6
-            "Khai fades back into the mist.",                                       // index 7
-            "Three Rodtfang Wolves emerge from the tree line.",                     // index 8
-            "Their glowing red eyes—",                                              // index 9
-            "—fixate on you. They do not hunt for food — they hunt to kill."        // index 10
+                    "that hold this reality together. \nOnly then will your path home reveal itself.\"",
+            "Khai fades back into the mist.",
+            "Three Rodtfang Wolves emerge from the tree line.",
+            "Their glowing red eyes—",
+            "—fixate on you. They do not hunt for food — they hunt to kill."
     };
+
     // ─── WORLD 3 DIALOGUES ──────────────────────────────────────────────
     private static final String[] WORLD3_DIALOGUES = {
             "You have been travelling for days, leaving the green world far behind.\n" +
@@ -2034,7 +2457,7 @@ public class GameScreen extends JPanel {
                     "You catch your breath. You hold the final Stone of Life.",
             "Sir Khai steps forward. His staff is no longer wood—it is blazing with chaotic energy.\n" +
                     "\"Finally.\"",
-            "\"You’ve served well, my student.\n" +
+            "\"You've served well, my student.\n" +
                     "Who better to collect the Stones of Life than one who trusts their teacher blindly?\"",
             "\"I have guided you not to save this land... but to claim its power.\n" +
                     "I have been waiting for a vessel like you for a millennium.\"",
@@ -2274,18 +2697,15 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // index 2 — fade world label, show SilhouetteSirKhai
         if (w1DialogueIndex == 2 && w1WorldLabel != null) {
             fadeW1Label();
             delay(1000, () -> crossfadeW1ToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {}));
         }
 
-        // index 3 — SilhouetteSirKhai2
         if (w1DialogueIndex == 3) {
             transitionW1Scene("/assets/Backgrounds/SilhouetteSirKhai2.jpg");
         }
 
-        // index 4 — SilhouetteSirKhai3
         if (w1DialogueIndex == 4) {
             try {
                 java.net.URL u = getClass().getResource("/assets/Backgrounds/SilhouetteSirKhai3.png");
@@ -2299,9 +2719,6 @@ public class GameScreen extends JPanel {
             } catch (Exception ex) {}
         }
 
-        // index 5 — "But his eyes are weary" — DO NOTHING, image stays as SilhouetteSirKhai3
-
-        // index 6 — "Be calm Traveler" — press continue → crossfade sequence → World1Background
         if (w1DialogueIndex == 6) {
             w1ContinueBtn.setEnabled(false);
             crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai2.jpg", () -> {
@@ -2323,8 +2740,6 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // index 7 — "Khai fades back into the mist" — forest already showing, nothing to do
-        // index 8 — "Three Rodtfang Wolves..." — Wolf1 crossfade
         if (w1DialogueIndex == 8) {
             w1ContinueBtn.setEnabled(false);
             crossfadeKhaiToKhai("/assets/Backgrounds/World1RodtfangWolf1.png", () -> {
@@ -2349,7 +2764,6 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        // index 9 — Wolf3 image
         if (w1DialogueIndex == 9) {
             try {
                 java.net.URL u = getClass().getResource("/assets/Backgrounds/World1RodtfangWolf3.png");
@@ -2527,7 +2941,6 @@ public class GameScreen extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                // Always fill black first so there is never a transparent/flicker frame
                 g2.setColor(Color.BLACK);
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 if (fDark != null && sceneAlpha[0] > 0) {
@@ -2549,7 +2962,7 @@ public class GameScreen extends JPanel {
         w2SceneAlpha = sceneAlpha;
         w2WorldAlpha = worldAlpha;
 
-        w2WorldLabel = new JLabel("WORLD 2 : THE DECAYING TOWN", SwingConstants.CENTER);
+        w2WorldLabel = new JLabel("WORLD 2 : THE DECAYING TOWN ", SwingConstants.CENTER);
         w2WorldLabel.setBounds(0, 220, 1280, 50);
         w2WorldLabel.setForeground(Color.WHITE);
         w2WorldLabel.setFont(new Font("Serif", Font.BOLD | Font.ITALIC, 26));
@@ -2681,10 +3094,8 @@ public class GameScreen extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-
                 g2.setColor(new Color(30, 10, 10));
                 g2.fillRect(0, 0, getWidth(), getHeight());
-
                 if (fDark != null && sceneAlpha[0] > 0) {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sceneAlpha[0]));
                     g2.drawImage(fDark, 0, 0, getWidth(), getHeight(), null);
@@ -2795,8 +3206,8 @@ public class GameScreen extends JPanel {
     // =========================================================================
 
     private void startWorld3Transition() {
-        utils.SoundUtil.stopLoop();                                    // ← ADD THIS
-        utils.SoundUtil.playLoop("TheForestOfSilence.wav", 0.5f);     // ← ADD THIS
+        utils.SoundUtil.stopLoop();
+        utils.SoundUtil.playLoop("TheForestOfSilence.wav", 0.5f);
         currentWorld = 3;
         w3DialogueIndex = 0;
         if (w3WorldLabel != null) {
@@ -2956,7 +3367,7 @@ public class GameScreen extends JPanel {
         Runnable resume = w3ResumeAfterDialogue;
         w3ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
-        playBattleMusic(); // ← this was missing, unlike finishW2InterDialogue
+        playBattleMusic();
         if (resume != null) resume.run();
     }
 

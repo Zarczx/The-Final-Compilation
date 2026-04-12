@@ -171,7 +171,7 @@ public class GameTester {
 
         sec.add(warpPanel, "GENERAL", new String[]{"Start Normally"}, 0);
         sec.add(warpPanel, "WORLD 1", new String[]{"Full W1 Run", "Rotfang Wolf", "Shade Sprite", "Dreadbark Treant", "Carrion Bat", "Hollow Stag (Boss)"}, 1);
-        sec.add(warpPanel, "WORLD 2", new String[]{"Full W2 Run", "Plague Vermin", "Forsaken Cultist", "Blight Hound", "Ghoul Footman", "Black Jailer", "Luther Von (Boss)"}, 7);
+        sec.add(warpPanel, "WORLD 2", new String[]{"Full W2 Run", "Plague Vermin", "Forsaken Cultist", "Blight Hound", "Ghoul Footman", "The Black Jailer", "Luther Von (Boss)"}, 7);
         sec.add(warpPanel, "WORLD 3", new String[]{"Full W3 Run", "Flame Revenant", "Bone Warlock", "Obsidian Crusher", "Soulflayer Gargoyle", "Zyrryl (Mini-Boss)"}, 14);
         sec.add(warpPanel, "MISC", new String[]{"Magic Shop", "Final Boss (Khai)"}, 20);
 
@@ -223,8 +223,8 @@ public class GameTester {
             case 9  -> { mainScreen.debugSkipToEnemy(customTestHero, "Forsaken Cultist",    2);       battleStarted[0] = true; }
             case 10 -> { mainScreen.debugSkipToEnemy(customTestHero, "Blight Hound",        2);       battleStarted[0] = true; }
             case 11 -> { mainScreen.debugSkipToEnemy(customTestHero, "Ghoul Footman",       2);       battleStarted[0] = true; }
-            case 12 -> { mainScreen.debugSkipToEnemy(customTestHero, "Black Jailer",        2);       battleStarted[0] = true; }
-            case 13 -> { mainScreen.debugSkipToEnemy(customTestHero, "Luther Von",          2);       battleStarted[0] = true; }
+            case 12 -> { mainScreen.debugSkipToEnemy(customTestHero, "The Black Jailer",        2);       battleStarted[0] = true; }
+            case 13 -> { mainScreen.debugSkipToEnemy(customTestHero, "Luther Von", 2); battleStarted[0] = true; }
             case 14 -> { mainScreen.debugSkipToWorld3(customTestHero);                                battleStarted[0] = true; }
             case 15 -> { mainScreen.debugSkipToEnemy(customTestHero, "Flame Revenant",      3);       battleStarted[0] = true; }
             case 16 -> { mainScreen.debugSkipToEnemy(customTestHero, "Bone Warlock",        3);       battleStarted[0] = true; }

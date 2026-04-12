@@ -50,6 +50,7 @@ public class BattlePanel extends JPanel {
     private static final double SPRITE_SCALE = 1.5;
     private static final int SHADE_X = 900;
     private static final int SHADE_Y = 340;
+    private String currentBattleBgPath = "";
 
 
     private BufferedImage[] idleFrames;
@@ -202,6 +203,120 @@ public class BattlePanel extends JPanel {
     private boolean isPlayingPlagueVerminDefeat   = false;
     private boolean isPlayingPlagueVerminEntrance = false;
 
+    // Forsaken Cultist
+    private static final int FORSAKEN_CULTIST_IDLE_FRAME_COUNT     = 4;
+    private static final int FORSAKEN_CULTIST_HURT_FRAME_COUNT     = 4;
+    private static final int FORSAKEN_CULTIST_ATTACK_FRAME_COUNT   = 4;
+    private static final int FORSAKEN_CULTIST_ENTRANCE_FRAME_COUNT = 4;
+    private static final int FORSAKEN_CULTIST_SPEED                = 200;
+    private static final int FORSAKEN_CULTIST_ENTRANCE_START_X     = 1300;
+    private static final double FORSAKEN_CULTIST_SCALE = 0.50;
+
+    private BufferedImage[] forsakenCultistIdleFrames;
+    private BufferedImage[] forsakenCultistHurtFrames;
+    private BufferedImage[] forsakenCultistAttackFrames;
+    private BufferedImage[] forsakenCultistEntranceFrames;
+
+    private boolean isPlayingForsakenCultistHurt     = false;
+    private boolean isPlayingForsakenCultistAttack   = false;
+    private boolean isPlayingForsakenCultistDefeat   = false;
+    private boolean isPlayingForsakenCultistEntrance = false;
+
+    // Blight Hound
+    private static final int BLIGHT_HOUND_IDLE_FRAME_COUNT     = 4;
+    private static final int BLIGHT_HOUND_HURT_FRAME_COUNT     = 4;
+    private static final int BLIGHT_HOUND_ATTACK_FRAME_COUNT   = 4;
+    private static final int BLIGHT_HOUND_ENTRANCE_FRAME_COUNT = 4;
+    private static final int BLIGHT_HOUND_SPEED                = 200;
+    private static final int BLIGHT_HOUND_ENTRANCE_START_X     = 1300;
+    private static final int BLIGHT_HOUND_X                    = PLAGUE_VERMIN_X;
+    private static final int BLIGHT_HOUND_Y = PLAGUE_VERMIN_Y + 195;
+    private static final double BLIGHT_HOUND_SCALE             = 0.40;
+
+    private BufferedImage[] blightHoundIdleFrames;
+    private BufferedImage[] blightHoundHurtFrames;
+    private BufferedImage[] blightHoundAttackFrames;
+    private BufferedImage[] blightHoundEntranceFrames;
+
+    private boolean isPlayingBlightHoundHurt     = false;
+    private boolean isPlayingBlightHoundAttack   = false;
+    private boolean isPlayingBlightHoundDefeat   = false;
+    private boolean isPlayingBlightHoundEntrance = false;
+
+    // Ghoul Footman
+    private static final int GHOUL_FOOTMAN_IDLE_FRAME_COUNT     = 4;
+    private static final int GHOUL_FOOTMAN_HURT_FRAME_COUNT     = 4;
+    private static final int GHOUL_FOOTMAN_ATTACK_FRAME_COUNT   = 4;
+    private static final int GHOUL_FOOTMAN_ENTRANCE_FRAME_COUNT = 4;
+    private static final int GHOUL_FOOTMAN_SPEED                = 200;
+    private static final int GHOUL_FOOTMAN_ENTRANCE_START_X     = 1300;
+    private static final int GHOUL_FOOTMAN_X                    = PLAGUE_VERMIN_X;
+    private static final int GHOUL_FOOTMAN_Y                    = PLAGUE_VERMIN_Y + 260;
+    private static final double GHOUL_FOOTMAN_SCALE             = 0.40;
+
+    private BufferedImage[] ghoulFootmanIdleFrames;
+    private BufferedImage[] ghoulFootmanHurtFrames;
+    private BufferedImage[] ghoulFootmanAttackFrames;
+    private BufferedImage[] ghoulFootmanEntranceFrames;
+
+    private boolean isPlayingGhoulFootmanHurt     = false;
+    private boolean isPlayingGhoulFootmanAttack   = false;
+    private boolean isPlayingGhoulFootmanDefeat   = false;
+    private boolean isPlayingGhoulFootmanEntrance = false;
+
+    // Black Jailer
+    private static final int BLACK_JAILER_IDLE_FRAME_COUNT      = 4;
+    private static final int BLACK_JAILER_HURT_FRAME_COUNT      = 4;
+    private static final int BLACK_JAILER_CHAINS_FRAME_COUNT    = 4;
+    private static final int BLACK_JAILER_LASH_FRAME_COUNT      = 4;
+    private static final int BLACK_JAILER_ENTRANCE_FRAME_COUNT  = 4;
+    private static final int BLACK_JAILER_SPEED                 = 240;
+    private static final int BLACK_JAILER_ENTRANCE_START_X      = 1300;
+    private static final int BLACK_JAILER_X                     = PLAGUE_VERMIN_X + 90;
+    private static final int BLACK_JAILER_Y                     = PLAGUE_VERMIN_Y + 250;
+    private static final double BLACK_JAILER_SCALE              = 0.50;
+
+    private BufferedImage[] blackJailerIdleFrames;
+    private BufferedImage[] blackJailerHurtFrames;
+    private BufferedImage[] blackJailerChainsFrames;
+    private BufferedImage[] blackJailerLashFrames;
+    private BufferedImage[] blackJailerEntranceFrames;
+
+    private boolean isPlayingBlackJailerHurt     = false;
+    private boolean isPlayingBlackJailerChains   = false;
+    private boolean isPlayingBlackJailerLash     = false;
+    private boolean isPlayingBlackJailerDefeat   = false;
+    private boolean isPlayingBlackJailerEntrance = false;
+
+    // Luther Von
+    private static final int LUTHER_VON_IDLE_FRAME_COUNT        = 4;
+    private static final int LUTHER_VON_HURT_FRAME_COUNT        = 4;
+    private static final int LUTHER_VON_DEFEATED_FRAME_COUNT    = 4;
+    private static final int LUTHER_VON_ENTRANCE_FRAME_COUNT    = 4;
+    private static final int LUTHER_VON_CROWN_FRAME_COUNT       = 4;
+    private static final int LUTHER_VON_ASCENSION_FRAME_COUNT   = 4;
+    private static final int LUTHER_VON_WRATH_FRAME_COUNT       = 4;
+    private static final int LUTHER_VON_SPEED                   = 200;
+    private static final int LUTHER_VON_ENTRANCE_START_X        = 1300;
+    private static final int LUTHER_VON_X                       = BLACK_JAILER_X;
+    private static final int LUTHER_VON_Y                       = 170;
+    private static final double LUTHER_VON_SCALE                = BLACK_JAILER_SCALE;
+
+    private BufferedImage[] lutherVonIdleFrames;
+    private BufferedImage[] lutherVonHurtFrames;
+    private BufferedImage[] lutherVonDefeatedFrames;
+    private BufferedImage[] lutherVonEntranceFrames;
+    private BufferedImage[] lutherVonCrownFrames;
+    private BufferedImage[] lutherVonAscensionFrames;
+    private BufferedImage[] lutherVonWrathFrames;
+
+    private boolean isPlayingLutherVonHurt       = false;
+    private boolean isPlayingLutherVonDefeat     = false;
+    private boolean isPlayingLutherVonEntrance   = false;
+    private boolean isPlayingLutherVonCrown      = false;
+    private boolean isPlayingLutherVonAscension  = false;
+    private boolean isPlayingLutherVonWrath      = false;
+
     // ════════════════════════════════════════════
     // ★ POSITION CONSTANTS
     // ════════════════════════════════════════════
@@ -321,6 +436,21 @@ public class BattlePanel extends JPanel {
         EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
         this.enemyDef = eDef;
 
+        // Right after:  this.enemyDef = eDef;
+
+        if (isWorld2Battle) {
+            String bg = switch (eDef.name) {
+                case "Plague Vermin"     -> "/assets/Backgrounds/World2BattleBackground.png";
+                case "Forsaken Cultist"  -> "/assets/Backgrounds/World2BattleBackground2.png";
+                case "Blight Hound"      -> "/assets/Backgrounds/World2BattleBackground3.png";
+                case "Ghoul Footman"     -> "/assets/Backgrounds/World2BattleBackground4.png";
+                case "The Black Jailer"  -> "/assets/Backgrounds/World2BattleBackground5.png";
+                case "Luther Von" -> "/assets/Backgrounds/World2BattleBackgroundLast.png";
+                default -> currentBattleBgPath;
+            };
+            setBattleBackground(bg);
+        }
+
         currentHero = (savedHeroCombatant != null) ? savedHeroCombatant : HeroFactory.createHero(heroDef);
         savedHeroCombatant = null;
         currentEnemy = HeroFactory.createEnemy(eDef);
@@ -346,7 +476,7 @@ public class BattlePanel extends JPanel {
         // MINIBOSS CHECKS
         boolean isStagFight   = eDef.name.equals("The Hollow Stag");
         boolean isJailerFight = eDef.name.equals("The Black Jailer");
-        boolean isLutherFight = eDef.name.equals("Luther Von The Corrupted King");
+        boolean isLutherFight = eDef.name.equals("Luther Von");
 
         if (isStagFight || isJailerFight || isLutherFight) {
 
@@ -395,6 +525,7 @@ public class BattlePanel extends JPanel {
 
     public void setBattleBackground(String resourcePath) {
         if (battleBg == null) return;
+        currentBattleBgPath = resourcePath; // ADD THIS LINE
         java.net.URL url = getClass().getResource(resourcePath);
         if (url != null) {
             battleBg.setIcon(new ImageIcon(
@@ -1102,6 +1233,366 @@ public class BattlePanel extends JPanel {
             }
         } catch (Exception ex) {}
 
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/ForsakenCultistIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FORSAKEN_CULTIST_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                forsakenCultistIdleFrames = new BufferedImage[FORSAKEN_CULTIST_IDLE_FRAME_COUNT];
+                for (int i = 0; i < FORSAKEN_CULTIST_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    forsakenCultistIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/ForsakenCultistHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FORSAKEN_CULTIST_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                forsakenCultistHurtFrames = new BufferedImage[FORSAKEN_CULTIST_HURT_FRAME_COUNT];
+                for (int i = 0; i < FORSAKEN_CULTIST_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    forsakenCultistHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/ForsakenCultistShadowBolt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FORSAKEN_CULTIST_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                forsakenCultistAttackFrames = new BufferedImage[FORSAKEN_CULTIST_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < FORSAKEN_CULTIST_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    forsakenCultistAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/ForsakenCultistEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FORSAKEN_CULTIST_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                forsakenCultistEntranceFrames = new BufferedImage[FORSAKEN_CULTIST_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < FORSAKEN_CULTIST_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    forsakenCultistEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlightHoundIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLIGHT_HOUND_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                blightHoundIdleFrames = new BufferedImage[BLIGHT_HOUND_IDLE_FRAME_COUNT];
+                for (int i = 0; i < BLIGHT_HOUND_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blightHoundIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlightHoundHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLIGHT_HOUND_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                blightHoundHurtFrames = new BufferedImage[BLIGHT_HOUND_HURT_FRAME_COUNT];
+                for (int i = 0; i < BLIGHT_HOUND_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blightHoundHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlightHoundCorpseExplosion.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLIGHT_HOUND_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                blightHoundAttackFrames = new BufferedImage[BLIGHT_HOUND_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < BLIGHT_HOUND_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blightHoundAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlightHoundEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLIGHT_HOUND_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                blightHoundEntranceFrames = new BufferedImage[BLIGHT_HOUND_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < BLIGHT_HOUND_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blightHoundEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/GhoulFootmanIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / GHOUL_FOOTMAN_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                ghoulFootmanIdleFrames = new BufferedImage[GHOUL_FOOTMAN_IDLE_FRAME_COUNT];
+                for (int i = 0; i < GHOUL_FOOTMAN_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    ghoulFootmanIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/GhoulFootmanHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / GHOUL_FOOTMAN_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                ghoulFootmanHurtFrames = new BufferedImage[GHOUL_FOOTMAN_HURT_FRAME_COUNT];
+                for (int i = 0; i < GHOUL_FOOTMAN_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    ghoulFootmanHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/GhoulFootmanRottenCleave.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / GHOUL_FOOTMAN_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                ghoulFootmanAttackFrames = new BufferedImage[GHOUL_FOOTMAN_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < GHOUL_FOOTMAN_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    ghoulFootmanAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/GhoulFootmanEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / GHOUL_FOOTMAN_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                ghoulFootmanEntranceFrames = new BufferedImage[GHOUL_FOOTMAN_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < GHOUL_FOOTMAN_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    ghoulFootmanEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlackJailerIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLACK_JAILER_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                blackJailerIdleFrames = new BufferedImage[BLACK_JAILER_IDLE_FRAME_COUNT];
+                for (int i = 0; i < BLACK_JAILER_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blackJailerIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlackJailerHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLACK_JAILER_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                blackJailerHurtFrames = new BufferedImage[BLACK_JAILER_HURT_FRAME_COUNT];
+                for (int i = 0; i < BLACK_JAILER_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blackJailerHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlackJailerShacklingChains.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLACK_JAILER_CHAINS_FRAME_COUNT, fh = sheet.getHeight();
+                blackJailerChainsFrames = new BufferedImage[BLACK_JAILER_CHAINS_FRAME_COUNT];
+                for (int i = 0; i < BLACK_JAILER_CHAINS_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blackJailerChainsFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlackJailerTormentingLash.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLACK_JAILER_LASH_FRAME_COUNT, fh = sheet.getHeight();
+                blackJailerLashFrames = new BufferedImage[BLACK_JAILER_LASH_FRAME_COUNT];
+                for (int i = 0; i < BLACK_JAILER_LASH_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blackJailerLashFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/BlackJailerEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLACK_JAILER_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                blackJailerEntranceFrames = new BufferedImage[BLACK_JAILER_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < BLACK_JAILER_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    blackJailerEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonIdleFrames = new BufferedImage[LUTHER_VON_IDLE_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonHurtFrames = new BufferedImage[LUTHER_VON_HURT_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonDefeated.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_DEFEATED_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonDefeatedFrames = new BufferedImage[LUTHER_VON_DEFEATED_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_DEFEATED_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonDefeatedFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonEntrance.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonEntranceFrames = new BufferedImage[LUTHER_VON_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonCrownOfDespair.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_CROWN_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonCrownFrames = new BufferedImage[LUTHER_VON_CROWN_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_CROWN_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonCrownFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonDarkAscension.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_ASCENSION_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonAscensionFrames = new BufferedImage[LUTHER_VON_ASCENSION_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_ASCENSION_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonAscensionFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World2EnemyAssets/LutherVonKingsWrath.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / LUTHER_VON_WRATH_FRAME_COUNT, fh = sheet.getHeight();
+                lutherVonWrathFrames = new BufferedImage[LUTHER_VON_WRATH_FRAME_COUNT];
+                for (int i = 0; i < LUTHER_VON_WRATH_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    lutherVonWrathFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
         JLabel sprite = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1131,14 +1622,43 @@ public class BattlePanel extends JPanel {
                 else if (isPlayingBatAttack)    frames = batAttackFrames;
                 else if (isPlayingBatDefeat)    frames = batHurtFrames;
                 else if (isPlayingBatEntrance)  frames = batEntranceFrames;
-                else if (isPlayingPlagueVerminHurt)     frames = plagueVerminHurtFrames;
-                else if (isPlayingPlagueVerminAttack)   frames = plagueVerminAttackFrames;
-                else if (isPlayingPlagueVerminDefeat)   frames = plagueVerminHurtFrames;
-                else if (isPlayingPlagueVerminEntrance) frames = plagueVerminEntranceFrames;
+                else if (isPlayingPlagueVerminHurt)         frames = plagueVerminHurtFrames;
+                else if (isPlayingPlagueVerminAttack)       frames = plagueVerminAttackFrames;
+                else if (isPlayingPlagueVerminDefeat)       frames = plagueVerminHurtFrames;
+                else if (isPlayingPlagueVerminEntrance)     frames = plagueVerminEntranceFrames;
+                else if (isPlayingForsakenCultistHurt)      frames = forsakenCultistHurtFrames;      // ADD
+                else if (isPlayingForsakenCultistAttack)    frames = forsakenCultistAttackFrames;    // ADD
+                else if (isPlayingForsakenCultistDefeat)    frames = forsakenCultistHurtFrames;      // ADD
+                else if (isPlayingForsakenCultistEntrance)  frames = forsakenCultistEntranceFrames;  // ADD
+                else if (isPlayingBlightHoundHurt)      frames = blightHoundHurtFrames;
+                else if (isPlayingBlightHoundAttack)    frames = blightHoundAttackFrames;
+                else if (isPlayingBlightHoundDefeat)    frames = blightHoundHurtFrames;
+                else if (isPlayingBlightHoundEntrance)  frames = blightHoundEntranceFrames;
+                else if (isPlayingGhoulFootmanHurt)     frames = ghoulFootmanHurtFrames;
+                else if (isPlayingGhoulFootmanAttack)   frames = ghoulFootmanAttackFrames;
+                else if (isPlayingGhoulFootmanDefeat)   frames = ghoulFootmanHurtFrames;
+                else if (isPlayingGhoulFootmanEntrance) frames = ghoulFootmanEntranceFrames;
+                else if (isPlayingBlackJailerHurt)     frames = blackJailerHurtFrames;
+                else if (isPlayingBlackJailerChains)   frames = blackJailerChainsFrames;
+                else if (isPlayingBlackJailerLash)     frames = blackJailerLashFrames;
+                else if (isPlayingBlackJailerDefeat)   frames = blackJailerHurtFrames;
+                else if (isPlayingBlackJailerEntrance) frames = blackJailerEntranceFrames;
+                else if (isPlayingLutherVonHurt)      frames = lutherVonHurtFrames;
+                else if (isPlayingLutherVonCrown)     frames = lutherVonCrownFrames;
+                else if (isPlayingLutherVonAscension) frames = lutherVonAscensionFrames;
+                else if (isPlayingLutherVonWrath)     frames = lutherVonWrathFrames;
+                else if (isPlayingLutherVonDefeat)    frames = lutherVonDefeatedFrames;
+                else if (isPlayingLutherVonEntrance)  frames = lutherVonEntranceFrames;
+                else if (isStag)                            frames = stagIdleFrames;
                 else if (isStag)                   frames = stagIdleFrames;
                 else if (isTreant)                 frames = treantIdleFrames;
                 else if (isBat())                  frames = batIdleFrames;   // ADD
                 else if (isPlagueVermin())         frames = plagueVerminIdleFrames;
+                else if (isForsakenCultist())      frames = forsakenCultistIdleFrames;
+                else if (isBlightHound())          frames = blightHoundIdleFrames;
+                else if (isGhoulFootman())         frames = ghoulFootmanIdleFrames;
+                else if (isBlackJailer())          frames = blackJailerIdleFrames;
+                else if (isLutherVon())        frames = lutherVonIdleFrames;
                 else if (isShade)                  frames = spriteIdleFrames;
                 else                               frames = wolfIdleFrames;
 
@@ -1153,11 +1673,22 @@ public class BattlePanel extends JPanel {
                 boolean isTreantAttack   = isTreantEnemy && isPlayingTreantAttack;
                 boolean isBatEnemy          = enemyDef != null && enemyDef.name.equals("Carrion Bat");
                 boolean isPlagueVerminEnemy = enemyDef != null && enemyDef.name.equals("Plague Vermin");
+                boolean isForsakenCultistEnemy = enemyDef != null && enemyDef.name.equals("Forsaken Cultist");
+                boolean isBlightHoundEnemy = enemyDef != null && enemyDef.name.equals("Blight Hound");
+                boolean isGhoulFootmanEnemy = enemyDef != null && enemyDef.name.equals("Ghoul Footman");
+                boolean isBlackJailerEnemy = enemyDef != null && enemyDef.name.equals("The Black Jailer");
+                boolean isLutherVonEnemy = enemyDef != null && enemyDef.name.equals("Luther Von");
+
                 double scale = isTreantEntrance    ? TREANT_SCALE
                         : isTreantAttack       ? TREANT_ATTACK_SCALE
                         : isTreantEnemy        ? TREANT_IDLE_SCALE
                         : isBatEnemy           ? BAT_SCALE
                         : isPlagueVerminEnemy  ? PLAGUE_VERMIN_SCALE
+                        : isForsakenCultistEnemy ? FORSAKEN_CULTIST_SCALE
+                        : isBlightHoundEnemy   ? BLIGHT_HOUND_SCALE      // ADD
+                        : isGhoulFootmanEnemy  ? GHOUL_FOOTMAN_SCALE
+                        : isBlackJailerEnemy   ? BLACK_JAILER_SCALE
+                        : isLutherVonEnemy     ? LUTHER_VON_SCALE
                         : ENEMY_SCALE;
                 g2.drawImage(frame, 0, 0, (int) (frame.getWidth() * scale), (int) (frame.getHeight() * scale), null);
 
@@ -1183,15 +1714,35 @@ public class BattlePanel extends JPanel {
             labelW = Math.max(labelW, (int) (batIdleFrames[0].getWidth() * BAT_SCALE));
             labelH = Math.max(labelH, (int) (batIdleFrames[0].getHeight() * BAT_SCALE));
         }
-        if (plagueVerminIdleFrames != null) {
-            labelW = Math.max(labelW, (int)(plagueVerminIdleFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE));
-            labelH = Math.max(labelH, (int)(plagueVerminIdleFrames[0].getHeight() * PLAGUE_VERMIN_SCALE));
-        }
-
         if (stagIdleFrames != null) {
             labelW = Math.max(labelW, (int) (stagIdleFrames[0].getWidth() * ENEMY_SCALE));
             labelH = Math.max(labelH, (int) (stagIdleFrames[0].getHeight() * ENEMY_SCALE));
         }
+        if (plagueVerminIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(plagueVerminIdleFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE));
+            labelH = Math.max(labelH, (int)(plagueVerminIdleFrames[0].getHeight() * PLAGUE_VERMIN_SCALE));
+        }
+        if (forsakenCultistIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(forsakenCultistIdleFrames[0].getWidth() * FORSAKEN_CULTIST_SCALE));
+            labelH = Math.max(labelH, (int)(forsakenCultistIdleFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE));
+        }
+        if (blightHoundIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(blightHoundIdleFrames[0].getWidth()  * BLIGHT_HOUND_SCALE));
+            labelH = Math.max(labelH, (int)(blightHoundIdleFrames[0].getHeight() * BLIGHT_HOUND_SCALE));
+        }
+        if (ghoulFootmanIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(ghoulFootmanIdleFrames[0].getWidth()  * GHOUL_FOOTMAN_SCALE));
+            labelH = Math.max(labelH, (int)(ghoulFootmanIdleFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE));
+        }
+        if (blackJailerIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(blackJailerIdleFrames[0].getWidth()  * BLACK_JAILER_SCALE));
+            labelH = Math.max(labelH, (int)(blackJailerIdleFrames[0].getHeight() * BLACK_JAILER_SCALE));
+        }
+        if (lutherVonIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(lutherVonIdleFrames[0].getWidth()  * LUTHER_VON_SCALE));
+            labelH = Math.max(labelH, (int)(lutherVonIdleFrames[0].getHeight() * LUTHER_VON_SCALE));
+        }
+
         if (labelW == 0) labelW = SPRITE_W;
         if (labelH == 0) labelH = SPRITE_H;
 
@@ -1217,6 +1768,52 @@ public class BattlePanel extends JPanel {
         return out;
     }
 
+    private int getHeroIdleY() {
+        if (currentBattleBgPath.contains("ForsakenCultist") || currentBattleBgPath.contains("World2BattleBackground2")) {
+            return IDLE_Y_W2 + 70;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackground3")) {
+            return IDLE_Y_W2 + 60;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackground4")) {
+            return IDLE_Y_W2 + 120;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackground5")) {
+            return IDLE_Y_W2 + 160;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackgroundLast")) {  // ADD THIS
+            return IDLE_Y_W2 + 80;                                          // ADD THIS
+        }                                                                    // ADD THIS
+        return isWorld2Battle ? IDLE_Y_W2 : IDLE_Y;
+    }
+
+    private int getHeroActionY() {
+        if (currentBattleBgPath.contains("ForsakenCultist") || currentBattleBgPath.contains("World2BattleBackground2")) {
+            return ACTION_Y_W2 + 70;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackground3")) {
+            return ACTION_Y_W2 + 60;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackground4")) {
+            return ACTION_Y_W2 + 120;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackground5")) {
+            return ACTION_Y_W2 + 160;
+        }
+        if (currentBattleBgPath.contains("World2BattleBackgroundLast")) {  // ADD THIS
+            return ACTION_Y_W2 + 80;                                        // ADD THIS
+        }                                                                    // ADD THIS
+        return isWorld2Battle ? ACTION_Y_W2 : ACTION_Y;
+    }
+
+    //Enemy
+    private int getEnemyActionY() {
+        if (currentBattleBgPath.contains("World2BattleBackground3")) {
+            return BLIGHT_HOUND_Y;
+        }
+        return ENEMY_Y;
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // ★ ANIMATION TRIGGERS
     // ════════════════════════════════════════════════════════════════════════
@@ -1230,7 +1827,7 @@ public class BattlePanel extends JPanel {
         if (idleFrames != null) {
             int w = (int) (idleFrames[0].getWidth() * SPRITE_SCALE);
             int h = (int) (idleFrames[0].getHeight() * SPRITE_SCALE);
-            heroSpriteLabel.setBounds(IDLE_X, isWorld2Battle ? IDLE_Y_W2 : IDLE_Y, w, h);
+            heroSpriteLabel.setBounds(IDLE_X, getHeroIdleY(), w, h);
         }
         heroIdleTimer = new javax.swing.Timer(220, e -> {
             heroSpriteFrame = (heroSpriteFrame + 1) % SPRITE_FRAME_COUNT;
@@ -1253,6 +1850,18 @@ public class BattlePanel extends JPanel {
         isPlayingStagHowl = false; isPlayingStagDefeat = false; isPlayingStagEntrance = false;
         isPlayingPlagueVerminHurt = false; isPlayingPlagueVerminAttack = false;
         isPlayingPlagueVerminDefeat = false; isPlayingPlagueVerminEntrance = false;
+        isPlayingForsakenCultistHurt = false; isPlayingForsakenCultistAttack = false;
+        isPlayingForsakenCultistDefeat = false; isPlayingForsakenCultistEntrance = false;
+        isPlayingBlightHoundHurt = false; isPlayingBlightHoundAttack = false;
+        isPlayingBlightHoundDefeat = false; isPlayingBlightHoundEntrance = false;
+        isPlayingGhoulFootmanHurt = false; isPlayingGhoulFootmanAttack = false;
+        isPlayingGhoulFootmanDefeat = false; isPlayingGhoulFootmanEntrance = false;
+        isPlayingBlackJailerHurt = false; isPlayingBlackJailerChains = false;
+        isPlayingBlackJailerLash = false; isPlayingBlackJailerDefeat = false;
+        isPlayingBlackJailerEntrance = false;
+        isPlayingLutherVonHurt = false; isPlayingLutherVonCrown = false;
+        isPlayingLutherVonAscension = false; isPlayingLutherVonWrath = false;
+        isPlayingLutherVonDefeat = false; isPlayingLutherVonEntrance = false;
         enemySpriteFrame = 0;
 
         if (eDef.name.equals("Rotfang Wolf") && wolfIdleFrames != null) {
@@ -1315,7 +1924,57 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else {
+        } else if (eDef.name.equals("Forsaken Cultist") && forsakenCultistIdleFrames != null) {
+            int w = (int) (forsakenCultistIdleFrames[0].getWidth() * FORSAKEN_CULTIST_SCALE);
+            int h = (int) (forsakenCultistIdleFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE);
+            enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y - 70, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(FORSAKEN_CULTIST_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % FORSAKEN_CULTIST_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Blight Hound") && blightHoundIdleFrames != null) {
+        int w = (int)(blightHoundIdleFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
+        int h = (int)(blightHoundIdleFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
+        enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h);
+        enemySpriteLabel.setVisible(true);
+        enemyIdleTimer = new javax.swing.Timer(BLIGHT_HOUND_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % BLIGHT_HOUND_IDLE_FRAME_COUNT;
+            if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+        });
+        enemyIdleTimer.start();
+        } else if (eDef.name.equals("Ghoul Footman") && ghoulFootmanIdleFrames != null) {
+            int w = (int) (ghoulFootmanIdleFrames[0].getWidth() * GHOUL_FOOTMAN_SCALE);
+            int h = (int) (ghoulFootmanIdleFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
+            enemySpriteLabel.setBounds(GHOUL_FOOTMAN_X, GHOUL_FOOTMAN_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(GHOUL_FOOTMAN_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % GHOUL_FOOTMAN_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("The Black Jailer") && blackJailerIdleFrames != null) {
+            int w = (int) (blackJailerIdleFrames[0].getWidth() * BLACK_JAILER_SCALE);
+            int h = (int) (blackJailerIdleFrames[0].getHeight() * BLACK_JAILER_SCALE);
+            enemySpriteLabel.setBounds(BLACK_JAILER_X, BLACK_JAILER_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(BLACK_JAILER_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % BLACK_JAILER_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Luther Von") && lutherVonIdleFrames != null) {
+            int w = (int) (lutherVonIdleFrames[0].getWidth() * LUTHER_VON_SCALE);
+            int h = (int) (lutherVonIdleFrames[0].getHeight() * LUTHER_VON_SCALE);
+            enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(LUTHER_VON_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % LUTHER_VON_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        }else {
             enemySpriteLabel.setVisible(false);
         }
     }
@@ -1325,26 +1984,34 @@ public class BattlePanel extends JPanel {
         if (enemySpriteLabel != null) enemySpriteLabel.setVisible(false);
     }
 
+    //Helper Methods
     private boolean isShadeSprite() { return enemyDef != null && enemyDef.name.equals("Shade Sprite"); }
     private boolean isTreant() { return enemyDef != null && enemyDef.name.equals("Dreadbark Treant"); }
     private boolean isBat() { return enemyDef != null && enemyDef.name.equals("Carrion Bat"); }
     private boolean isPlagueVermin() { return enemyDef != null && enemyDef.name.equals("Plague Vermin"); }
+    private boolean isForsakenCultist() { return enemyDef != null && enemyDef.name.equals("Forsaken Cultist"); }
+    private boolean isBlightHound() { return enemyDef != null && enemyDef.name.equals("Blight Hound"); }
+    private boolean isGhoulFootman() { return enemyDef != null && enemyDef.name.equals("Ghoul Footman"); }
+    private boolean isBlackJailer() { return enemyDef != null && enemyDef.name.equals("The Black Jailer"); }
+    private boolean isLutherVon() { return enemyDef != null && enemyDef.name.equals("Luther Von"); }
 
-    private boolean isBat() {
-        return enemyDef != null && enemyDef.name.equals("Carrion Bat");
-    }
 
     private boolean isStag() {
         return enemyDef != null && enemyDef.name.equals("The Hollow Stag");
     }
 
     private void playEnemyHurt(Runnable onDone) {
-        if (isStag())             playStagHurtAnimation(onDone);
-        else if (isTreant())      playTreantHurtAnimation(onDone);
-        else if (isBat())         playBatHurtAnimation(onDone);
-        else if (isPlagueVermin()) playPlagueVerminHurtAnimation(onDone);
-        else if (isShadeSprite()) playSpriteHurtAnimation(onDone);
-        else playWolfHurtAnimation(onDone);
+        if (isStag())                  playStagHurtAnimation(onDone);
+        else if (isTreant())           playTreantHurtAnimation(onDone);
+        else if (isBat())              playBatHurtAnimation(onDone);
+        else if (isPlagueVermin())     playPlagueVerminHurtAnimation(onDone);
+        else if (isForsakenCultist())  playForsakenCultistHurtAnimation(onDone);
+        else if (isBlightHound())      playBlightHoundHurtAnimation(onDone);
+        else if (isShadeSprite())      playSpriteHurtAnimation(onDone);
+        else if (isGhoulFootman())     playGhoulFootmanHurtAnimation(onDone);
+        else if (isBlackJailer())      playBlackJailerHurtAnimation(onDone);
+        else if (isLutherVon())        playLutherVonHurtAnimation(onDone);
+        else                           playWolfHurtAnimation(onDone);
     }
 
     private void playEnemyAttack(Runnable onDone) {
@@ -1352,29 +2019,52 @@ public class BattlePanel extends JPanel {
             String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
             if ("Blackened Howl".equals(lastSkill)) playStagBlackenedHowlAnimation(onDone);
             else                                     playStagDeathlyChargeAnimation(onDone);
-        } else if (isTreant())        playTreantAttackAnimation(onDone);
-        else if (isBat())             playBatAttackAnimation(onDone);
-        else if (isPlagueVermin())    playPlagueVerminAttackAnimation(onDone);
-        else if (isShadeSprite())     playSpriteTricksterAnimation(onDone);
-        else                          playWolfSavageHowlAnimation(onDone);
+        } else if (isTreant())           playTreantAttackAnimation(onDone);
+        else if (isBat())                playBatAttackAnimation(onDone);
+        else if (isPlagueVermin())       playPlagueVerminAttackAnimation(onDone);
+        else if (isForsakenCultist())    playForsakenCultistAttackAnimation(onDone);
+        else if (isBlightHound())        playBlightHoundAttackAnimation(onDone);
+        else if (isShadeSprite())        playSpriteTricksterAnimation(onDone);
+        else if (isGhoulFootman())       playGhoulFootmanAttackAnimation(onDone);
+        else if (isBlackJailer()) {
+            String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
+            if ("Shackling Chains".equals(lastSkill)) playBlackJailerChainsAnimation(onDone);
+            else                                       playBlackJailerLashAnimation(onDone);
+        }else if (isLutherVon()) {
+            String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
+            if ("Crown of Despair".equals(lastSkill))   playLutherVonCrownAnimation(onDone);
+            else if ("Dark Ascension".equals(lastSkill)) playLutherVonAscensionAnimation(onDone);
+            else                                          playLutherVonWrathAnimation(onDone);
+        }
+        else                             playWolfSavageHowlAnimation(onDone);
     }
 
     private void playEnemyDefeat(Runnable onDone) {
-        if (isStag())             playStagDefeatAnimation(onDone);
-        else if (isTreant())      playTreantDefeatAnimation(onDone);
-        else if (isBat())         playBatDefeatAnimation(onDone);
-        else if (isPlagueVermin()) playPlagueVerminDefeatAnimation(onDone);
-        else if (isShadeSprite()) playSpriteDefeatAnimation(onDone);
-        else playWolfDefeatAnimation(onDone);
+        if (isStag())                  playStagDefeatAnimation(onDone);
+        else if (isTreant())           playTreantDefeatAnimation(onDone);
+        else if (isBat())              playBatDefeatAnimation(onDone);
+        else if (isPlagueVermin())     playPlagueVerminDefeatAnimation(onDone);
+        else if (isForsakenCultist())  playForsakenCultistDefeatAnimation(onDone);
+        else if (isBlightHound())      playBlightHoundDefeatAnimation(onDone);
+        else if (isGhoulFootman())     playGhoulFootmanDefeatAnimation(onDone);
+        else if (isShadeSprite())      playSpriteDefeatAnimation(onDone);
+        else if (isBlackJailer())      playBlackJailerDefeatAnimation(onDone);
+        else if (isLutherVon())        playLutherVonDefeatAnimation(onDone);
+        else                           playWolfDefeatAnimation(onDone);
     }
 
     private void playEnemyEntrance(Runnable onDone) {
-        if (isStag())             playStagEntranceAnimation(onDone);
-        else if (isTreant())      playTreantEntranceAnimation(onDone);
-        else if (isBat())         playBatEntranceAnimation(onDone);
-        else if (isPlagueVermin()) playPlagueVerminEntranceAnimation(onDone);
-        else if (isShadeSprite()) playSpriteEntranceAnimation(onDone);
-        else playWolfEntranceAnimation(onDone);
+        if (isStag())                  playStagEntranceAnimation(onDone);
+        else if (isTreant())           playTreantEntranceAnimation(onDone);
+        else if (isBat())              playBatEntranceAnimation(onDone);
+        else if (isPlagueVermin())     playPlagueVerminEntranceAnimation(onDone);
+        else if (isForsakenCultist())  playForsakenCultistEntranceAnimation(onDone);
+        else if (isBlightHound())      playBlightHoundEntranceAnimation(onDone);
+        else if (isGhoulFootman())     playGhoulFootmanEntranceAnimation(onDone);
+        else if (isBlackJailer())      playBlackJailerEntranceAnimation(onDone);
+        else if (isShadeSprite())      playSpriteEntranceAnimation(onDone);
+        else if (isLutherVon())        playLutherVonEntranceAnimation(onDone);
+        else                           playWolfEntranceAnimation(onDone);
     }
 
 
@@ -2073,6 +2763,409 @@ public class BattlePanel extends JPanel {
         t.start();
     }
 
+    // FORSAKEN CULTIST
+
+    private void playForsakenCultistEntranceAnimation(Runnable onDone) {
+        if (forsakenCultistEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingForsakenCultistEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(forsakenCultistEntranceFrames[0].getWidth()  * FORSAKEN_CULTIST_SCALE);
+        int h = (int)(forsakenCultistEntranceFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE);
+        enemySpriteLabel.setBounds(FORSAKEN_CULTIST_ENTRANCE_START_X, ENEMY_Y - 120, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(FORSAKEN_CULTIST_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % FORSAKEN_CULTIST_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {FORSAKEN_CULTIST_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= ENEMY_X) {
+                enemySpriteLabel.setLocation(ENEMY_X, ENEMY_Y - 120);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingForsakenCultistEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], ENEMY_Y - 120); }
+        });
+        slideTimer.start();
+    }
+
+    private void playForsakenCultistHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (forsakenCultistHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingForsakenCultistHurt = true; enemySpriteFrame = 0;
+        int w = (int)(forsakenCultistHurtFrames[0].getWidth()  * FORSAKEN_CULTIST_SCALE);
+        int h = (int)(forsakenCultistHurtFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE);
+        enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y - 70, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(70, e -> {
+            if (frame[0] < FORSAKEN_CULTIST_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingForsakenCultistHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playForsakenCultistAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (forsakenCultistAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingForsakenCultistAttack = true; enemySpriteFrame = 0;
+        int w = (int)(forsakenCultistAttackFrames[0].getWidth()  * FORSAKEN_CULTIST_SCALE);
+        int h = (int)(forsakenCultistAttackFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE);
+        enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y - 90, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < FORSAKEN_CULTIST_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingForsakenCultistAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playForsakenCultistDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (forsakenCultistHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingForsakenCultistDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(forsakenCultistHurtFrames[0].getWidth()  * FORSAKEN_CULTIST_SCALE);
+        int h = (int)(forsakenCultistHurtFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE);
+        enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y - 70, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < FORSAKEN_CULTIST_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingForsakenCultistDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playBlightHoundEntranceAnimation(Runnable onDone) {
+        if (blightHoundEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingBlightHoundEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(blightHoundEntranceFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
+        int h = (int)(blightHoundEntranceFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
+        enemySpriteLabel.setBounds(BLIGHT_HOUND_ENTRANCE_START_X, BLIGHT_HOUND_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(BLIGHT_HOUND_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % BLIGHT_HOUND_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {BLIGHT_HOUND_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= BLIGHT_HOUND_X) {
+                enemySpriteLabel.setLocation(BLIGHT_HOUND_X, BLIGHT_HOUND_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingBlightHoundEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], BLIGHT_HOUND_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playBlightHoundHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blightHoundHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBlightHoundHurt = true; enemySpriteFrame = 0;
+        int w = (int)(blightHoundHurtFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
+        int h = (int)(blightHoundHurtFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
+        enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BLIGHT_HOUND_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBlightHoundHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBlightHoundAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blightHoundAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBlightHoundAttack = true; enemySpriteFrame = 0;
+        int w = (int)(blightHoundAttackFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
+        int h = (int)(blightHoundAttackFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
+        enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BLIGHT_HOUND_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBlightHoundAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBlightHoundDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blightHoundHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingBlightHoundDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(blightHoundHurtFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
+        int h = (int)(blightHoundHurtFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
+        enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < BLIGHT_HOUND_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingBlightHoundDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playGhoulFootmanEntranceAnimation(Runnable onDone) {
+        if (ghoulFootmanEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingGhoulFootmanEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(ghoulFootmanEntranceFrames[0].getWidth()  * GHOUL_FOOTMAN_SCALE);
+        int h = (int)(ghoulFootmanEntranceFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
+        enemySpriteLabel.setBounds(GHOUL_FOOTMAN_ENTRANCE_START_X, GHOUL_FOOTMAN_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(GHOUL_FOOTMAN_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % GHOUL_FOOTMAN_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {GHOUL_FOOTMAN_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= GHOUL_FOOTMAN_X) {
+                enemySpriteLabel.setLocation(GHOUL_FOOTMAN_X, GHOUL_FOOTMAN_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingGhoulFootmanEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], GHOUL_FOOTMAN_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playGhoulFootmanHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (ghoulFootmanHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingGhoulFootmanHurt = true; enemySpriteFrame = 0;
+        int w = (int)(ghoulFootmanHurtFrames[0].getWidth()  * GHOUL_FOOTMAN_SCALE);
+        int h = (int)(ghoulFootmanHurtFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
+        enemySpriteLabel.setBounds(GHOUL_FOOTMAN_X, GHOUL_FOOTMAN_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < GHOUL_FOOTMAN_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingGhoulFootmanHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playGhoulFootmanAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (ghoulFootmanAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingGhoulFootmanAttack = true; enemySpriteFrame = 0;
+        int w = (int)(ghoulFootmanAttackFrames[0].getWidth()  * GHOUL_FOOTMAN_SCALE);
+        int h = (int)(ghoulFootmanAttackFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
+        enemySpriteLabel.setBounds(GHOUL_FOOTMAN_X, GHOUL_FOOTMAN_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < GHOUL_FOOTMAN_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingGhoulFootmanAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playGhoulFootmanDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (ghoulFootmanHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingGhoulFootmanDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(ghoulFootmanHurtFrames[0].getWidth()  * GHOUL_FOOTMAN_SCALE);
+        int h = (int)(ghoulFootmanHurtFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
+        enemySpriteLabel.setBounds(GHOUL_FOOTMAN_X, GHOUL_FOOTMAN_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < GHOUL_FOOTMAN_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingGhoulFootmanDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playBlackJailerEntranceAnimation(Runnable onDone) {
+        if (blackJailerEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingBlackJailerEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(blackJailerEntranceFrames[0].getWidth()  * BLACK_JAILER_SCALE);
+        int h = (int)(blackJailerEntranceFrames[0].getHeight() * BLACK_JAILER_SCALE);
+        enemySpriteLabel.setBounds(BLACK_JAILER_ENTRANCE_START_X, BLACK_JAILER_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(BLACK_JAILER_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % BLACK_JAILER_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {BLACK_JAILER_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= BLACK_JAILER_X) {
+                enemySpriteLabel.setLocation(BLACK_JAILER_X, BLACK_JAILER_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingBlackJailerEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], BLACK_JAILER_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playBlackJailerHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blackJailerHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBlackJailerHurt = true; enemySpriteFrame = 0;
+        int w = (int)(blackJailerHurtFrames[0].getWidth()  * BLACK_JAILER_SCALE);
+        int h = (int)(blackJailerHurtFrames[0].getHeight() * BLACK_JAILER_SCALE);
+        enemySpriteLabel.setBounds(BLACK_JAILER_X, BLACK_JAILER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BLACK_JAILER_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBlackJailerHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBlackJailerChainsAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blackJailerChainsFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBlackJailerChains = true; enemySpriteFrame = 0;
+        int w = (int)(blackJailerChainsFrames[0].getWidth()  * BLACK_JAILER_SCALE);
+        int h = (int)(blackJailerChainsFrames[0].getHeight() * BLACK_JAILER_SCALE);
+        enemySpriteLabel.setBounds(BLACK_JAILER_X, BLACK_JAILER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BLACK_JAILER_CHAINS_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBlackJailerChains = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBlackJailerLashAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blackJailerLashFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBlackJailerLash = true; enemySpriteFrame = 0;
+        int w = (int)(blackJailerLashFrames[0].getWidth()  * BLACK_JAILER_SCALE);
+        int h = (int)(blackJailerLashFrames[0].getHeight() * BLACK_JAILER_SCALE);
+        enemySpriteLabel.setBounds(BLACK_JAILER_X, BLACK_JAILER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BLACK_JAILER_LASH_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBlackJailerLash = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBlackJailerDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (blackJailerHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingBlackJailerDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(blackJailerHurtFrames[0].getWidth()  * BLACK_JAILER_SCALE);
+        int h = (int)(blackJailerHurtFrames[0].getHeight() * BLACK_JAILER_SCALE);
+        enemySpriteLabel.setBounds(BLACK_JAILER_X, BLACK_JAILER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < BLACK_JAILER_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingBlackJailerDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playLutherVonEntranceAnimation(Runnable onDone) {
+        if (lutherVonEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingLutherVonEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(lutherVonEntranceFrames[0].getWidth()  * LUTHER_VON_SCALE);
+        int h = (int)(lutherVonEntranceFrames[0].getHeight() * LUTHER_VON_SCALE);
+        enemySpriteLabel.setBounds(LUTHER_VON_ENTRANCE_START_X, LUTHER_VON_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(LUTHER_VON_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % LUTHER_VON_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {LUTHER_VON_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= LUTHER_VON_X) {
+                enemySpriteLabel.setLocation(LUTHER_VON_X, LUTHER_VON_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingLutherVonEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], LUTHER_VON_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playLutherVonHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (lutherVonHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingLutherVonHurt = true; enemySpriteFrame = 0;
+        int w = (int)(lutherVonHurtFrames[0].getWidth()  * LUTHER_VON_SCALE);
+        int h = (int)(lutherVonHurtFrames[0].getHeight() * LUTHER_VON_SCALE);
+        enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < LUTHER_VON_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingLutherVonHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playLutherVonCrownAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (lutherVonCrownFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingLutherVonCrown = true; enemySpriteFrame = 0;
+        int w = (int)(lutherVonCrownFrames[0].getWidth()  * LUTHER_VON_SCALE);
+        int h = (int)(lutherVonCrownFrames[0].getHeight() * LUTHER_VON_SCALE);
+        enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < LUTHER_VON_CROWN_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingLutherVonCrown = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playLutherVonAscensionAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (lutherVonAscensionFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingLutherVonAscension = true; enemySpriteFrame = 0;
+        int w = (int)(lutherVonAscensionFrames[0].getWidth()  * LUTHER_VON_SCALE);
+        int h = (int)(lutherVonAscensionFrames[0].getHeight() * LUTHER_VON_SCALE);
+        enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < LUTHER_VON_ASCENSION_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingLutherVonAscension = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playLutherVonWrathAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (lutherVonWrathFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingLutherVonWrath = true; enemySpriteFrame = 0;
+        int w = (int)(lutherVonWrathFrames[0].getWidth()  * LUTHER_VON_SCALE);
+        int h = (int)(lutherVonWrathFrames[0].getHeight() * LUTHER_VON_SCALE);
+        enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < LUTHER_VON_WRATH_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingLutherVonWrath = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playLutherVonDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (lutherVonDefeatedFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingLutherVonDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(lutherVonDefeatedFrames[0].getWidth()  * LUTHER_VON_SCALE);
+        int h = (int)(lutherVonDefeatedFrames[0].getHeight() * LUTHER_VON_SCALE);
+        enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < LUTHER_VON_DEFEATED_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingLutherVonDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+
     // HERO ACTIONS
     private void playKaelHurtAnimation(Runnable onDone) {
         if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
@@ -2083,8 +3176,9 @@ public class BattlePanel extends JPanel {
         }
         isPlayingKaelHurt = true;
         heroSpriteFrame = 0;
-        int w = (int) (kaelHurtFrames[0].getWidth() * SPRITE_SCALE), h = (int) (kaelHurtFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(IDLE_X, isWorld2Battle ? IDLE_Y_W2 : IDLE_Y, w, h);
+        int w = (int) (kaelHurtFrames[0].getWidth() * SPRITE_SCALE);
+        int h = (int) (kaelHurtFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(IDLE_X, getHeroIdleY(), w, h);
         heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(150, e -> {
@@ -2116,8 +3210,9 @@ public class BattlePanel extends JPanel {
         }
         isPlayingBladeRush = true;
         heroSpriteFrame = 0;
-        int lW = (int) (bladeRushFrames[0].getWidth() * SPRITE_SCALE), lH = (int) (bladeRushFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(getActionX(bladeRushFrames), isWorld2Battle ? ACTION_Y_W2 : ACTION_Y, lW, lH);
+        int lW = (int) (bladeRushFrames[0].getWidth() * SPRITE_SCALE);
+        int lH = (int) (bladeRushFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(bladeRushFrames), getHeroActionY(), lW, lH);
         heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(130, e -> {
@@ -2143,8 +3238,9 @@ public class BattlePanel extends JPanel {
         }
         isPlayingPiercingSlash = true;
         heroSpriteFrame = 0;
-        int lW = (int) (piercingSlashFrames[0].getWidth() * SPRITE_SCALE), lH = (int) (piercingSlashFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(getActionX(piercingSlashFrames), isWorld2Battle ? ACTION_Y_W2 : ACTION_Y, lW, lH);
+        int lW = (int) (piercingSlashFrames[0].getWidth() * SPRITE_SCALE);
+        int lH = (int) (piercingSlashFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(piercingSlashFrames), getHeroActionY(), lW, lH);
         heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(110, e -> {
@@ -2170,8 +3266,9 @@ public class BattlePanel extends JPanel {
         }
         isPlayingEternalCross = true;
         heroSpriteFrame = 0;
-        int lW = (int) (eternalCrossFrames[0].getWidth() * SPRITE_SCALE), lH = (int) (eternalCrossFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(getActionX(eternalCrossFrames), isWorld2Battle ? ACTION_Y_W2 : ACTION_Y, lW, lH);
+        int lW = (int) (eternalCrossFrames[0].getWidth() * SPRITE_SCALE);
+        int lH = (int) (eternalCrossFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(eternalCrossFrames), getHeroActionY(), lW, lH);
         heroSpriteLabel.repaint();
         int[] frame = {0}, repeat = {0};
         javax.swing.Timer t = new javax.swing.Timer(60, e -> {
@@ -2312,6 +3409,11 @@ public class BattlePanel extends JPanel {
             case "Carrion Bat" -> "Carrion Bat uses Screech" + damage;
             case "The Hollow Stag"  -> "The Hollow Stag uses " + engine.getLastEnemySkillName() + damage;
             case "Plague Vermin" -> "Plague Vermin uses Plague Bite" + damage;
+            case "Forsaken Cultist" -> "Forsaken Cultist uses Shadow Bolt" + damage;
+            case "Blight Hound" -> "Blight Hound uses Corpse Explosion" + damage;
+            case "Ghoul Footman" -> "Ghoul Footman uses Rotten Cleave" + damage;
+            case "The Black Jailer" -> "The Black Jailer uses " + engine.getLastEnemySkillName() + damage;
+            case "Luther Von" -> "Luther Von uses " + engine.getLastEnemySkillName() + damage;
             default                 -> null;
         };
 
