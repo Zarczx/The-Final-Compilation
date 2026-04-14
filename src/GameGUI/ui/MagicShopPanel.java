@@ -1,6 +1,6 @@
 package GameGUI.ui;
 
-import GameGUI.model.Combatant;
+import GameGUI.model.entity.Combatant;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -234,29 +234,5 @@ public class MagicShopPanel extends JPanel {
         if (player != null && shardsLabel != null) {
             shardsLabel.setText("💠 Soul Shards: " + player.soulShards);
         }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  QUICK TEST METHOD
-    // ═══════════════════════════════════════════════════════════════════════════
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Shop UI Test");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1280, 720);
-        frame.setLocationRelativeTo(null);
-
-        Combatant testPlayer = new Combatant("Test Hero", "Swordsman", "⚔️", 100, 15, 10, 50, 50, null);
-        testPlayer.soulShards = 200;
-
-        MagicShopPanel testShop = new MagicShopPanel();
-        testShop.loadPlayer(testPlayer);
-
-        testShop.setOnLeaveShop(() -> {
-            JOptionPane.showMessageDialog(frame, "You left! Max HP is: " + testPlayer.maxHp + " | Owned Fortified? " + testPlayer.hasFortifiedPlating);
-            System.exit(0);
-        });
-
-        frame.add(testShop);
-        frame.setVisible(true);
     }
 }

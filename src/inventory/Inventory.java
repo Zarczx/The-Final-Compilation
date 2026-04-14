@@ -5,8 +5,6 @@ import utils.ColorUtil;
 import utils.InputUtil;
 import utils.PrintUtil;
 
-import java.awt.*;
-
 public class Inventory {
 
     private final Character player;

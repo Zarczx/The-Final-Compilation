@@ -1,358 +1,282 @@
 package GameGUI.ui;
 
-import GameGUI.model.Combatant;
-import GameGUI.model.HeroData.HeroDefinition;
+import GameGUI.model.entity.Combatant;
+import GameGUI.model.equipment.Weapon;
+import GameGUI.model.equipment.Armor;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 public class InventoryDialog extends JDialog {
 
-    private final Combatant currentHero;
-    private final HeroDefinition heroDef;
+    private final Combatant combatant;
+    private final Runnable onUpdate;
 
-    // Darkest Dungeon Color Palette
-    private static final Color BG_DARK = new Color(15, 15, 18);
-    private static final Color BG_PANEL = new Color(24, 24, 28);
-    private static final Color BORDER_BRONZE = new Color(100, 85, 60);
-    private static final Color TEXT_PARCHMENT = new Color(210, 205, 185);
-    private static final Color TEXT_MUTED = new Color(140, 135, 120);
-    private static final Color TEXT_BLOOD = new Color(180, 40, 40);
-    private static final Color TEXT_GOLD = new Color(220, 180, 60);
-    private static final Color TEXT_BLUE = new Color(80, 140, 200);
+    // --- Thematic Colors & Fonts ---
+    private static final Color BG_DARK = new Color(15, 15, 15);
+    private static final Color PANEL_DARK = new Color(25, 25, 25);
+    private static final Color GOLD_MUTED = new Color(160, 140, 90);
+    private static final Color TEXT_LIGHT = new Color(210, 210, 200);
+    private static final Color BTN_HOVER = new Color(40, 40, 40);
 
-    private static final Color GREEN = new Color(80, 160, 80);
-    // Standardized Fonts
-    private static final Font FONT_TITLE = new Font("Monospaced", Font.BOLD, 16);
-    private static final Font FONT_TEXT = new Font("Monospaced", Font.BOLD, 14);
-    private static final Font FONT_SMALL = new Font("Monospaced", Font.PLAIN, 12);
+    private static final Font FONT_REG = new Font("Georgia", Font.PLAIN, 14);
+    private static final Font FONT_TITLE = new Font("Georgia", Font.BOLD, 16);
+    private static final Font FONT_LARGE = new Font("Georgia", Font.BOLD, 22);
 
-    // Dynamic UI Elements
-    private JLabel hpLabel, energyLabel, atkLabel, defLabel;
+    // --- UI Components ---
+    private JLabel hpLbl, energyLbl, weaponLbl, armorLbl;
+    private JLabel normPotLbl, fullPotLbl, energyPotLbl, shardsLbl;
+    private JLabel feedbackLbl; // <-- NEW: Label for in-dialog feedback
 
-    public InventoryDialog(Window owner, HeroDefinition heroDef, Combatant currentHero) {
-        super(owner, "CHAR SHEET : " + heroDef.name.toUpperCase(), Dialog.ModalityType.APPLICATION_MODAL);
-        this.heroDef = heroDef;
-        this.currentHero = currentHero;
+    public InventoryDialog(JFrame parent, Combatant combatant, Runnable onUpdate) {
+        super(parent, "Status & Inventory", true);
+        this.combatant = combatant;
+        this.onUpdate = onUpdate;
 
-        setSize(650, 480);
-        setLocationRelativeTo(owner);
+        setSize(550, 450); // Slightly taller to fit the feedback text
+        setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
-        setResizable(false);
         getContentPane().setBackground(BG_DARK);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setBackground(BG_DARK);
-        tabbedPane.setForeground(TEXT_PARCHMENT);
-        tabbedPane.setFont(FONT_TITLE);
-        tabbedPane.setFocusable(false);
+        UIManager.put("ToolTip.background", PANEL_DARK);
+        UIManager.put("ToolTip.foreground", TEXT_LIGHT);
+        UIManager.put("ToolTip.border", new LineBorder(GOLD_MUTED, 1));
+        UIManager.put("ToolTip.font", FONT_REG);
 
-        // Remove standard tab borders to make it look flatter
-        tabbedPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-        // We combine Stats and Inventory into one dense "Roster" view
-        tabbedPane.addTab(" ROSTER ", createCharacterSheetPanel());
-        tabbedPane.addTab(" SKILLS ", createSkillsPanel());
-
-        add(tabbedPane, BorderLayout.CENTER);
-
-        // Brutalist Close Button
-        JButton closeBtn = new JButton("RETURN TO BATTLE");
-        closeBtn.setFont(FONT_TITLE);
-        closeBtn.setBackground(new Color(40, 10, 10));
-        closeBtn.setForeground(TEXT_PARCHMENT);
-        closeBtn.setFocusPainted(false);
-        closeBtn.setBorder(BorderFactory.createLineBorder(TEXT_BLOOD, 2));
-        closeBtn.setPreferredSize(new Dimension(0, 40));
-        closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        closeBtn.addActionListener(e -> dispose());
-
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.setBorder(new EmptyBorder(5, 10, 10, 10));
-        bottomPanel.setBackground(BG_DARK);
-        bottomPanel.add(closeBtn, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        initComponents();
+        updateUI();
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // ★ UNIFIED CHARACTER SHEET (Stats + Equipment + Consumables)
-    // ════════════════════════════════════════════════════════════════════════
-    private JPanel createCharacterSheetPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 2, 10, 0));
-        panel.setBackground(BG_DARK);
-        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
+    private void initComponents() {
+        JPanel mainGrid = new JPanel(new GridLayout(1, 2, 15, 0));
+        mainGrid.setBackground(BG_DARK);
+        mainGrid.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // LEFT COLUMN: Vitals & Equipment
-        JPanel leftCol = new JPanel();
-        leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
-        leftCol.setBackground(BG_DARK);
+        // ==========================================
+        // LEFT PANEL: Stats & Equipment
+        // ==========================================
+        JPanel leftPanel = createThematicPanel("Status");
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
 
-        leftCol.add(createBoxedPanel("VITALS & COMBAT", createStatsContent()));
-        leftCol.add(Box.createRigidArea(new Dimension(0, 10)));
-        leftCol.add(createBoxedPanel("EQUIPMENT", createEquipContent()));
+        JLabel nameLbl = new JLabel(combatant.emoji + " " + combatant.name);
+        nameLbl.setFont(FONT_LARGE);
+        nameLbl.setForeground(GOLD_MUTED);
+        nameLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // RIGHT COLUMN: Provisions (Potions)
-        JPanel rightCol = new JPanel();
-        rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
-        rightCol.setBackground(BG_DARK);
+        hpLbl = createStyledLabel("❤ HP: ");
+        energyLbl = createStyledLabel("⚡ Energy: ");
 
-        rightCol.add(createBoxedPanel("PROVISIONS", createProvisionsContent()));
+        leftPanel.add(nameLbl);
+        leftPanel.add(Box.createVerticalStrut(20));
+        leftPanel.add(hpLbl);
+        leftPanel.add(Box.createVerticalStrut(10));
+        leftPanel.add(energyLbl);
+        leftPanel.add(Box.createVerticalStrut(30));
 
-        panel.add(leftCol);
-        panel.add(rightCol);
+        JLabel equipTitle = new JLabel("Equipment (Hover for Stats)");
+        equipTitle.setFont(new Font("Georgia", Font.ITALIC, 12));
+        equipTitle.setForeground(Color.GRAY);
+        equipTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        weaponLbl = createStyledLabel("⚔️ Weapon: ");
+        armorLbl = createStyledLabel("🛡️ Armor: ");
+
+        leftPanel.add(equipTitle);
+        leftPanel.add(Box.createVerticalStrut(10));
+        leftPanel.add(weaponLbl);
+        leftPanel.add(Box.createVerticalStrut(10));
+        leftPanel.add(armorLbl);
+
+        // ==========================================
+        // RIGHT PANEL: Items & Souls
+        // ==========================================
+        JPanel rightPanel = createThematicPanel("Inventory");
+        rightPanel.setLayout(new GridLayout(4, 1, 0, 10));
+
+        JPanel shardsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        shardsPanel.setOpaque(false);
+        shardsLbl = new JLabel("💎 Soul Shards: ");
+        shardsLbl.setFont(FONT_TITLE);
+        shardsLbl.setForeground(new Color(150, 200, 255));
+        shardsPanel.add(shardsLbl);
+
+        normPotLbl = createStyledLabel("🧪 Normal Flask: 0");
+        JButton useNormBtn = createThematicButton("Consume");
+        useNormBtn.addActionListener(e -> usePotion("normal"));
+
+        fullPotLbl = createStyledLabel("🩸 Crimson Flask: 0");
+        JButton useFullBtn = createThematicButton("Consume");
+        useFullBtn.addActionListener(e -> usePotion("full"));
+
+        energyPotLbl = createStyledLabel("✨ Cerulean Flask: 0");
+        JButton useEnergyBtn = createThematicButton("Consume");
+        useEnergyBtn.addActionListener(e -> usePotion("energy"));
+
+        rightPanel.add(shardsPanel);
+        rightPanel.add(createItemRow(normPotLbl, useNormBtn));
+        rightPanel.add(createItemRow(fullPotLbl, useFullBtn));
+        rightPanel.add(createItemRow(energyPotLbl, useEnergyBtn));
+
+        // ==========================================
+        // BOTTOM: Feedback & Close Action
+        // ==========================================
+        JPanel bottomContainer = new JPanel(new BorderLayout());
+        bottomContainer.setBackground(BG_DARK);
+
+        // NEW: Feedback Label instead of JOptionPane
+        feedbackLbl = new JLabel(" ");
+        feedbackLbl.setForeground(GOLD_MUTED);
+        feedbackLbl.setFont(new Font("Georgia", Font.ITALIC, 14));
+        feedbackLbl.setHorizontalAlignment(SwingConstants.CENTER);
+        feedbackLbl.setBorder(new EmptyBorder(10, 0, 10, 0));
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBackground(BG_DARK);
+        JButton closeBtn = createThematicButton("Return");
+        closeBtn.addActionListener(e -> dispose());
+        bottomPanel.add(closeBtn);
+
+        bottomContainer.add(feedbackLbl, BorderLayout.NORTH);
+        bottomContainer.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Assemble
+        mainGrid.add(leftPanel);
+        mainGrid.add(rightPanel);
+        add(mainGrid, BorderLayout.CENTER);
+        add(bottomContainer, BorderLayout.SOUTH);
+    }
+
+    private JPanel createThematicPanel(String title) {
+        JPanel panel = new JPanel();
+        panel.setBackground(PANEL_DARK);
+        TitledBorder border = BorderFactory.createTitledBorder(
+                new LineBorder(GOLD_MUTED, 1), title,
+                TitledBorder.CENTER, TitledBorder.TOP, FONT_TITLE, GOLD_MUTED);
+        panel.setBorder(BorderFactory.createCompoundBorder(border, new EmptyBorder(10, 10, 10, 10)));
         return panel;
     }
 
-    private JPanel createStatsContent() {
-        JPanel p = new JPanel(new GridLayout(0, 1, 0, 5));
-        p.setBackground(BG_PANEL);
-
-        p.add(createStatRow("CLASS", heroDef.role, TEXT_PARCHMENT));
-        p.add(createStatRow("LEVEL", String.valueOf(currentHero.level), TEXT_PARCHMENT));
-
-        hpLabel = new JLabel(currentHero.currentHp + " / " + currentHero.maxHp);
-        hpLabel.setForeground(TEXT_BLOOD);
-        hpLabel.setFont(FONT_TEXT);
-        p.add(createDynamicRow("HP", hpLabel));
-
-        energyLabel = new JLabel(currentHero.energy + " / " + currentHero.maxEnergy);
-        energyLabel.setForeground(TEXT_BLUE);
-        energyLabel.setFont(FONT_TEXT);
-        p.add(createDynamicRow("ENERGY", energyLabel));
-
-        atkLabel = new JLabel(String.valueOf(currentHero.attack));
-        atkLabel.setForeground(TEXT_GOLD);
-        atkLabel.setFont(FONT_TEXT);
-        p.add(createDynamicRow("DMG", atkLabel));
-
-        defLabel = new JLabel(String.valueOf(currentHero.defense));
-        defLabel.setForeground(TEXT_PARCHMENT);
-        defLabel.setFont(FONT_TEXT);
-        p.add(createDynamicRow("DEF", defLabel));
-
-        p.add(createStatRow("SHARDS", String.valueOf(currentHero.soulShards), TEXT_BLUE));
-
-        return p;
+    private JLabel createStyledLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setForeground(TEXT_LIGHT);
+        lbl.setFont(FONT_REG);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return lbl;
     }
 
-    private JPanel createEquipContent() {
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(BG_PANEL);
+    private JButton createThematicButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Georgia", Font.BOLD, 12));
+        btn.setBackground(BG_DARK);
+        btn.setForeground(GOLD_MUTED);
+        btn.setFocusPainted(false);
+        btn.setBorder(new LineBorder(GOLD_MUTED, 1));
+        btn.setPreferredSize(new Dimension(80, 30));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        Combatant.Weapon wpn = currentHero.inventory.getEquippedWeapon();
-        Combatant.Armor arm = currentHero.inventory.getEquippedArmor();
-
-        p.add(createStatRow("WEAPON", wpn != null ? wpn.getName() : "Bare Hands", TEXT_GOLD));
-        if (wpn != null) {
-            if (wpn.lifestealPercent > 0) p.add(createStatRow(" ↳ Lifesteal", wpn.lifestealPercent + "%", TEXT_BLOOD));
-            if (wpn.extraHitChance > 0) p.add(createStatRow(" ↳ Extra Hit", wpn.extraHitChance + "%", TEXT_GOLD));
-            if (wpn.stunChance > 0) p.add(createStatRow(" ↳ Stun", wpn.stunChance + "%", TEXT_BLUE));
-            if (wpn.bleedChance > 0) p.add(createStatRow(" ↳ Bleed", wpn.bleedChance + "%", TEXT_BLOOD));
-            // Add enchantments loop if they exist
-        }
-
-        p.add(Box.createRigidArea(new Dimension(0, 10)));
-
-        p.add(createStatRow("ARMOR", arm != null ? arm.getName() : "Rags", TEXT_GOLD));
-        if (arm != null) {
-            if (arm.immuneDebuff) p.add(createStatRow(" ↳ Immune", "Debuffs", GREEN));
-            if (arm.reflectChance > 0) p.add(createStatRow(" ↳ Reflect", arm.reflectPercent + "% DMG", TEXT_GOLD));
-        }
-
-        return p;
-    }
-
-    private JPanel createProvisionsContent() {
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(BG_PANEL);
-
-        int nPots = currentHero.inventory.getNormalHealingPotions();
-        int fPots = currentHero.inventory.getFullHealingPotions();
-        int ePots = currentHero.inventory.getEnergyPotions();
-
-        p.add(createPotionRow("Minor Salve", nPots, 20, "normal"));
-        p.add(Box.createRigidArea(new Dimension(0, 15)));
-        p.add(createPotionRow("Major Flask", fPots, currentHero.maxHp, "full"));
-        p.add(Box.createRigidArea(new Dimension(0, 15)));
-        p.add(createPotionRow("Energy Tonic", ePots, 20, "energy"));
-
-        return p;
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // ★ SKILLS TAB (Dense text, rigid lines)
-    // ════════════════════════════════════════════════════════════════════════
-    private JPanel createSkillsPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(BG_DARK);
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        if (heroDef.skills != null) {
-            for (var skill : heroDef.skills) {
-                JPanel skillBox = createBoxedPanel(skill.name.toUpperCase(), createSingleSkillContent(skill));
-                panel.add(skillBox);
-                panel.add(Box.createRigidArea(new Dimension(0, 10)));
-            }
-        }
-
-        JScrollPane scroll = new JScrollPane(panel);
-        scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
-
-        JPanel wrap = new JPanel(new BorderLayout());
-        wrap.add(scroll, BorderLayout.CENTER);
-        return wrap;
-    }
-
-    private JPanel createSingleSkillContent(GameGUI.model.HeroData.SkillDef skill) {
-        JPanel p = new JPanel();
-        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(BG_PANEL);
-
-        int minDmg = (int)(currentHero.attack * skill.minMultiplier);
-        int maxDmg = (int)(currentHero.attack * skill.maxMultiplier);
-
-        String pierce = skill.pierceArmor ? " [PIERCE]" : "";
-        String dmgText = (minDmg == maxDmg) ? String.valueOf(minDmg) : (minDmg + "-" + maxDmg);
-
-        JLabel dmgLabel = new JLabel("DMG: " + dmgText + pierce);
-        dmgLabel.setFont(FONT_TITLE);
-        dmgLabel.setForeground(TEXT_BLOOD);
-        p.add(dmgLabel);
-        p.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        JTextArea desc = new JTextArea(skill.description);
-        desc.setLineWrap(true);
-        desc.setWrapStyleWord(true);
-        desc.setEditable(false);
-        desc.setOpaque(false);
-        desc.setForeground(TEXT_MUTED);
-        desc.setFont(FONT_SMALL);
-        p.add(desc);
-
-        return p;
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // ★ UI BUILDER HELPERS
-    // ════════════════════════════════════════════════════════════════════════
-
-    // Creates a rigid, bronze-bordered box with a title (Classic Darkest Dungeon style)
-    private JPanel createBoxedPanel(String title, JPanel content) {
-        JPanel box = new JPanel(new BorderLayout());
-        box.setBackground(BG_PANEL);
-
-        Border line = BorderFactory.createLineBorder(BORDER_BRONZE, 1);
-        Border titled = BorderFactory.createTitledBorder(line, title, TitledBorder.LEFT, TitledBorder.TOP, FONT_TITLE, TEXT_GOLD);
-        Border padded = BorderFactory.createCompoundBorder(titled, new EmptyBorder(10, 10, 10, 10));
-
-        box.setBorder(padded);
-        box.add(content, BorderLayout.CENTER);
-        return box;
-    }
-
-    private JPanel createStatRow(String title, String value, Color valColor) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-
-        JLabel t = new JLabel(title);
-        t.setForeground(TEXT_MUTED);
-        t.setFont(FONT_TEXT);
-
-        JLabel v = new JLabel(value);
-        v.setForeground(valColor);
-        v.setFont(FONT_TEXT);
-        v.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        row.add(t, BorderLayout.WEST);
-        row.add(v, BorderLayout.EAST);
-        return row;
-    }
-
-    private JPanel createDynamicRow(String title, JLabel valueLabel) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-
-        JLabel t = new JLabel(title);
-        t.setForeground(TEXT_MUTED);
-        t.setFont(FONT_TEXT);
-
-        valueLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        row.add(t, BorderLayout.WEST);
-        row.add(valueLabel, BorderLayout.EAST);
-        return row;
-    }
-
-    // A blocky, utilitarian potion row
-    private JPanel createPotionRow(String name, int initialCount, int restoreAmount, String type) {
-        JPanel row = new JPanel(new BorderLayout());
-        row.setOpaque(false);
-        row.setMaximumSize(new Dimension(300, 35));
-
-        JLabel nLbl = new JLabel(name + "  x");
-        nLbl.setForeground(TEXT_PARCHMENT);
-        nLbl.setFont(FONT_TEXT);
-
-        JLabel countLbl = new JLabel(String.valueOf(initialCount));
-        countLbl.setForeground(TEXT_GOLD);
-        countLbl.setFont(FONT_TITLE);
-
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        left.setOpaque(false);
-        left.add(nLbl);
-        left.add(countLbl);
-
-        JButton useBtn = new JButton("USE");
-        useBtn.setFont(FONT_TITLE);
-        useBtn.setBackground(new Color(20, 40, 20)); // Muted DD green
-        useBtn.setForeground(TEXT_PARCHMENT);
-        useBtn.setFocusPainted(false);
-        useBtn.setBorder(BorderFactory.createLineBorder(new Color(40, 80, 40), 1));
-        useBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        if (initialCount <= 0) useBtn.setEnabled(false);
-
-        useBtn.addActionListener(e -> {
-            boolean isEnergy = type.equals("energy");
-            int curr = isEnergy ? currentHero.energy : currentHero.currentHp;
-            int max = isEnergy ? currentHero.maxEnergy : currentHero.maxHp;
-
-            if (curr >= max) {
-                JOptionPane.showMessageDialog(this, (isEnergy?"Energy":"HP")+" Full.", "Notice", JOptionPane.PLAIN_MESSAGE);
-                return;
-            }
-
-            switch(type) {
-                case "normal": currentHero.inventory.useNormalHealingPotion(); break;
-                case "full":   currentHero.inventory.useFullHealingPotion(); break;
-                case "energy": currentHero.inventory.useEnergyPotion(); break;
-            }
-
-            if (isEnergy) currentHero.energy = Math.min(currentHero.maxEnergy, currentHero.energy + restoreAmount);
-            else currentHero.currentHp = Math.min(currentHero.maxHp, currentHero.currentHp + restoreAmount);
-
-            updateStatLabels();
-
-            int newCount = Integer.parseInt(countLbl.getText()) - 1;
-            countLbl.setText(String.valueOf(newCount));
-            if (newCount <= 0) useBtn.setEnabled(false);
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(BTN_HOVER); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(BG_DARK); }
         });
+        return btn;
+    }
 
-        row.add(left, BorderLayout.WEST);
-        row.add(useBtn, BorderLayout.EAST);
+    private JPanel createItemRow(JLabel label, JButton button) {
+        JPanel row = new JPanel(new BorderLayout(10, 0));
+        row.setOpaque(false);
+        row.add(label, BorderLayout.CENTER);
+        row.add(button, BorderLayout.EAST);
         return row;
     }
 
-    private void updateStatLabels() {
-        if (hpLabel != null) hpLabel.setText(currentHero.currentHp + " / " + currentHero.maxHp);
-        if (energyLabel != null) energyLabel.setText(currentHero.energy + " / " + currentHero.maxEnergy);
+    // --- Game Logic ---
+
+    private void usePotion(String type) {
+        // Delegate entirely to the Inventory manager (which passes it to Potions)
+        String msg = switch (type) {
+            case "normal" -> combatant.inventory.useNormalHealingPotion();
+            case "full"   -> combatant.inventory.useFullHealingPotion();
+            case "energy" -> combatant.inventory.useEnergyPotion();
+            default       -> "Error";
+        };
+
+        // Display the text inside the dialog instead of a pop-up
+        feedbackLbl.setText(msg);
+
+        // Make the text red if it failed, or green if it succeeded
+        if (msg.contains("❌")) {
+            feedbackLbl.setForeground(new Color(200, 80, 80));
+        } else {
+            feedbackLbl.setForeground(new Color(120, 200, 120));
+        }
+
+        updateUI(); // (Or updateUI() depending on what you named it in your file)
+
+        if (onUpdate != null) {
+            onUpdate.run();
+        }
+    }
+
+    private void updateUI() {
+        hpLbl.setText(String.format("<html>❤ HP: <font color='#C85A5A'>%d / %d</font></html>",
+                combatant.currentHp, combatant.maxHp));
+        energyLbl.setText(String.format("<html>⚡ Energy: <font color='#5A96C8'>%d / %d</font></html>",
+                combatant.energy, combatant.maxEnergy));
+
+        Weapon w = combatant.inventory.getEquippedWeapon();
+        if (w != null) {
+            weaponLbl.setText("⚔️ " + w.name);
+            weaponLbl.setToolTipText(generateWeaponTooltip(w));
+        } else {
+            weaponLbl.setText("⚔️ Bare Fists");
+            weaponLbl.setToolTipText("No weapon equipped.");
+        }
+
+        Armor a = combatant.inventory.getEquippedArmor();
+        if (a != null) {
+            armorLbl.setText("🛡️ " + a.name);
+            armorLbl.setToolTipText(generateArmorTooltip(a));
+        } else {
+            armorLbl.setText("🛡️ Unarmored");
+            armorLbl.setToolTipText("No armor equipped.");
+        }
+
+        // Point these to combatant.potions instead of inventory!
+        normPotLbl.setText("🧪 Normal Flasks: " + combatant.inventory.potions.getNormalHealingPotions());
+        fullPotLbl.setText("🩸 Crimson Flasks: " + combatant.inventory.potions.getFullHealingPotions());
+        energyPotLbl.setText("✨ Cerulean Flasks: " + combatant.inventory.potions.getEnergyPotions());
+        shardsLbl.setText("💎 Soul Shards: " + combatant.soulShards);
+    }
+
+    // --- HTML Tooltip Generators ---
+
+    private String generateWeaponTooltip(Weapon w) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><div style='padding:5px;'>");
+        sb.append("<b style='color:#A08C5A;'>").append(w.name).append(" ").append(w.rarity).append("</b><br><br>");
+        sb.append("Attack Power: <font color='#C85A5A'>+").append(w.atkBuff).append("</font><br>");
+        if (w.lifestealPercent > 0) sb.append("Lifesteal: ").append(w.lifestealPercent).append("%<br>");
+        if (w.energyPerAttack > 0) sb.append("Energy Regained: ").append(w.energyPerAttack).append("<br>");
+        if (w.poisonChance > 0) sb.append("Poison Build-up: ").append(w.poisonChance).append("%<br>");
+        if (w.stunChance > 0) sb.append("Stagger Chance: ").append(w.stunChance).append("%<br>");
+        if (w.extraHitChance > 0) sb.append("Twin-strike Chance: ").append(w.extraHitChance).append("%<br>");
+        sb.append("</div></html>");
+        return sb.toString();
+    }
+
+    private String generateArmorTooltip(Armor a) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><div style='padding:5px;'>");
+        sb.append("<b style='color:#A08C5A;'>").append(a.name).append(" ").append(a.rarity).append("</b><br><br>");
+        sb.append("Physical Defense: <font color='#789678'>+").append(a.getDefBuff()).append("</font><br>");
+        if (a.hpBuff > 0) sb.append("Vitality Boost: +").append(a.hpBuff).append("<br>");
+        if (a.immuneDebuff) sb.append("Resists Debuffs<br>");
+        if (a.immuneEffects) sb.append("Resists Status Ailments<br>");
+        if (a.reflectChance > 0) sb.append("Thorns: ").append(a.reflectChance).append("% chance (").append(a.reflectPercent).append("% DMG)<br>");
+        sb.append("</div></html>");
+        return sb.toString();
     }
 }

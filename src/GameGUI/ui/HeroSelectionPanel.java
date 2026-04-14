@@ -1,7 +1,7 @@
 package GameGUI.ui;
 
-import GameGUI.model.HeroData;
-import GameGUI.model.HeroData.HeroDefinition;
+import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.HeroData.HeroDefinition;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
