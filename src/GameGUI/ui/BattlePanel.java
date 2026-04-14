@@ -1,8 +1,8 @@
 package GameGUI.ui;
 
-import GameGUI.model.Combatant;
-import GameGUI.model.HeroData.HeroDefinition;
-import GameGUI.model.HeroData.EnemyDefinition;
+import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.HeroData.HeroDefinition;
+import GameGUI.model.entity.HeroData.EnemyDefinition;
 import GameGUI.model.HeroFactory;
 import GameGUI.logic.BattleManager;
 import GameGUI.logic.ProgressionService;
@@ -676,8 +676,18 @@ public class BattlePanel extends JPanel {
 
     private void openInventoryDialog() {
         if (currentHero == null || heroDef == null) return;
+
+        // 1. Get the window and safely cast it to a JFrame
         Window owner = SwingUtilities.getWindowAncestor(this);
-        InventoryDialog dlg = new InventoryDialog(owner, heroDef, currentHero);
+        JFrame parentFrame = (owner instanceof JFrame) ? (JFrame) owner : null;
+
+        // 2. Pass the Combatant (currentHero) and the Runnable callback
+        InventoryDialog dlg = new InventoryDialog(parentFrame, currentHero, () -> {
+            // This code runs when onUpdate.run() is called inside InventoryDialog
+            refreshBattleUI();
+            // updateUI(); // Uncomment or change this to your actual panel refresh method
+        });
+
         dlg.setVisible(true);   // blocks (modal) until closed
     }
 

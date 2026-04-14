@@ -1,9 +1,9 @@
 package GameGUI.engine;
 
-import GameGUI.model.HeroData;
-import GameGUI.model.HeroData.ArmorDef;
-import GameGUI.model.HeroData.HeroDefinition;
-import GameGUI.model.HeroData.WeaponDef;
+import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.HeroData.ArmorDef;
+import GameGUI.model.entity.HeroData.HeroDefinition;
+import GameGUI.model.entity.HeroData.WeaponDef;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

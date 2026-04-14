@@ -1,7 +1,8 @@
 package GameGUI.engine;
 
-import GameGUI.model.HeroData;
-import GameGUI.model.HeroData.HeroDefinition;
+import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.HeroData.HeroDefinition;
+import GameGUI.model.entity.Combatant;
 import GameGUI.ui.BattlePanel;
 import GameGUI.ui.HeroSelectionPanel;
 
@@ -285,7 +286,7 @@ public class GameScreen extends JPanel {
         this.currentWorld = 2;
         if (typingTimer != null) typingTimer.stop();
 
-        GameGUI.model.Combatant dummy = GameGUI.model.HeroFactory.createHero(hero);
+        Combatant dummy = GameGUI.model.HeroFactory.createHero(hero);
         dummy.soulShards = 999;
 
         magicShopPanel.loadPlayer(dummy);
@@ -297,7 +298,7 @@ public class GameScreen extends JPanel {
         this.currentWorld = 1;
         if (typingTimer != null) typingTimer.stop();
 
-        java.util.List<GameGUI.model.HeroData.EnemyDefinition> stagOnly =
+        java.util.List<HeroData.EnemyDefinition> stagOnly =
                 HeroData.WORLD1_ENEMIES.stream()
                         .filter(e -> e.name.equals("The Hollow Stag"))
                         .collect(java.util.stream.Collectors.toList());
@@ -3393,7 +3394,7 @@ public class GameScreen extends JPanel {
                 cardLayout.show(cardPanel, SCREEN_BATTLE);
                 battlePanel.startEnemySequence(
                         confirmedHero,
-                        GameGUI.model.HeroData.FINAL_BOSS_SEQUENCE,
+                        HeroData.FINAL_BOSS_SEQUENCE,
                         () -> System.out.println("GAME OVER - YOU BEAT THE GAME!")
                 );
                 return;

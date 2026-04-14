@@ -1,4 +1,4 @@
-package GameGUI.model;
+package GameGUI.model.entity;
 
 import java.util.List;
 
@@ -7,6 +7,9 @@ import java.util.List;
  * Contains only definitions and static constants for heroes, enemies, and items.
  */
 public class HeroData {
+
+    // ─── Weapon Types ────────────────────────────────────────────────────────
+    public enum WeaponType { SWORD, BOW, STAFF }
 
     // ─── Skill Definition ────────────────────────────────────────────────────
     public static class SkillDef {
@@ -28,14 +31,16 @@ public class HeroData {
 
     // ─── Weapon Definition ───────────────────────────────────────────────────
     public static class WeaponDef {
+        public final WeaponType type; // <--- ADDED WEAPON TYPE
         public final String name, rarity;
         public final int atkBuff;
         public final int lifestealPercent, poisonChance, bleedChance, stunChance;
         public final int freezeChance, confuseChance, energyPerAttack, extraHitChance;
 
-        public WeaponDef(String name, String rarity, int atkBuff, int lifestealPercent,
+        public WeaponDef(WeaponType type, String name, String rarity, int atkBuff, int lifestealPercent,
                          int poisonChance, int bleedChance, int stunChance,
                          int freezeChance, int confuseChance, int energyPerAttack, int extraHitChance) {
+            this.type = type; // <--- ASSIGNED WEAPON TYPE
             this.name = name; this.rarity = rarity; this.atkBuff = atkBuff;
             this.lifestealPercent = lifestealPercent; this.poisonChance = poisonChance;
             this.bleedChance = bleedChance; this.stunChance = stunChance;
@@ -95,30 +100,28 @@ public class HeroData {
 
     // ─── Shared Item Constants ───────────────────────────────────────────────
     // ⚔️ SWORDS (Focus on Extra Hit Chance)
-    // Format: (Name, Rarity, ATK, Lifesteal, Poison, Bleed, Stun, Freeze, Confuse, Energy, ExtraHit)
-    public static final WeaponDef OLD_BROADSWORD     = new WeaponDef("Old Broadsword", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef IRON_SHORTSWORD    = new WeaponDef("Iron Shortsword", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef TWINSTRIKE_BLADE   = new WeaponDef("Twinstrike Blade", "🔵", 20, 0, 0, 0, 0, 0, 0, 0, 20);
-    public static final WeaponDef LIFEBOND_BLADE     = new WeaponDef("Lifebond Blade", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef ECLIPSE_GREATSWORD = new WeaponDef("Eclipse Greatsword", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
-    public static final WeaponDef CELESTIAL_EDGE     = new WeaponDef("Celestial Edge", "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
+    public static final WeaponDef OLD_BROADSWORD     = new WeaponDef(WeaponType.SWORD, "Old Broadsword", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef IRON_SHORTSWORD    = new WeaponDef(WeaponType.SWORD, "Iron Shortsword", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef TWINSTRIKE_BLADE   = new WeaponDef(WeaponType.SWORD, "Twinstrike Blade", "🔵", 20, 0, 0, 0, 0, 0, 0, 0, 20);
+    public static final WeaponDef LIFEBOND_BLADE     = new WeaponDef(WeaponType.SWORD, "Lifebond Blade", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef ECLIPSE_GREATSWORD = new WeaponDef(WeaponType.SWORD, "Eclipse Greatsword", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
+    public static final WeaponDef CELESTIAL_EDGE     = new WeaponDef(WeaponType.SWORD, "Celestial Edge", "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
 
     // 🏹 BOWS (Focus on Extra Hit Chance & Lifesteal)
-    public static final WeaponDef WOODEN_BOW         = new WeaponDef("Wooden Bow", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef OAK_LONGBOW        = new WeaponDef("Oak Longbow", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef TWINSHOT_BOW       = new WeaponDef("Twinshot Bow", "🔵", 20, 0, 0, 0, 0, 0, 0, 0, 20);
-    public static final WeaponDef LIFEBLOOM_BOW      = new WeaponDef("Lifebloom Bow", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef AETHERSTRIKE_BOW   = new WeaponDef("Aetherstrike Bow", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
-    public static final WeaponDef GOLDEN_TALON       = new WeaponDef("Golden Talon", "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
+    public static final WeaponDef WOODEN_BOW         = new WeaponDef(WeaponType.BOW, "Wooden Bow", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef OAK_LONGBOW        = new WeaponDef(WeaponType.BOW, "Oak Longbow", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef TWINSHOT_BOW       = new WeaponDef(WeaponType.BOW, "Twinshot Bow", "🔵", 20, 0, 0, 0, 0, 0, 0, 0, 20);
+    public static final WeaponDef LIFEBLOOM_BOW      = new WeaponDef(WeaponType.BOW, "Lifebloom Bow", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef AETHERSTRIKE_BOW   = new WeaponDef(WeaponType.BOW, "Aetherstrike Bow", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
+    public static final WeaponDef GOLDEN_TALON       = new WeaponDef(WeaponType.BOW, "Golden Talon", "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
 
     // 🔮 STAFFS (Focus on Confuse Chance)
-    public static final WeaponDef WOODEN_STAFF       = new WeaponDef("Wooden Staff", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef APPRENTICE_STAFF   = new WeaponDef("Apprentice's Staff", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef MYSTIC_MIND_STAFF  = new WeaponDef("Mystic Mind Staff", "🔵", 20, 0, 0, 0, 0, 0, 30, 0, 0);
-    public static final WeaponDef FLAMEHEART_STAFF   = new WeaponDef("Flameheart Staff", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef AETHERIC_STAFF     = new WeaponDef("Aetheric Staff", "🟣", 35, 12, 0, 0, 0, 0, 25, 0, 0);
-    public static final WeaponDef CHRONOMANCER_STAFF = new WeaponDef("Chronomancer Staff", "🟡", 50, 15, 0, 0, 0, 0, 35, 0, 0);
-
+    public static final WeaponDef WOODEN_STAFF       = new WeaponDef(WeaponType.STAFF, "Wooden Staff", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef APPRENTICE_STAFF   = new WeaponDef(WeaponType.STAFF, "Apprentice's Staff", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef MYSTIC_MIND_STAFF  = new WeaponDef(WeaponType.STAFF, "Mystic Mind Staff", "🔵", 20, 0, 0, 0, 0, 0, 30, 0, 0);
+    public static final WeaponDef FLAMEHEART_STAFF   = new WeaponDef(WeaponType.STAFF, "Flameheart Staff", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef AETHERIC_STAFF     = new WeaponDef(WeaponType.STAFF, "Aetheric Staff", "🟣", 35, 12, 0, 0, 0, 0, 25, 0, 0);
+    public static final WeaponDef CHRONOMANCER_STAFF = new WeaponDef(WeaponType.STAFF, "Chronomancer Staff", "🟡", 50, 15, 0, 0, 0, 0, 35, 0, 0);
     // 🛡️ ARMORS
     public static final ArmorDef  LEATHER_GUARD      = new ArmorDef("Leather Guard", "⚪", 0, 5, false, false, 0, 0);
     public static final ArmorDef  IRON_VANGUARD      = new ArmorDef("Iron Vanguard", "🟢", 0, 10, false, false, 0, 0);
