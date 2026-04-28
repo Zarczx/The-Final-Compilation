@@ -4,10 +4,11 @@ import GameGUI.model.entity.Combatant;
 import java.util.Random;
 
 /**
- * DamageCalculator — Handles all math for attacks and status damage.
+ * DamageCalculator — Handles all math for attacks.
  *
  * All HP mutations go through Combatant's public mutators (takeDamage, heal)
  * so clamping is always consistent and never duplicated here.
+ * * Note: Status/DoT damage is now handled exclusively by the StatusManager.
  */
 public class DamageCalculator {
 
@@ -33,6 +34,9 @@ public class DamageCalculator {
      */
     public static int calculateDamage(Combatant attacker, Combatant defender,
                                       double skillMultiplier, boolean pierce) {
+
+        // effectiveAttack() and effectiveDefense() now pull the exact stats
+        // updated by StatusManager and equipment!
         double base   = attacker.effectiveAttack() * skillMultiplier;
         double defVal = pierce
                 ? defender.effectiveDefense() * 0.15
@@ -46,26 +50,5 @@ public class DamageCalculator {
 
         // Defender halves damage while in guard stance
         return defender.defending ? Math.max(1, damage / 2) : damage;
-    }
-
-    // =========================================================================
-    // DAMAGE-OVER-TIME TICK
-    // =========================================================================
-
-    /**
-     * Applies one tick of DoT damage to {@code c} if an active DoT is present.
-     * Uses {@code c.takeDamage()} for consistent HP clamping.
-     *
-     * @return the damage dealt this tick, or 0 if no DoT is active
-     */
-    public static int applyDoT(Combatant c) {
-        if (c.dotTurnsLeft <= 0 || c.dotDamage <= 0) return 0;
-
-        int dmg = c.dotDamage;
-        c.takeDamage(dmg);      // routes through Combatant.takeDamage() — clamps at 0
-        c.dotTurnsLeft--;
-
-        if (c.dotTurnsLeft == 0) c.dotDamage = 0; // clean up when DoT expires
-        return dmg;
     }
 }
