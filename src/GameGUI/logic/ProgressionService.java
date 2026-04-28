@@ -35,6 +35,9 @@ public class ProgressionService {
     /**
      * Applies the permanent stat increases based on Role and World Level.
      */
+    /**
+     * Applies the permanent stat increases based on Role and World Level.
+     */
     private static void applyLevelUp(Combatant hero, int worldLevel) {
         if (hero.level >= 30) return;
 
@@ -44,7 +47,7 @@ public class ProgressionService {
         int oldAtk   = hero.baseAttack;
         int oldDef   = hero.baseDefense;
 
-        // Apply class-specific growth formulas
+        // Apply class-specific growth formulas to BASE stats
         switch (hero.role) {
             case "Swordsman" -> {
                 hero.maxHp += 60 + (worldLevel * 5);
@@ -68,16 +71,13 @@ public class ProgressionService {
             }
         }
 
-        // Keep the difference between Base and Total stats intact
-        int weaponBonus = hero.attack - oldAtk - hero.attackModifier;
-        int armorBonus  = hero.defense - oldDef - hero.defenseModifier;
-
-        hero.attack  = hero.baseAttack + weaponBonus + hero.attackModifier;
-        hero.defense = hero.baseDefense + armorBonus + hero.defenseModifier;
+        // ★ THE FIX: Simply call recalculateBuffs!
+        // This will automatically add the weapon and armor stats to the newly increased base stats.
+        hero.recalculateBuffs();
 
         // Restore 50% HP and Energy
-        hero.currentHp = Math.min(hero.maxHp, hero.currentHp + (int)(hero.maxHp * 0.50));
-        hero.energy    = Math.min(hero.maxEnergy, hero.energy + (int)(hero.maxEnergy * 0.50));
+        hero.heal((int)(hero.maxHp * 0.50)); // Use the safe mutator!
+        hero.restoreEnergy((int)(hero.maxEnergy * 0.50));
 
         // Deduct XP requirement for the next level
         hero.exp -= hero.nextLevelExp;

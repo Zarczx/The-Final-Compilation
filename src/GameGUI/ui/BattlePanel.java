@@ -31,6 +31,8 @@ public class BattlePanel extends JPanel {
     private boolean animating = false;
 
     private JLabel battleBg;
+    private JLabel heroConditionLabel;
+    private JLabel enemyConditionLabel;
 
     // ════════════════════════════════════════════
     // ★ HERO SPRITE FIELDS
@@ -507,8 +509,7 @@ public class BattlePanel extends JPanel {
                         repaint();
 
                         playEnemyEntrance(() -> {
-                            setActionsEnabled(true);
-                            animating = false;
+                            beginPlayerTurnSequence();
                         });
                     }
                 });
@@ -517,8 +518,7 @@ public class BattlePanel extends JPanel {
 
         } else {
             playEnemyEntrance(() -> {
-                setActionsEnabled(true);
-                animating = false;
+                beginPlayerTurnSequence();
             });
         }
     }
@@ -3312,10 +3312,14 @@ public class BattlePanel extends JPanel {
         clearLog();
         setTurnLabel(true);
 
+        // Math is calculated in the background
         BattleManager.ActionResult pResult = engine.playerAction(action);
-        refreshBattleUI();
+        engine.advanceToEnemyTurn();
 
         Runnable afterHeroAnim = () -> {
+            // ★ UI updates precisely when the hit connects!
+            refreshBattleUI();
+
             if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
                 playEnemyHurt(() -> {
                     clearLog();
@@ -3329,29 +3333,10 @@ public class BattlePanel extends JPanel {
                 playEnemyHurt(() -> {
                     clearLog();
                     if (pResult != null) addLogFromResult(pResult, true);
-                    Timer t1 = new Timer(900, e -> {
-                        engine.advanceToEnemyTurn();
-                        setTurnLabel(false);
-                        BattleManager.ActionResult er = engine.enemyTurn(); // run first
-                        refreshBattleUI();
-                        playEnemyAttack(() -> {                             // then animate
-                            playKaelHurtAnimation(() -> {
-                                clearLog();
-                                if (er != null) addEnemyAttackLog(er);
-                                if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
-                                    handleDefeat();
-                                } else {
-                                    Timer t3 = new Timer(800, ev2 -> {
-                                        clearLog();
-                                        setTurnLabel(true);
-                                        setActionsEnabled(true);
-                                        animating = false;
-                                    });
-                                    t3.setRepeats(false);
-                                    t3.start();
-                                }
-                            });
-                        });
+
+                    Timer t1 = new Timer(1500, e -> {
+                        clearLog();
+                        executeEnemyTurnSequence();
                     });
                     t1.setRepeats(false);
                     t1.start();
@@ -3363,78 +3348,101 @@ public class BattlePanel extends JPanel {
         else if (action == BattleManager.BattleAction.SKILL2) playPiercingSlashAnimation(afterHeroAnim);
         else if (action == BattleManager.BattleAction.ULTIMATE) playEternalCrossSlashAnimation(afterHeroAnim);
         else {
+            // Skip turn / Defend
+            refreshBattleUI(); // Update immediately for skip turn
             if (pResult != null) addLogFromResult(pResult, true);
             if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
                 handleVictory();
                 animating = false;
                 return;
             }
-            Timer t1 = new Timer(900, e -> {
-                engine.advanceToEnemyTurn();
-                setTurnLabel(false);
-                BattleManager.ActionResult er = engine.enemyTurn(); // run first
-                refreshBattleUI();
-                playEnemyAttack(() -> {                             // then animate
-                    playKaelHurtAnimation(() -> {
-                        clearLog();
-                        if (er != null) addEnemyAttackLog(er);
-                        if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
-                        else {
-                            Timer t3 = new Timer(800, ev2 -> {
-                                clearLog();
-                                setTurnLabel(true);
-                                setActionsEnabled(true);
-                                animating = false;
-                            });
-                            t3.setRepeats(false);
-                            t3.start();
-                        }
-                    });
-                });
+            Timer t1 = new Timer(1500, e -> {
+                clearLog();
+                executeEnemyTurnSequence();
             });
             t1.setRepeats(false);
             t1.start();
         }
     }
-
     private void addEnemyAttackLog(BattleManager.ActionResult r) {
-        if (enemyDef == null) {
-            addLogFromResult(r, false);
-            return;
+        // We no longer need the massive switch statement because
+        // BattleManager now formats the string perfectly for us
+        addLogFromResult(r, false);
+    }
+
+    private void beginPlayerTurnSequence() {
+        setTurnLabel(true);
+        BattleManager.ActionResult preCheck = engine.startPlayerTurnCheck();
+
+        if (preCheck != null && preCheck.logMessage != null && !preCheck.logMessage.isEmpty()) {
+            addLogFromResult(preCheck, true);
         }
+        refreshBattleUI();
 
-        String msg;
-        String damage = "";
-        if (r.logMessage != null && !r.logMessage.isEmpty()) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
-            damage = m.find() ? " and dealt " + m.group() + " damage!" : "!";
+        // If the Pre-Check caused the turn to immediately pass to the enemy (e.g., Stunned/Frozen)
+        if (engine.getCurrentTurn() == BattleManager.TurnOwner.ENEMY) {
+            animating = true;
+            setActionsEnabled(false);
+
+            // Check if player died to DoT before the enemy even acts
+            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+                handleDefeat();
+                return;
+            }
+
+            // Wait a moment so the player can read the "Turn Skipped" message, then start enemy turn
+            Timer skipTimer = new Timer(1800, e -> {
+                clearLog();
+                executeEnemyTurnSequence();
+            });
+            skipTimer.setRepeats(false);
+            skipTimer.start();
         } else {
-            damage = "!";
-        }
-
-        msg = switch (enemyDef.name) {
-            case "Rotfang Wolf" -> "Rotfang Wolf uses Savage Howl" + damage;
-            case "Shade Sprite" -> "Shade Sprite uses Trickster Strike" + damage;
-            case "Dreadbark Treant" -> "Dreadbark Treant uses Root Snare" + damage;
-            case "Carrion Bat" -> "Carrion Bat uses Screech" + damage;
-            case "The Hollow Stag"  -> "The Hollow Stag uses " + engine.getLastEnemySkillName() + damage;
-            case "Plague Vermin" -> "Plague Vermin uses Plague Bite" + damage;
-            case "Forsaken Cultist" -> "Forsaken Cultist uses Shadow Bolt" + damage;
-            case "Blight Hound" -> "Blight Hound uses Corpse Explosion" + damage;
-            case "Ghoul Footman" -> "Ghoul Footman uses Rotten Cleave" + damage;
-            case "The Black Jailer" -> "The Black Jailer uses " + engine.getLastEnemySkillName() + damage;
-            case "Luther Von" -> "Luther Von uses " + engine.getLastEnemySkillName() + damage;
-            default                 -> null;
-        };
-
-        if (msg != null) {
-            addLog(msg, RED);
-            if (r.dotDamageApplied > 0) addLog("Burn tick: " + r.dotDamageApplied, new Color(150, 60, 0));
-        } else {
-            addLogFromResult(r, false);
+            // Player is free to move. Enable the buttons!
+            setActionsEnabled(true);
+            animating = false;
         }
     }
 
+    private void executeEnemyTurnSequence() {
+        setTurnLabel(false);
+        // Math is calculated in the background
+        BattleManager.ActionResult er = engine.enemyTurn();
+
+        boolean enemyAttacked = false;
+        if (er != null && er.logMessage != null) {
+            if (er.logMessage.contains("uses")) {
+                enemyAttacked = true;
+            }
+        }
+
+        Runnable postEnemyAction = () -> {
+            // ★ UI updates precisely when the hit connects!
+            refreshBattleUI();
+            clearLog();
+            if (er != null) addLogFromResult(er, false);
+
+            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+                handleDefeat();
+            } else {
+                Timer t3 = new Timer(1500, ev2 -> {
+                    clearLog();
+                    beginPlayerTurnSequence(); // Hand turn back to player
+                });
+                t3.setRepeats(false);
+                t3.start();
+            }
+        };
+
+        if (enemyAttacked) {
+            // Animation plays first, THEN postEnemyAction updates the HP and log
+            playEnemyAttack(() -> playKaelHurtAnimation(postEnemyAction));
+        } else {
+            // If Stunned/Frozen, just update UI and logs immediately
+            refreshBattleUI();
+            postEnemyAction.run();
+        }
+    }
     private void handleVictory() {
         if (enemySequence != null) {
             EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
@@ -3686,11 +3694,37 @@ public class BattlePanel extends JPanel {
     }
 
     private void addLogFromResult(BattleManager.ActionResult r, boolean isPlayer) {
-        Color c = isPlayer ? GREEN : RED;
-        if (r.wasDefend) c = BLUE;
-        if (r.isSpecial) c = PURPLE;
-        addLog(r.logMessage, c);
-        if (r.dotDamageApplied > 0) addLog("Status tick: " + r.dotDamageApplied, new Color(150, 60, 0));
+        // Safety check to prevent null errors
+        if (r == null || r.logMessage == null || r.logMessage.trim().isEmpty()) {
+            return;
+        }
+
+        Color baseColor = isPlayer ? GREEN : RED;
+        if (r.wasDefend) baseColor = BLUE;
+        if (r.isSpecial) baseColor = PURPLE;
+
+        // Split the large block of text back into individual lines
+        String[] logLines = r.logMessage.split("\n");
+
+        for (String log : logLines) {
+            log = log.trim();
+            if (log.isEmpty()) continue; // Skip blank lines
+
+            Color logColor = baseColor;
+
+            // Dynamic text coloring based on effect emojis!
+            if (log.contains("☠️") || log.contains("🩸") || log.contains("🔥")) {
+                logColor = new Color(220, 100, 20); // Orange-red for DoT
+            } else if (log.contains("❄️") || log.contains("💫") || log.contains("🌀")) {
+                logColor = new Color(180, 100, 250); // Purple for CC
+            } else if (log.contains("💖") || log.contains("✨")) {
+                logColor = new Color(50, 200, 100); // Bright green for heal/mana
+            } else if (log.contains("🛡️") || log.contains("📉") || log.contains("🔻") || log.contains("💪")) {
+                logColor = new Color(150, 150, 150); // Gray for buff expirations
+            }
+
+            addLog(log, logColor);
+        }
     }
 
     private void addLog(String text, Color color) {
@@ -3775,6 +3809,14 @@ public class BattlePanel extends JPanel {
 
         heroStatusLbl.setText(currentHero.defending ? "Defending" : " ");
         enemyStatusLbl.setText(currentEnemy.defending ? "Defending" : " ");
+
+        // ★ NEW: Update Condition Labels dynamically
+        if (heroConditionLabel != null && currentHero != null && currentHero.getStatusManager() != null) {
+            heroConditionLabel.setText(currentHero.getStatusManager().getActiveStatusesDisplay());
+        }
+        if (enemyConditionLabel != null && currentEnemy != null && currentEnemy.getStatusManager() != null) {
+            enemyConditionLabel.setText(currentEnemy.getStatusManager().getActiveStatusesDisplay());
+        }
     }
 
     private void initLogFonts() {
@@ -3928,8 +3970,15 @@ public class BattlePanel extends JPanel {
         JLabel role = new JLabel("");
         role.setFont(new Font("Monospaced", Font.ITALIC, 9));
         role.setForeground(TEXT_DIM);
-        role.setBounds(50, 20, 215, 14);
+        role.setBounds(50, 20, 150, 14);
         card.add(role);
+
+        // Moved "Defending" label up here next to the role so it doesn't overlap
+        JLabel statusLbl = new JLabel(" ");
+        statusLbl.setFont(new Font("Monospaced", Font.BOLD, 10));
+        statusLbl.setForeground(BLUE);
+        statusLbl.setBounds(200, 20, 100, 14);
+        card.add(statusLbl);
 
         JLabel hpLbl = new JLabel("HP");
         hpLbl.setFont(FONT_STAT);
@@ -3951,11 +4000,12 @@ public class BattlePanel extends JPanel {
         hpText.setBounds(228, 34, 62, 16);
         card.add(hpText);
 
-        JLabel statusLbl = new JLabel(" ");
-        statusLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
-        statusLbl.setForeground(BLUE);
-        statusLbl.setBounds(50, 72, 215, 14);
-        card.add(statusLbl);
+        // ★ NEW: Condition Label (Poisoned, Stunned, etc.)
+        JLabel conditionLbl = new JLabel("Cond: Normal");
+        conditionLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
+        conditionLbl.setForeground(new Color(255, 200, 50));
+        conditionLbl.setBounds(50, 72, 280, 14);
+        card.add(conditionLbl);
 
         if (isHero) {
             heroEmojiLbl = emoji;
@@ -3965,6 +4015,7 @@ public class BattlePanel extends JPanel {
             heroHpBar = hpBar;
             heroHpText = hpText;
             heroStatusLbl = statusLbl;
+            heroConditionLabel = conditionLbl; // Assigning Hero Label
 
             JLabel epLbl = new JLabel("EP");
             epLbl.setFont(FONT_STAT);
@@ -3995,6 +4046,7 @@ public class BattlePanel extends JPanel {
             enemyHpBar = hpBar;
             enemyHpText = hpText;
             enemyStatusLbl = statusLbl;
+            enemyConditionLabel = conditionLbl; // Assigning Enemy Label
         }
         return card;
     }
