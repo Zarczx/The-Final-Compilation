@@ -5,6 +5,10 @@ import GameGUI.model.entity.HeroData.ArmorDef;
 import GameGUI.model.entity.HeroData.HeroDefinition;
 import GameGUI.model.entity.HeroData.WeaponDef;
 
+import GameGUI.model.equipment.Sword;
+import GameGUI.model.equipment.Bow;
+import GameGUI.model.equipment.Staff;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -42,18 +46,17 @@ public class GameTester {
             }
         });
 
-        // Group weapons by class
         WeaponDef[] swords = {
-                HeroData.OLD_BROADSWORD, HeroData.IRON_SHORTSWORD, HeroData.TWINSTRIKE_BLADE,
-                HeroData.LIFEBOND_BLADE, HeroData.ECLIPSE_GREATSWORD, HeroData.CELESTIAL_EDGE
+                Sword.OLD_BROADSWORD, Sword.IRON_SHORTSWORD, Sword.TWINSTRIKE_BLADE,
+                Sword.LIFEBOND_BLADE, Sword.ECLIPSE_GREATSWORD, Sword.CELESTIAL_EDGE
         };
         WeaponDef[] bows = {
-                HeroData.WOODEN_BOW, HeroData.OAK_LONGBOW, HeroData.TWINSHOT_BOW,
-                HeroData.LIFEBLOOM_BOW, HeroData.AETHERSTRIKE_BOW, HeroData.GOLDEN_TALON
+                Bow.WOODEN_BOW, Bow.OAK_LONGBOW, Bow.TWINSHOT_BOW,
+                Bow.LIFEBLOOM_BOW, Bow.AETHERSTRIKE_BOW, Bow.GOLDEN_TALON
         };
         WeaponDef[] staffs = {
-                HeroData.WOODEN_STAFF, HeroData.APPRENTICE_STAFF, HeroData.MYSTIC_MIND_STAFF,
-                HeroData.FLAMEHEART_STAFF, HeroData.AETHERIC_STAFF, HeroData.CHRONOMANCER_STAFF
+                Staff.WOODEN_STAFF, Staff.APPRENTICE_STAFF, Staff.MYSTIC_MIND_STAFF,
+                Staff.FLAMEHEART_STAFF, Staff.AETHERIC_STAFF, Staff.CHRONOMANCER_STAFF
         };
 
         JComboBox<WeaponDef> weaponCombo = new JComboBox<>();
@@ -173,7 +176,9 @@ public class GameTester {
         sec.add(warpPanel, "WORLD 1", new String[]{"Full W1 Run", "Rotfang Wolf", "Shade Sprite", "Dreadbark Treant", "Carrion Bat", "Hollow Stag (Boss)"}, 1);
         sec.add(warpPanel, "WORLD 2", new String[]{"Full W2 Run", "Plague Vermin", "Forsaken Cultist", "Blight Hound", "Ghoul Footman", "The Black Jailer", "Luther Von (Boss)"}, 7);
         sec.add(warpPanel, "WORLD 3", new String[]{"Full W3 Run", "Flame Revenant", "Bone Warlock", "Obsidian Crusher", "Soulflayer Gargoyle", "Zyrryl (Mini-Boss)"}, 14);
-        sec.add(warpPanel, "MISC", new String[]{"Magic Shop", "Final Boss (Khai)"}, 20);
+
+        // ★ FIX: Added "Prefi Encounter" to the MISC section array
+        sec.add(warpPanel, "MISC", new String[]{"Magic Shop", "Prefi Encounter", "Final Boss (Khai)"}, 20);
 
         tabs.addTab("2. Launch Game", warpPanel);
         dialog.add(tabs, BorderLayout.CENTER);
@@ -210,6 +215,7 @@ public class GameTester {
 
         final boolean[] battleStarted = {false};
 
+        // ★ FIX: Shifted the switch statement to account for the new Prefi Encounter at index 21
         switch (chosen[0]) {
             case 0  -> System.out.println("Starting normally...");
             case 1  -> { mainScreen.debugSkipToWorld1Battle(customTestHero);                          battleStarted[0] = true; }
@@ -232,7 +238,8 @@ public class GameTester {
             case 18 -> { mainScreen.debugSkipToEnemy(customTestHero, "Soulflayer Gargoyle", 3);       battleStarted[0] = true; }
             case 19 -> { mainScreen.debugSkipToEnemy(customTestHero, "Zyrryl",              3);       battleStarted[0] = true; }
             case 20 -> mainScreen.debugSkipToShop(customTestHero);
-            case 21 -> { mainScreen.debugSkipToFinalBoss(customTestHero);                             battleStarted[0] = true; }
+            case 21 -> mainScreen.debugSkipToPrefiEncounter(customTestHero);
+            case 22 -> { mainScreen.debugSkipToFinalBoss(customTestHero);                             battleStarted[0] = true; }
         }
 
         if (battleStarted[0]) {
