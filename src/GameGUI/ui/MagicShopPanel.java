@@ -99,68 +99,139 @@ public class MagicShopPanel extends JPanel {
         itemsContainer.removeAll();
         if (player == null) return;
 
-        // 1. Vital Surge
+        var weapon = player.inventory.getEquippedWeapon();
+        var armor = player.inventory.getEquippedArmor();
+
+        // =====================================================================
+        // 💎 PERMANENT STAT UPGRADES
+        // =====================================================================
         itemsContainer.add(createItemCard(
-                "Vital Surge", "Increase Max HP by 50.", "❤️", 40,
+                "Vitality Blessing", "Permanent +100 Max HP.", "💖", 10,
+                () -> false, // Can buy multiple times
+                btn -> { player.maxHp += 100; player.heal(100); },
+                "All"
+        ));
+
+        itemsContainer.add(createItemCard(
+                "Attack Infusion", "Permanent +8 Base ATK.", "⚔️", 12,
+                () -> false,
+                btn -> { player.baseAttack += 8; player.recalculateBuffs(); },
+                "All"
+        ));
+
+        // =====================================================================
+        // 🌟 WEAPON ENCHANTMENTS
+        // =====================================================================
+        itemsContainer.add(createItemCard(
+                "Vital Surge", "+5% Lifesteal on attacks.", "❤️", 28,
                 () -> player.hasVitalSurge,
-                btn -> { player.hasVitalSurge = true; player.maxHp += 50; player.currentHp += 50; }
+                btn -> {
+                    player.hasVitalSurge = true;
+                    if (weapon != null) {
+                        weapon.addLifestealPercent += 5;
+                        weapon.enchantments.put("💖 Vital Surge", "(+5% Lifesteal)");
+                    }
+                },
+                "Swordsman", "Archer", "Mage"
         ));
 
-        // 2. Shock Bind
         itemsContainer.add(createItemCard(
-                "Shock Bind", "15% chance to stun enemy.", "⚡", 50,
+                "Shock Bind", "20% chance to stun target.", "⚡", 30,
                 () -> player.hasShockBind,
-                btn -> { player.hasShockBind = true; }
+                btn -> {
+                    player.hasShockBind = true;
+                    if (weapon != null) {
+                        weapon.stunChance += 20;
+                        weapon.enchantments.put("⛓️ Shockbind", "(20% Stun chance)");
+                    }
+                },
+                "Swordsman" // Restricted!
         ));
 
-        // 3. Frost Arrow
         itemsContainer.add(createItemCard(
-                "Frost Arrow", "15% chance to freeze enemy.", "❄️", 50,
+                "Frost Arrow", "20% chance to freeze target.", "❄️", 30,
                 () -> player.hasFrostArrow,
-                btn -> { player.hasFrostArrow = true; }
+                btn -> {
+                    player.hasFrostArrow = true;
+                    if (weapon != null) {
+                        weapon.freezeChance += 20;
+                        weapon.enchantments.put("❄️ Frost Arrow", "(20% Freeze chance)");
+                    }
+                },
+                "Archer" // Restricted!
         ));
 
-        // 4. Arc Surge
         itemsContainer.add(createItemCard(
-                "Arc Surge", "15% chance to reduce enemy ATK.", "📉", 50,
+                "Arc Surge", "+3 Energy restored per attack.", "✨", 26,
                 () -> player.hasArcSurge,
-                btn -> { player.hasArcSurge = true; }
+                btn -> {
+                    player.hasArcSurge = true;
+                    if (weapon != null) {
+                        weapon.energyPerAttack += 3;
+                        weapon.enchantments.put("✨ Arc Surge", "(+3 Energy per hit)");
+                    }
+                },
+                "Mage" // Restricted!
         ));
 
-        // 5. Venom Infusion
         itemsContainer.add(createItemCard(
-                "Venom Infusion", "15% chance to poison enemy.", "☠️", 60,
+                "Venom Infusion", "20% chance to poison target.", "☠️", 30,
                 () -> player.hasVenomInfusion,
-                btn -> { player.hasVenomInfusion = true; }
+                btn -> {
+                    player.hasVenomInfusion = true;
+                    if (weapon != null) {
+                        weapon.poisonChance += 20;
+                        weapon.enchantments.put("☠️ Venom Infusion", "(+20% Poison chance)");
+                    }
+                },
+                "All"
         ));
 
-        // 6. Razor Edge
         itemsContainer.add(createItemCard(
-                "Razor Edge", "20% chance to inflict Bleed.", "🩸", 60,
+                "Razor Edge", "20% chance to inflict Bleed.", "🩸", 32,
                 () -> player.hasRazorEdge,
-                btn -> { player.hasRazorEdge = true; }
+                btn -> {
+                    player.hasRazorEdge = true;
+                    if (weapon != null) {
+                        weapon.bleedChance += 20;
+                        weapon.enchantments.put("🩸 Razor Edge", "(+20% Bleed chance)");
+                    }
+                },
+                "Swordsman", "Archer" // Allowed for two classes!
         ));
 
-        // 7. Fortified Plating
+        // =====================================================================
+        // 🛡️ ARMOR & SPECIAL
+        // =====================================================================
         itemsContainer.add(createItemCard(
-                "Fortified Plating", "Increase base defense by 15.", "🛡️", 40,
+                "Fortified Plating", "Armor gains +10 DEF.", "🛡️", 26,
                 () -> player.hasFortifiedPlating,
-                btn -> { player.hasFortifiedPlating = true; player.baseDefense += 15; player.defense += 15; }
+                btn -> {
+                    player.hasFortifiedPlating = true;
+                    if (armor != null) {
+                        armor.addDefBuff += 10;
+                        armor.hasEnchantment = true;
+                        player.recalculateBuffs();
+                    }
+                },
+                "All"
         ));
 
-        // 8. Phoenix Soulstone
         itemsContainer.add(createItemCard(
-                "Phoenix Soulstone", "Revive once upon death.", "🕊️", 100,
+                "Phoenix Soulstone", "Revive once upon death.", "🕊️", 40,
                 () -> player.hasPhoenixSoulstone,
-                btn -> { player.hasPhoenixSoulstone = true; }
+                btn -> { player.hasPhoenixSoulstone = true; }, // You can link this to inventory later
+                "All"
         ));
 
         itemsContainer.revalidate();
         itemsContainer.repaint();
     }
 
+    // Notice the new "String... allowedRoles" parameter at the end!
     private JPanel createItemCard(String name, String desc, String icon, int cost,
-                                  Supplier<Boolean> isOwned, Consumer<JButton> applyUpgrade) {
+                                  Supplier<Boolean> isOwned, Consumer<JButton> applyUpgrade,
+                                  String... allowedRoles) {
 
         JPanel card = new JPanel(new BorderLayout(15, 10));
         card.setBackground(BG_CARD);
@@ -193,8 +264,26 @@ public class MagicShopPanel extends JPanel {
         buyBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         buyBtn.setPreferredSize(new Dimension(140, 40));
 
-        // If the player already owns it, lock the button!
-        if (isOwned.get()) {
+        // --- Verify Class Restrictions ---
+        boolean isClassAllowed = false;
+        if (allowedRoles.length == 0 || allowedRoles[0].equalsIgnoreCase("All")) {
+            isClassAllowed = true;
+        } else {
+            for (String role : allowedRoles) {
+                if (player.getClassType().equalsIgnoreCase(role)) {
+                    isClassAllowed = true;
+                    break;
+                }
+            }
+        }
+
+        // --- Setup Button State ---
+        if (!isClassAllowed) {
+            buyBtn.setText(allowedRoles[0] + " Only"); // e.g. "Swordsman Only"
+            buyBtn.setBackground(new Color(80, 30, 30)); // Deep red for locked
+            buyBtn.setForeground(new Color(150, 100, 100));
+            buyBtn.setEnabled(false);
+        } else if (isOwned.get()) {
             buyBtn.setText("Owned");
             buyBtn.setBackground(new Color(40, 40, 40));
             buyBtn.setForeground(Color.GRAY);
@@ -207,10 +296,9 @@ public class MagicShopPanel extends JPanel {
             buyBtn.addActionListener(e -> {
                 if (player.soulShards >= cost) {
                     player.soulShards -= cost;
-                    applyUpgrade.accept(buyBtn); // Applies stat changes & sets boolean flag
+                    applyUpgrade.accept(buyBtn);
                     updateShardsDisplay();
 
-                    // Lock button visually
                     buyBtn.setText("Owned");
                     buyBtn.setBackground(new Color(40, 40, 40));
                     buyBtn.setForeground(Color.GRAY);

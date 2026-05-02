@@ -20,6 +20,7 @@ public class GameScreen extends JPanel {
     private static final String SCREEN_WORLD3_INTRO ="world3Intro";
     private static final String SCREEN_BATTLE ="battle";
     private static final String SCREEN_SHOP = "shop";
+    private static final String SCREEN_PREFI = "prefi";
 
     private GameGUI.ui.MagicShopPanel magicShopPanel;
 
@@ -281,16 +282,50 @@ public class GameScreen extends JPanel {
         startFinalBossTransition();
     }
 
-    public void debugSkipToShop(HeroDefinition hero) {
-        this.confirmedHero = hero;
+    public void debugSkipToShop(HeroData.HeroDefinition heroDef) {
+        this.confirmedHero = heroDef;
         this.currentWorld = 2;
         if (typingTimer != null) typingTimer.stop();
 
-        Combatant dummy = GameGUI.model.HeroFactory.createHero(hero);
-        dummy.soulShards = 999;
+        // 1. Create the test hero
+        Combatant realHero = GameGUI.model.HeroFactory.createHero(heroDef);
+        realHero.soulShards = 999;
 
-        magicShopPanel.loadPlayer(dummy);
+        // 2. INJECT the hero into BattlePanel so Shop upgrades carry over to battles!
+        battlePanel.setCurrentHero(realHero);
+
+        magicShopPanel.loadPlayer(realHero);
         cardLayout.show(cardPanel, SCREEN_SHOP);
+    }
+
+    // Use this for the GameTester button
+    public void debugSkipToPrefiEncounter(HeroData.HeroDefinition heroDef) {
+        this.confirmedHero = heroDef;
+        this.currentWorld = 3;
+        if (typingTimer != null) typingTimer.stop();
+
+        // 1. Create the test hero
+        Combatant realHero = GameGUI.model.HeroFactory.createHero(heroDef);
+
+        // 2. INJECT the hero into BattlePanel so it uses THIS exact object for the Final Boss!
+        battlePanel.setCurrentHero(realHero);
+
+        // 3. Start the encounter
+        startPrefiEncounter(realHero);
+    }
+
+    // This handles the actual transition and logic
+    private void startPrefiEncounter(Combatant player) {
+        utils.SoundUtil.stopLoop(); // Stop battle music for the trial
+
+        GameGUI.ui.PrefiEncounterGUI prefiPanel = new GameGUI.ui.PrefiEncounterGUI(player, () -> {
+            // This runs when the player passes or fails the encounter!
+            playWorldMusic();
+            startFinalBossTransition(); // Move on to Khai's betrayal
+        });
+
+        cardPanel.add(prefiPanel, SCREEN_PREFI);
+        cardLayout.show(cardPanel, SCREEN_PREFI);
     }
 
     public void debugSkipToHollowStag(HeroDefinition hero) {
@@ -356,6 +391,7 @@ public class GameScreen extends JPanel {
                 resumeFight.run();
             }
         });
+
         battlePanel.startEnemySequence(hero, match, () -> {
             if (currentWorld == 1) {
                 playWorldMusic();
@@ -364,8 +400,8 @@ public class GameScreen extends JPanel {
                 playWorldMusic();
                 showKingVictoryDialogue();
             } else if (currentWorld == 3) {
-                playWorldMusic();
-                startFinalBossTransition();
+                // ★ PREFI ENCOUNTER LAUNCHES HERE ★
+                startPrefiEncounter(battlePanel.getCurrentHero());
             }
         });
     }
@@ -468,8 +504,8 @@ public class GameScreen extends JPanel {
                     confirmedHero,
                     HeroData.WORLD3_ENEMIES,
                     () -> {
-                        playWorldMusic();
-                        startFinalBossTransition();
+                        // ★ PREFI ENCOUNTER LAUNCHES HERE ★
+                        startPrefiEncounter(battlePanel.getCurrentHero());
                     }
             );
         }

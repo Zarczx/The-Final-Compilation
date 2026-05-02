@@ -8,6 +8,15 @@ import java.util.List;
 
 public class Sword extends Weapon {
 
+    // ─── Sword Constants ─────────────────────────────────────────────────────
+    public static final HeroData.WeaponDef OLD_BROADSWORD     = new HeroData.WeaponDef(HeroData.WeaponType.SWORD, "Old Broadsword",     "⚪", 5,  0,  0, 0, 0, 0, 0, 0, 0);
+    public static final HeroData.WeaponDef IRON_SHORTSWORD    = new HeroData.WeaponDef(HeroData.WeaponType.SWORD, "Iron Shortsword",    "🟢", 10, 0,  0, 0, 0, 0, 0, 0, 0);
+    public static final HeroData.WeaponDef TWINSTRIKE_BLADE   = new HeroData.WeaponDef(HeroData.WeaponType.SWORD, "Twinstrike Blade",   "🔵", 20, 0,  0, 0, 0, 0, 0, 0, 20);
+    public static final HeroData.WeaponDef LIFEBOND_BLADE     = new HeroData.WeaponDef(HeroData.WeaponType.SWORD, "Lifebond Blade",     "🔵", 20, 8,  0, 0, 0, 0, 0, 0, 0);
+    public static final HeroData.WeaponDef ECLIPSE_GREATSWORD = new HeroData.WeaponDef(HeroData.WeaponType.SWORD, "Eclipse Greatsword", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
+    public static final HeroData.WeaponDef CELESTIAL_EDGE     = new HeroData.WeaponDef(HeroData.WeaponType.SWORD, "Celestial Edge",     "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
+
+    // ─── Constructor ─────────────────────────────────────────────────────────
     public Sword(HeroData.WeaponDef def) {
         super(def);
     }
