@@ -89,6 +89,7 @@ public class HeroData {
         public final String name, role, emoji;
         public final int maxHp, attack, defense, worldLevel, count, xpReward;
 
+
         public EnemyDefinition(String name, String role, String emoji,
                                int maxHp, int attack, int defense,
                                int worldLevel, int count, int xpReward) {
