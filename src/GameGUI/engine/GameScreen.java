@@ -279,6 +279,7 @@ public class GameScreen extends JPanel {
         this.confirmedHero = hero;
         this.currentWorld = 3;
         if (typingTimer != null) typingTimer.stop();
+        battlePanel.setBattleBackground("/assets/Backgrounds/NecroBackground.png");
         startFinalBossTransition();
     }
 
@@ -362,15 +363,38 @@ public class GameScreen extends JPanel {
             return;
         }
 
-        if (currentWorld == 2) {
-            java.util.List<String> secondHalfEnemies = java.util.List.of(
-                    "Forsaken Cultist", "Blight Hound", "Ghoul Footman", "Black Jailer", "Luther Von"
-            );
-            if (secondHalfEnemies.contains(enemyName)) {
-                battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
-            } else {
-                battlePanel.setBattleBackground("/assets/Backgrounds/World2Battle1Background.png");
-            }
+        if (currentWorld == 1) {
+            String bg = switch (enemyName) {
+                case "Rotfang Wolf"    -> "/assets/Backgrounds/World1BattleBackground.png";
+                case "Shade Sprite"    -> "/assets/Backgrounds/World1BattleBackground2.png";
+                case "Dreadbark Treant"-> "/assets/Backgrounds/World1BattleBackground3.png";
+                case "Carrion Bat"     -> "/assets/Backgrounds/World1BattleBackground4.png";
+                case "The Hollow Stag" -> "/assets/Backgrounds/World1BattleBackground5.png";
+                default                -> "/assets/Backgrounds/World1BattleBackground.png";
+            };
+            battlePanel.setBattleBackground(bg);
+        } else if (currentWorld == 2) {
+            String bg = switch (enemyName) {
+                case "Plague Vermin"    -> "/assets/Backgrounds/World2BattleBackground.png";
+                case "Forsaken Cultist" -> "/assets/Backgrounds/World2BattleBackground2.png";
+                case "Blight Hound"     -> "/assets/Backgrounds/World2BattleBackground3.png";
+                case "Ghoul Footman"    -> "/assets/Backgrounds/World2BattleBackground4.png";
+                case "The Black Jailer" -> "/assets/Backgrounds/World2BattleBackground5.png";
+                case "Luther Von"       -> "/assets/Backgrounds/World2BattleBackgroundLast.png";
+                default                 -> "/assets/Backgrounds/World2Battle1Background.png";
+            };
+            battlePanel.setBattleBackground(bg);
+        } else if (currentWorld == 3) {
+            String bg = switch (enemyName) {
+                case "Flame Revenant"      -> "/assets/Backgrounds/World3BG9.png";
+                case "Bone Warlock"        -> "/assets/Backgrounds/World3BG15.5.png";
+                case "Obsidian Crusher"    -> "/assets/Backgrounds/World3BG21.5.png";
+                case "Soulflayer Gargoyle" -> "/assets/Backgrounds/World3BG27.png";
+                case "Zyrryl"              -> "/assets/Backgrounds/World3BG30.5.png";
+                case "Khai the Gray"   -> "/assets/Backgrounds/NecroBackground.png";
+                default                    -> "/assets/Backgrounds/World3BG9.png";
+            };
+            battlePanel.setBattleBackground(bg);
         }
 
         utils.SoundUtil.stopLoop();
@@ -500,6 +524,7 @@ public class GameScreen extends JPanel {
                     }
             );
         } else if (currentWorld == 3) {
+            battlePanel.setBattleBackground("/assets/Backgrounds/World3BG9.png");
             battlePanel.startEnemySequence(
                     confirmedHero,
                     HeroData.WORLD3_ENEMIES,
@@ -2431,76 +2456,102 @@ public class GameScreen extends JPanel {
     // ─── WORLD 3 DIALOGUES ──────────────────────────────────────────────
     private static final String[] WORLD3_DIALOGUES = {
             "You have been travelling for days, leaving the green world far behind.\n" +
-                    "You have reached a land where not even a glimmer of life can survive.",
+                    "You have reached a land where not even a glimmer of life can survive.",         // index 0 — BG1 shown on entry
             "The earth here has turned to black glass. Ash falls like snow, coating your armor in gray dust.\n" +
-                    "Rivers of molten fire carve through the rock, lighting the underbelly of the dark clouds.",
+                    "Rivers of molten fire carve through the rock, lighting the underbelly of the dark clouds.", // index 1 — show BG2 before this
             "At the center of this desolation, rising higher than the mountains...\n" +
                     "Stands a spire of twisted obsidian, piercing the storm itself.\n" +
-                    "THE NECROMANCER'S TOWER.",
+                    "THE NECROMANCER'S TOWER.",                                                      // index 2 — show BG3→BG4 before this
             "\"We are here,\" Khai whispers, his voice barely audible over the roaring wind.\n" +
-                    "\"The source of the rot. The end of the path.\"",
-            "The ground beneath you becomes uncomfortably hot. The cracks in the rock begin to glow.\n" +
-                    "Molten magma bubbles to the surface!",
+                    "\"The source of the rot. The end of the path.\"",                               // index 3 — show BG5→BG6 before this
+            "The ground beneath you becomes uncomfortably hot. The cracks in the rock begin to glow.",  // index 4 — BG6 stays
             "From the fire, shape-less forms pull themselves together.\n" +
                     "FLAME REVENANTS rise, their bodies flickering with ember and hatred.\n" +
-                    "They scream without mouths, a sound like burning timber."
+                    "They scream without mouths, a sound like burning timber."                       // index 5 — show BG7→BG8 before this
     };
 
     private static final String[][] WORLD3_INTER_DIALOGUES = {
+            // ── INTER 0: after Flame Revenants ──────────────────────────────────────
             {
+                    // chunk 0 — BG10 shown immediately
                     "You steel yourself and look up at the Tower.",
+                    // chunk 1 — BG11 (2s) → BG12
                     "You begin the ascent. The air thickens with suffocating magic.\n" +
                             "Each step you take hums with a pulse from the Stones you carry, as if they are calling out.",
+                    // chunk 2 — BG13
                     "The air grows cold, despite the rivers of lava flowing nearby.\n" +
                             "A hollow chanting fills the chamber, vibrating in your bones.",
+                    // chunk 3 — BG14
                     "From the shadows of the obsidian pillars, figures draped in tattered robes emerge.\n" +
                             "BONE WARLOCKS.",
+                    // chunk 4 — BG15.5 (battle bg set separately)
                     "They raise staffs made of spine and skull, chanting forbidden incantations\n" +
                             "to twist the very life force from your body."
             },
+            // ── INTER 1: after Bone Warlocks ─────────────────────────────────────────
             {
+                    // chunk 0 — BG15 (2s) → BG16 (2s) → BG17 (2s) → BG18 (2s) → BG19
                     "A deep, rhythmic thumping echoes through the cavern. Boom... Boom...\n" +
                             "Lava geysers burst upward, spraying molten rock against the walls.",
+                    // chunk 1 — BG20
                     "Massive shadows rise from behind the curtain of fire.\n" +
                             "OBSIDIAN CRUSHERS emerge — molten giants forged from living stone and fury.",
+                    // chunk 2 — BG21
                     "Their skin is black rock, their veins flow with lava,\n" +
                             "and they look at you as nothing more than dust to be swept away."
             },
+            // ── INTER 2: after Obsidian Crushers ─────────────────────────────────────
             {
+                    // chunk 0 — BG22
                     "Halfway up the winding stairs, you find something etched into the obsidian wall.\n" +
                             "It is a mural, ancient and jagged.",
+                    // chunk 1 — BG22 stays
                     "It shows a hooded figure holding three glowing stones high above a kneeling crowd.\n" +
                             "Beneath it, carved in a language that looks chillingly familiar, is a single phrase:\n" +
                             "\"TO TEACH IS TO CONTROL.\"",
+                    // chunk 2 — BG23
                     "A shiver runs down your spine that has nothing to do with the cold.\n" +
                             "You climb higher into the spire. The air grows thin and impossibly cold.",
+                    // chunk 3 — BG24 (2s) → BG25
                     "Suddenly, stone cracks with a sharp snap!\n" +
                             "Perched on the obsidian ledges above, grim stone statues shed their rocky skin and shriek as they dive.",
+                    // chunk 4 — BG26
                     "SOULFLAYER GARGOYLES take flight.\n" +
                             "Their wings block out the red lightning, and their eyes burn with hunger for the living."
             },
+            // ── INTER 3: after Soulflayer Gargoyles ───────────────────────────────────
             {
+                    // chunk 0 — BG28
                     "You reach the penultimate landing. The heat here is unbearable.\n" +
                             "The stone beneath your boots is soft, almost melting.",
+                    // chunk 1 — BG29
                     "A towering figure steps from the magma falls blocking the path.\n" +
                             "ZYRRYL, Warden of the Shattered Tower.",
+                    // chunk 2 — BG29 stays
                     "His armor is forged from cursed steel and hardened lava.\n" +
                             "He drags a massive greatsword that glows white-hot."
             }
     };
 
     private static final String[] KHAI_BETRAYAL_DIALOGUE = {
+            // index 0 — BG30
             "With a heavy crash, Zyrryl, the Tower Warden, falls to the ground.\n" +
                     "You catch your breath. You hold the final Stone of Life.",
+            // index 1 — BG31 (2s) → BG32
             "Sir Khai steps forward. His staff is no longer wood—it is blazing with chaotic energy.\n" +
                     "\"Finally.\"",
+            // index 2 — BG33
             "\"You've served well, my student.\n" +
                     "Who better to collect the Stones of Life than one who trusts their teacher blindly?\"",
+            // index 3 — BG34
             "\"I have guided you not to save this land... but to claim its power.\n" +
                     "I have been waiting for a vessel like you for a millennium.\"",
+            // index 4 — BG35
             "The air around him turns black. His weary eyes are gone, replaced by burning voids.",
+            // index 5 — BG35 stays
             "\"I wish to bring chaos not only to this land, but to all lands beyond.\n" +
                     "The Necromancer you sought... The one who brings the end of worlds...\"",
+            // index 6 — BG36, RED text + shake
             "...IS ME!!!!!!!!!"
     };
 
@@ -3131,7 +3182,8 @@ public class GameScreen extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(new Color(30, 10, 10));
+                // Always fill black first — covers TheBackground.png
+                g2.setColor(Color.BLACK);
                 g2.fillRect(0, 0, getWidth(), getHeight());
                 if (fDark != null && sceneAlpha[0] > 0) {
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, sceneAlpha[0]));
@@ -3145,7 +3197,8 @@ public class GameScreen extends JPanel {
             }
         };
         w3Scene.setBounds(0, 0, 1280, 520);
-        w3Scene.setOpaque(false);
+        w3Scene.setOpaque(true);   // ← change false to true
+        w3Scene.setBackground(Color.BLACK);
 
         w3SceneBg    = w3Scene;
         w3SceneAlpha = sceneAlpha;
@@ -3226,7 +3279,7 @@ public class GameScreen extends JPanel {
         layeredPane.add(w3TheBg,           JLayeredPane.FRAME_CONTENT_LAYER);
         layeredPane.add(w3Scene,           JLayeredPane.DEFAULT_LAYER);
         layeredPane.add(w3KhaiPanel,       JLayeredPane.PALETTE_LAYER);
-        layeredPane.add(w3WorldLabel,      JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(w3WorldLabel,      JLayeredPane.MODAL_LAYER);      // ← raise this
         layeredPane.add(w3DialogueBgLabel, JLayeredPane.PALETTE_LAYER);
         layeredPane.add(w3DialogueBox,     JLayeredPane.MODAL_LAYER);
         layeredPane.add(w3ContinueBtn,     JLayeredPane.PALETTE_LAYER);
@@ -3247,36 +3300,47 @@ public class GameScreen extends JPanel {
         utils.SoundUtil.playLoop("TheForestOfSilence.wav", 0.5f);
         currentWorld = 3;
         w3DialogueIndex = 0;
+
         if (w3WorldLabel != null) {
             w3WorldLabel.setVisible(true);
             w3WorldLabel.setForeground(Color.WHITE);
         }
         if (w3KhaiLabel != null) {
-            w3KhaiLabel.setIcon(null);
+            java.net.URL bg1url = getClass().getResource("/assets/Backgrounds/World3BG1.png");
+            if (bg1url != null) {
+                w3KhaiLabel.setIcon(new ImageIcon(
+                        new ImageIcon(bg1url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+            }
             w3KhaiAlpha[0] = 0f;
             w3KhaiLabel.putClientProperty("prevImage", null);
             w3KhaiLabel.putClientProperty("prevAlpha", 0f);
         }
-        if (w3SceneAlpha != null) w3SceneAlpha[0] = 1.0f;
-        if (w3WorldAlpha != null) w3WorldAlpha[0] = 0.0f;
-        if (w3SceneBg != null) w3SceneBg.repaint();
+        if (w3SceneAlpha != null) w3SceneAlpha[0] = 0f;
+        if (w3WorldAlpha != null) w3WorldAlpha[0] = 0f;
+        if (w3SceneBg != null) {
+            w3SceneBg.setOpaque(true);
+            w3SceneBg.setBackground(Color.BLACK);
+            w3SceneBg.repaint();
+        }
 
         cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
 
-        delay(800, () -> {
-            Timer crossfade = new Timer(16, null);
-            crossfade.addActionListener(ev -> {
-                if (w3SceneBg == null) { crossfade.stop(); return; }
-                w3SceneAlpha[0] = Math.max(0f, w3SceneAlpha[0] - 0.02f);
-                w3WorldAlpha[0] = Math.min(1f, w3WorldAlpha[0] + 0.02f);
+        // Hold on black + label for 1.5s, then fade in BG1
+        delay(1500, () -> {
+            Timer fadeIn = new Timer(16, null);
+            fadeIn.addActionListener(ev -> {
+                if (w3KhaiLabel == null) { fadeIn.stop(); return; }
+                w3KhaiAlpha[0] = Math.min(1f, w3KhaiAlpha[0] + 0.008f);
+                w3KhaiLabel.repaint();
                 w3SceneBg.repaint();
-                if (w3SceneAlpha[0] <= 0f && w3WorldAlpha[0] >= 1f) {
-                    crossfade.stop();
-                    delay(600, () -> fadeW3Label());
-                    delay(1400, () -> startW3Typing());
+                if (w3KhaiAlpha[0] >= 1f) {
+                    fadeIn.stop();
+                    // Once BG1 fully fades in, fade out the label then start typing
+                    fadeW3Label();
+                    delay(1000, () -> startW3Typing());
                 }
             });
-            crossfade.start();
+            fadeIn.start();
         });
     }
 
@@ -3337,6 +3401,46 @@ public class GameScreen extends JPanel {
             else finishW3InterDialogue();
             return;
         }
+
+        if (w3DialogueIndex == 1) {
+            // After "earth turned to black glass" — show BG2 then type dialogue[2]
+            showW3SceneImage("/assets/Backgrounds/World3BG2.png");
+        } else if (w3DialogueIndex == 2) {
+            // After "THE NECROMANCER'S TOWER" — BG3 2s → BG4 2s then type dialogue[3]
+            w3ContinueBtn.setEnabled(false);
+            showW3SceneImage("/assets/Backgrounds/World3BG3.png");
+            delay(2000, () -> {
+                showW3SceneImage("/assets/Backgrounds/World3BG4.png");
+                delay(2000, () -> {
+                    w3DialogueIndex = 3;
+                    w3ContinueBtn.setEnabled(true);
+                    startW3Typing();
+                });
+            });
+            return;
+        } else if (w3DialogueIndex == 3) {
+            // After "We are here" — BG5 2s then type dialogue[4]
+            w3ContinueBtn.setEnabled(false);
+            showW3SceneImage("/assets/Backgrounds/World3BG5.png");
+            delay(2000, () -> {
+                w3DialogueIndex = 4;
+                w3ContinueBtn.setEnabled(true);
+                startW3Typing();
+            });
+            return;
+        } else if (w3DialogueIndex == 4) {
+            // After "cracks in the rock begin to glow" — BG7 2s → BG8 then type dialogue[5]
+            w3ContinueBtn.setEnabled(false);
+            showW3SceneImage("/assets/Backgrounds/World3BG7.png");
+            delay(2000, () -> {
+                showW3SceneImage("/assets/Backgrounds/World3BG8.png");
+                w3DialogueIndex = 5;
+                w3ContinueBtn.setEnabled(true);
+                startW3Typing();
+            });
+            return;
+        }
+
         w3DialogueIndex++;
         if (w3DialogueIndex < WORLD3_DIALOGUES.length) {
             startW3Typing();
@@ -3382,6 +3486,127 @@ public class GameScreen extends JPanel {
             finishW3InterDialogue(); return;
         }
         if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+
+        int interIdx = resolveW3InterIndex();
+
+        // ── INTER 0: after Flame Revenants ───────────────────────────────────────
+        if (interIdx == 0) {
+            switch (w3InterChunkIndex) {
+                case 0 -> { showW3InterBg("/assets/Backgrounds/World3BG10.png"); typeW3InterChunkNow(); return; }
+                case 1 -> {
+                    w3ContinueBtn.setEnabled(false);
+                    showW3InterBg("/assets/Backgrounds/World3BG11.png");
+                    delay(2000, () -> {
+                        showW3InterBg("/assets/Backgrounds/World3BG12.png");
+                        w3ContinueBtn.setEnabled(true);
+                        typeW3InterChunkNow();
+                    });
+                    return;
+                }
+                case 2 -> { showW3InterBg("/assets/Backgrounds/World3BG13.png"); typeW3InterChunkNow(); return; }
+                case 3 -> { showW3InterBg("/assets/Backgrounds/World3BG14.png"); typeW3InterChunkNow(); return; }
+                case 4 -> { /* BG14 stays for battle lead-in */ typeW3InterChunkNow(); return; }
+            }
+        }
+
+        // ── INTER 1: after Bone Warlocks ─────────────────────────────────────────
+        if (interIdx == 1) {
+            switch (w3InterChunkIndex) {
+                case 0 -> {
+                    // BG15 → BG16 → BG17 → BG18 → BG19 timed sequence then type
+                    w3ContinueBtn.setEnabled(false);
+                    showW3InterBg("/assets/Backgrounds/World3BG15.png");
+                    delay(2000, () -> {
+                        showW3InterBg("/assets/Backgrounds/World3BG16.png");
+                        delay(2000, () -> {
+                            showW3InterBg("/assets/Backgrounds/World3BG17.png");
+                            delay(2000, () -> {
+                                showW3InterBg("/assets/Backgrounds/World3BG18.png");
+                                delay(2000, () -> {
+                                    showW3InterBg("/assets/Backgrounds/World3BG19.png");
+                                    w3ContinueBtn.setEnabled(true);
+                                    typeW3InterChunkNow();
+                                });
+                            });
+                        });
+                    });
+                    return;
+                }
+                case 1 -> { showW3InterBg("/assets/Backgrounds/World3BG20.png"); typeW3InterChunkNow(); return; }
+                case 2 -> { showW3InterBg("/assets/Backgrounds/World3BG21.png"); typeW3InterChunkNow(); return; }
+            }
+        }
+
+        // ── INTER 2: after Obsidian Crushers ─────────────────────────────────────
+        if (interIdx == 2) {
+            switch (w3InterChunkIndex) {
+                case 0 -> { showW3InterBg("/assets/Backgrounds/World3BG22.png"); typeW3InterChunkNow(); return; }
+                case 1 -> { /* BG22 stays */ typeW3InterChunkNow(); return; }
+                case 2 -> { showW3InterBg("/assets/Backgrounds/World3BG23.png"); typeW3InterChunkNow(); return; }
+                case 3 -> {
+                    w3ContinueBtn.setEnabled(false);
+                    showW3InterBg("/assets/Backgrounds/World3BG24.png");
+                    delay(2000, () -> {
+                        showW3InterBg("/assets/Backgrounds/World3BG25.png");
+                        w3ContinueBtn.setEnabled(true);
+                        typeW3InterChunkNow();
+                    });
+                    return;
+                }
+                case 4 -> { showW3InterBg("/assets/Backgrounds/World3BG26.png"); typeW3InterChunkNow(); return; }
+            }
+        }
+
+        // ── INTER 3: after Soulflayer Gargoyles ──────────────────────────────────
+        if (interIdx == 3) {
+            switch (w3InterChunkIndex) {
+                case 0 -> { showW3InterBg("/assets/Backgrounds/World3BG28.png"); typeW3InterChunkNow(); return; }
+                case 1 -> { showW3InterBg("/assets/Backgrounds/World3BG29.png"); typeW3InterChunkNow(); return; }
+                case 2 -> { /* BG29 stays */ typeW3InterChunkNow(); return; }
+            }
+        }
+
+        typeW3InterChunkNow();
+    }
+
+
+    private void finishW3InterDialogue() {
+        w3InInterDialogue = false;
+        w3DialogueBox.setText("");
+        Runnable resume = w3ResumeAfterDialogue;
+        w3ResumeAfterDialogue = null;
+
+        // Set battle background based on which inter-dialogue just finished
+        int interIdx = resolveW3InterIndex();
+        String battleBg = switch (interIdx) {
+            case 0 -> "/assets/Backgrounds/World3BG15.5.png";  // Bone Warlock battle bg
+            case 1 -> "/assets/Backgrounds/World3BG21.5.png";  // Obsidian Crusher battle bg
+            case 2 -> "/assets/Backgrounds/World3BG27.png";    // Soulflayer Gargoyle battle bg
+            case 3 -> "/assets/Backgrounds/World3BG30.5.png";  // Zyrryl battle bg
+            default -> "/assets/Backgrounds/World3BG9.png";
+        };
+        battlePanel.setBattleBackground(battleBg);
+
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        playBattleMusic();
+        if (resume != null) resume.run();
+    }
+
+    /** Shows an image in the w3KhaiLabel layer for main dialogue scenes. */
+    private void showW3SceneImage(String path) {
+        if (w3KhaiLabel == null) return;
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) return;
+        w3KhaiLabel.setIcon(new ImageIcon(
+                new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+        w3KhaiLabel.putClientProperty("prevImage", null);
+        w3KhaiLabel.putClientProperty("prevAlpha", 0f);
+        w3KhaiAlpha[0] = 1.0f;
+        w3KhaiLabel.repaint();
+    }
+
+    /** Types the current w3InterChunks[w3InterChunkIndex] text with the typewriter effect. */
+    private void typeW3InterChunkNow() {
         String text = w3InterChunks[w3InterChunkIndex];
         w3DialogueBox.setText("");
         w3ContinueBtn.setEnabled(false);
@@ -3398,14 +3623,26 @@ public class GameScreen extends JPanel {
         w3TypingTimer.start();
     }
 
-    private void finishW3InterDialogue() {
-        w3InInterDialogue = false;
-        w3DialogueBox.setText("");
-        Runnable resume = w3ResumeAfterDialogue;
-        w3ResumeAfterDialogue = null;
-        cardLayout.show(cardPanel, SCREEN_BATTLE);
-        playBattleMusic();
-        if (resume != null) resume.run();
+    /** Shows an image in the w3KhaiLabel layer for inter-dialogue scenes. */
+    private void showW3InterBg(String path) {
+        if (w3KhaiLabel == null) return;
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) return;
+        w3KhaiLabel.setIcon(new ImageIcon(
+                new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
+        w3KhaiLabel.putClientProperty("prevImage", null);
+        w3KhaiLabel.putClientProperty("prevAlpha", 0f);
+        w3KhaiAlpha[0] = 1.0f;
+        w3KhaiLabel.repaint();
+    }
+
+    /** Resolves which WORLD3_INTER_DIALOGUES index w3InterChunks belongs to. Returns -1 if not matched. */
+    private int resolveW3InterIndex() {
+        if (w3InterChunks == null) return -1;
+        for (int i = 0; i < WORLD3_INTER_DIALOGUES.length; i++) {
+            if (w3InterChunks == WORLD3_INTER_DIALOGUES[i]) return i;
+        }
+        return -1;
     }
 
     private void startFinalBossTransition() {
@@ -3417,7 +3654,6 @@ public class GameScreen extends JPanel {
             w3SceneBg.repaint();
         }
         if (w3WorldLabel != null) w3WorldLabel.setVisible(false);
-        if (w3KhaiLabel != null) w3KhaiLabel.setIcon(null);
 
         w3ContinueBtn.setEnabled(false);
 
@@ -3431,56 +3667,185 @@ public class GameScreen extends JPanel {
                 battlePanel.startEnemySequence(
                         confirmedHero,
                         HeroData.FINAL_BOSS_SEQUENCE,
-                        () -> System.out.println("GAME OVER - YOU BEAT THE GAME!")
+                        this::showKhaiVictoryDialogue
                 );
                 return;
             }
 
-            String text = KHAI_BETRAYAL_DIALOGUE[idx[0]];
-            w3DialogueBox.setText("");
-
-            if (idx[0] == 6) {
-                w3DialogueBox.setForeground(Color.RED);
-                w3DialogueBox.setFont(w3DialogueBox.getFont().deriveFont(28f));
-
-                Point origin = getLocation();
-                Timer shakeTimer = new Timer(50, ev -> {
-                    int dx = (Math.random() > 0.5 ? 5 : -5);
-                    int dy = (Math.random() > 0.5 ? 5 : -5);
-                    setLocation(origin.x + dx, origin.y + dy);
-                });
-                shakeTimer.start();
-                delay(1000, () -> {
-                    shakeTimer.stop();
-                    setLocation(origin);
-                });
-            } else {
-                w3DialogueBox.setForeground(Color.WHITE);
+            switch (idx[0]) {
+                case 0 -> showW3SceneImage("/assets/Backgrounds/World3BG30.png");
+                case 1 -> {
+                    // BG31 for 2s then BG32, then type line 1
+                    showW3SceneImage("/assets/Backgrounds/World3BG31.png");
+                    idx[0]++;  // advance to 2 NOW before the delay
+                    delay(2000, () -> {
+                        showW3SceneImage("/assets/Backgrounds/World3BG32.png");
+                        typeKhaiLine(1, typeNext[0]);  // hardcode line 1
+                    });
+                    return;
+                }
+                case 2 -> showW3SceneImage("/assets/Backgrounds/World3BG33.png");
+                case 3 -> showW3SceneImage("/assets/Backgrounds/World3BG34.png");
+                case 4 -> showW3SceneImage("/assets/Backgrounds/World3BG35.png");
+                case 5 -> { /* BG35 stays */ }
+                case 6 -> showW3SceneImage("/assets/Backgrounds/World3BG36.png");
             }
 
-            int[] ci = {0};
-            if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
-            final Runnable next = typeNext[0];
-
-            w3TypingTimer = new Timer(35, e -> {
-                if (ci[0] < text.length()) {
-                    w3DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
-                } else {
-                    w3TypingTimer.stop();
-                    idx[0]++;
-                    w3ContinueBtn.setEnabled(true);
-
-                    for (ActionListener l : w3ContinueBtn.getActionListeners()) w3ContinueBtn.removeActionListener(l);
-                    w3ContinueBtn.addActionListener(ev -> {
-                        w3ContinueBtn.setEnabled(false);
-                        for (ActionListener l : w3ContinueBtn.getActionListeners()) w3ContinueBtn.removeActionListener(l);
-                        next.run();
-                    });
-                }
-            });
-            w3TypingTimer.start();
+            typeKhaiLine(idx[0]++, typeNext[0]);
         };
 
         typeNext[0].run();
+    }
+
+    private void showKhaiVictoryDialogue() {
+        cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
+        if (w3SceneBg != null) {
+            w3SceneBg.setBackground(Color.BLACK);
+            w3SceneBg.setOpaque(true);
+            w3SceneBg.repaint();
+        }
+        if (w3WorldLabel != null) w3WorldLabel.setVisible(false);
+        if (w3KhaiLabel != null) {
+            w3KhaiLabel.setIcon(null);
+            w3KhaiAlpha[0] = 0f;
+            w3KhaiLabel.putClientProperty("prevImage", null);
+            w3KhaiLabel.putClientProperty("prevAlpha", 0f);
+            w3KhaiLabel.repaint();
+        }
+
+        showW3SceneImage("/assets/Backgrounds/W3Epilogue1.png");
+        typeVictoryLine(0, () -> {
+            w3ContinueBtn.setEnabled(false);
+            String[] autoSeq = {
+                    "/assets/Backgrounds/W3Epilogue2.png",
+                    "/assets/Backgrounds/W3Epilogue3.png",
+                    "/assets/Backgrounds/W3Epilogue4.png",
+                    "/assets/Backgrounds/W3Epilogue5.png",
+                    "/assets/Backgrounds/W3Epilogue6.png",
+                    "/assets/Backgrounds/W3Epilogue7.png",
+                    "/assets/Backgrounds/W3Epilogue8.png",
+                    "/assets/Backgrounds/W3Epilogue9.png",
+                    "/assets/Backgrounds/W3Epilogue10.png",
+            };
+            final int[] si = {0};
+            Runnable[] stepSeq = {null};
+            stepSeq[0] = () -> {
+                if (si[0] < autoSeq.length) {
+                    showW3SceneImage(autoSeq[si[0]++]);
+                    delay(2000, stepSeq[0]);
+                } else {
+                    showW3SceneImage("/assets/Backgrounds/W3Epilogue11.png");
+                    w3DialogueBox.setText("");
+                    w3ContinueBtn.setEnabled(true);
+                    for (ActionListener l : w3ContinueBtn.getActionListeners())
+                        w3ContinueBtn.removeActionListener(l);
+                    w3ContinueBtn.addActionListener(new ActionListener() {
+                        @Override public void actionPerformed(ActionEvent e) {
+                            w3ContinueBtn.removeActionListener(this);
+                            w3ContinueBtn.setEnabled(false);
+                            showW3SceneImage("/assets/Backgrounds/W3Epilogue12.png");
+                            w3DialogueBox.setText("");
+                            w3ContinueBtn.setEnabled(true);
+                            for (ActionListener l2 : w3ContinueBtn.getActionListeners())
+                                w3ContinueBtn.removeActionListener(l2);
+                            w3ContinueBtn.addActionListener(new ActionListener() {
+                                @Override public void actionPerformed(ActionEvent e2) {
+                                    w3ContinueBtn.removeActionListener(this);
+                                    w3ContinueBtn.setEnabled(false);
+                                    typeVictoryLine(3, () ->
+                                            typeVictoryLine(4, () ->
+                                                    typeVictoryLine(5, () -> {
+                                                        w3ContinueBtn.setEnabled(false);
+                                                        showW3SceneImage("/assets/Backgrounds/W3Epilogue13.png");
+                                                        delay(2000, () -> {
+                                                            showW3SceneImage("/assets/Backgrounds/W3Epilogue14.png");
+                                                            typeVictoryLine(6, () -> System.exit(0));
+                                                        });
+                                                    })
+                                            )
+                                    );
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+            stepSeq[0].run();
+        });
+    }
+
+    private static final String[] KHAI_VICTORY_DIALOGUE = {
+            // index 0 — Epilogue1 shown immediately, then type this
+            "With your last strike, Khai staggers.\n" +
+                    "His form unravels into smoke and stars.",
+            // index 1 — Epilogue2→3→4→5→6→7→8→9→10 auto-sequence, then Epilogue11, then type this (no text, just continue trigger)
+            "",
+            // index 2 — Epilogue12 shown, then type this
+            "",
+            // index 3 — type this
+            "You jolt awake.\n" +
+                    "You're back in the lab. The CodeChum exam screen stares back at you.",
+            // index 4
+            "The timer blinks: 00:00:01.\n" +
+                    "The exam has already ended.",
+            // index 5
+            "You conquered a world, fought betrayal, toppled a king —\n" +
+                    "yet here, in reality, you didn't even answer a single problem.",
+            // index 6 — Epilogue13 2s → Epilogue14, then type this
+            "And for a split second, when you glance at your professor across the room...\n" +
+                    "you swear his eyes flash violet.",
+    };
+
+    /** Types one line of the Khai betrayal dialogue then enables the continue button. */
+    private void typeKhaiLine(int lineIdx, Runnable onContinue) {
+        typeFromArray(KHAI_BETRAYAL_DIALOGUE, lineIdx, onContinue);
+    }
+
+    private void typeVictoryLine(int lineIdx, Runnable onContinue) {
+        typeFromArray(KHAI_VICTORY_DIALOGUE, lineIdx, onContinue);
+    }
+
+    private void typeFromArray(String[] source, int lineIdx, Runnable onContinue) {
+        if (lineIdx >= source.length) return;
+        String text = source[lineIdx];
+        w3DialogueBox.setText("");
+        w3DialogueBox.setForeground(Color.WHITE);
+        try {
+            java.io.InputStream fs = getClass().getResourceAsStream("/assets/AssetFont/Pixelari.ttf");
+            if (fs != null) w3DialogueBox.setFont(Font.createFont(Font.TRUETYPE_FONT, fs).deriveFont(Font.BOLD, 19f));
+        } catch (Exception ignored) {}
+
+        // Special red shake for betrayal line index 6 only
+        if (source == KHAI_BETRAYAL_DIALOGUE && lineIdx == 6) {
+            w3DialogueBox.setForeground(Color.RED);
+            try { w3DialogueBox.setFont(w3DialogueBox.getFont().deriveFont(28f)); } catch (Exception ignored) {}
+            Point origin = getLocation();
+            Timer shakeTimer = new Timer(50, ev -> {
+                int dx = (Math.random() > 0.5 ? 5 : -5);
+                int dy = (Math.random() > 0.5 ? 5 : -5);
+                setLocation(origin.x + dx, origin.y + dy);
+            });
+            shakeTimer.start();
+            delay(1000, () -> { shakeTimer.stop(); setLocation(origin); });
+        }
+
+        int[] ci = {0};
+        if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+        final Runnable next = onContinue;
+        w3TypingTimer = new Timer(35, e -> {
+            if (ci[0] < text.length()) {
+                w3DialogueBox.append(String.valueOf(text.charAt(ci[0]++)));
+            } else {
+                w3TypingTimer.stop();
+                w3ContinueBtn.setEnabled(true);
+                for (ActionListener l : w3ContinueBtn.getActionListeners()) w3ContinueBtn.removeActionListener(l);
+                w3ContinueBtn.addActionListener(ev -> {
+                    w3ContinueBtn.setEnabled(false);
+                    for (ActionListener l : w3ContinueBtn.getActionListeners()) w3ContinueBtn.removeActionListener(l);
+                    if (next != null) next.run();
+                });
+            }
+        });
+        w3TypingTimer.start();
     }
 }

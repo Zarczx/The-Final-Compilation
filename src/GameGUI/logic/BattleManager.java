@@ -264,20 +264,26 @@ public class BattleManager {
 
     private String resolveEnemySkillName() {
         return switch (enemy.name) {
-            case "Rotfang Wolf"     -> "Savage Howl";
-            case "Shade Sprite"     -> "Trickster Strike";
-            case "Dreadbark Treant" -> "Root Snare";
-            case "Carrion Bat"      -> "Screech";
-            case "Plague Vermin"    -> "Plague Bite";
-            case "Forsaken Cultist" -> "Shadow Bolt";
-            case "Blight Hound"     -> "Corpse Explosion";
-            case "Ghoul Footman"    -> "Rotten Cleave";
-            case "The Hollow Stag"  -> rng.nextBoolean() ? "Deathly Charge"    : "Blackened Howl";
-            case "The Black Jailer" -> rng.nextBoolean() ? "Tormenting Lash"   : "Shackling Chains";
-            case "Luther Von"       -> switch (rng.nextInt(3)) {
+            case "Rotfang Wolf"        -> "Savage Howl";
+            case "Shade Sprite"        -> "Trickster Strike";
+            case "Dreadbark Treant"    -> "Root Snare";
+            case "Carrion Bat"         -> "Screech";
+            case "Plague Vermin"       -> "Plague Bite";
+            case "Forsaken Cultist"    -> "Shadow Bolt";
+            case "Blight Hound"        -> "Corpse Explosion";
+            case "Ghoul Footman"       -> "Rotten Cleave";
+            case "The Hollow Stag"     -> rng.nextBoolean() ? "Deathly Charge"  : "Blackened Howl";
+            case "The Black Jailer"    -> rng.nextBoolean() ? "Tormenting Lash" : "Shackling Chains";
+            case "Luther Von"          -> switch (rng.nextInt(3)) {
                 case 0  -> "Crown of Despair";
                 case 1  -> "Dark Ascension";
                 default -> "Kings Wrath";
+            };
+            case "Zyrryl"              -> rng.nextBoolean() ? "Great Cleaver" : "Bone Shield";
+            case "Khai the Necromancer" -> switch (rng.nextInt(3)) {
+                case 0  -> "Soul Drain";
+                case 1  -> "Encapsulation";
+                default -> "Dark Ascension";
             };
             default -> "Attack";
         };

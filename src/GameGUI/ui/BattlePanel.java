@@ -53,6 +53,7 @@ public class BattlePanel extends JPanel {
     private static final int ETERNAL_CROSS_FRAME_COUNT = 8;
     private static final int KAEL_HURT_FRAME_COUNT = 2;
 
+
     private static final int SPRITE_W = 80;
     private static final int SPRITE_H = 64;
     private static final double SPRITE_SCALE = 1.5;
@@ -71,6 +72,25 @@ public class BattlePanel extends JPanel {
     private boolean isPlayingPiercingSlash = false;
     private boolean isPlayingEternalCross = false;
     private boolean isPlayingKaelHurt = false;
+
+    // Karl sprite constants
+    private static final double KARL_SPRITE_SCALE = 1.5; // tune this value down, e.g. 1.2
+    private static final int KARL_IDLE_FRAME_COUNT = 8;
+    private static final int KARL_HURT_FRAME_COUNT = 8;
+    private static final int KARL_PIERCING_SHOT_FRAME_COUNT = 8; // adjust to actual frame count
+    private static final int KARL_BULLSEYE_FRAME_COUNT = 8;
+    private static final int KARL_RAIN_FRAME_COUNT = 8;
+
+    private BufferedImage[] karlIdleFrames;
+    private BufferedImage[] karlHurtFrames;
+    private BufferedImage[] karlPiercingShotFrames;
+    private BufferedImage[] karlBullseyeFrames;
+    private BufferedImage[] karlRainFrames;
+
+    private boolean isPlayingKarlHurt = false;
+    private boolean isPlayingKarlPiercingShot = false;
+    private boolean isPlayingKarlBullseye = false;
+    private boolean isPlayingKarlRain = false;
 
     // ════════════════════════════════════════════
     // ★ ENEMY SPRITE FIELDS
@@ -325,6 +345,141 @@ public class BattlePanel extends JPanel {
     private boolean isPlayingLutherVonAscension  = false;
     private boolean isPlayingLutherVonWrath      = false;
 
+    // Flame Revenant
+    private static final int FLAME_REVENANT_IDLE_FRAME_COUNT     = 4;
+    private static final int FLAME_REVENANT_HURT_FRAME_COUNT     = 4;
+    private static final int FLAME_REVENANT_ATTACK_FRAME_COUNT   = 4;
+    private static final int FLAME_REVENANT_ENTRANCE_FRAME_COUNT = 4;
+    private static final int FLAME_REVENANT_SPEED                = 200;
+    private static final int FLAME_REVENANT_ENTRANCE_START_X     = 1300;
+    private static final int FLAME_REVENANT_X                    = ENEMY_X;
+    private static final int FLAME_REVENANT_Y                    = ENEMY_Y - 100;
+    private static final double FLAME_REVENANT_SCALE             = 1.5;
+
+    private BufferedImage[] flameRevenantIdleFrames;
+    private BufferedImage[] flameRevenantHurtFrames;
+    private BufferedImage[] flameRevenantAttackFrames;
+    private BufferedImage[] flameRevenantEntranceFrames;
+
+    private boolean isPlayingFlameRevenantHurt     = false;
+    private boolean isPlayingFlameRevenantAttack   = false;
+    private boolean isPlayingFlameRevenantDefeat   = false;
+    private boolean isPlayingFlameRevenantEntrance = false;
+
+    // Bone Warlock
+    private static final int BONE_WARLOCK_IDLE_FRAME_COUNT     = 4;
+    private static final int BONE_WARLOCK_HURT_FRAME_COUNT     = 4;
+    private static final int BONE_WARLOCK_ATTACK_FRAME_COUNT   = 4;
+    private static final int BONE_WARLOCK_ENTRANCE_FRAME_COUNT = 4;
+    private static final int BONE_WARLOCK_SPEED                = 200;
+    private static final int BONE_WARLOCK_ENTRANCE_START_X     = 1300;
+    private static final int BONE_WARLOCK_X                    = ENEMY_X - 30;
+    private static final int BONE_WARLOCK_Y                    = ENEMY_Y - 100;
+    private static final double BONE_WARLOCK_SCALE             = 1.5;
+
+    private BufferedImage[] boneWarlockIdleFrames;
+    private BufferedImage[] boneWarlockHurtFrames;
+    private BufferedImage[] boneWarlockAttackFrames;
+    private BufferedImage[] boneWarlockEntranceFrames;
+
+    private boolean isPlayingBoneWarlockHurt     = false;
+    private boolean isPlayingBoneWarlockAttack   = false;
+    private boolean isPlayingBoneWarlockDefeat   = false;
+    private boolean isPlayingBoneWarlockEntrance = false;
+
+    // Obsidian Crusher
+    private static final int OBSIDIAN_CRUSHER_IDLE_FRAME_COUNT     = 4;
+    private static final int OBSIDIAN_CRUSHER_HURT_FRAME_COUNT     = 4;
+    private static final int OBSIDIAN_CRUSHER_ATTACK_FRAME_COUNT   = 4;
+    private static final int OBSIDIAN_CRUSHER_ENTRANCE_FRAME_COUNT = 4;
+    private static final int OBSIDIAN_CRUSHER_SPEED                = 200;
+    private static final int OBSIDIAN_CRUSHER_ENTRANCE_START_X     = 1300;
+    private static final int OBSIDIAN_CRUSHER_X                    = ENEMY_X;
+    private static final int OBSIDIAN_CRUSHER_Y                    = ENEMY_Y - 100;
+    private static final double OBSIDIAN_CRUSHER_SCALE             = 1.5;
+
+    private BufferedImage[] obsidianCrusherIdleFrames;
+    private BufferedImage[] obsidianCrusherHurtFrames;
+    private BufferedImage[] obsidianCrusherAttackFrames;
+    private BufferedImage[] obsidianCrusherEntranceFrames;
+
+    private boolean isPlayingObsidianCrusherHurt     = false;
+    private boolean isPlayingObsidianCrusherAttack   = false;
+    private boolean isPlayingObsidianCrusherDefeat   = false;
+    private boolean isPlayingObsidianCrusherEntrance = false;
+
+    // Soulflayer Gargoyle
+    private static final int SOULFLAYER_GARGOYLE_IDLE_FRAME_COUNT     = 4;
+    private static final int SOULFLAYER_GARGOYLE_HURT_FRAME_COUNT     = 4;
+    private static final int SOULFLAYER_GARGOYLE_ATTACK_FRAME_COUNT   = 4;
+    private static final int SOULFLAYER_GARGOYLE_ENTRANCE_FRAME_COUNT = 4;
+    private static final int SOULFLAYER_GARGOYLE_SPEED                = 200;
+    private static final int SOULFLAYER_GARGOYLE_ENTRANCE_START_X     = 1300;
+    private static final int SOULFLAYER_GARGOYLE_X                    = ENEMY_X;
+    private static final int SOULFLAYER_GARGOYLE_Y                    = ENEMY_Y - 260;
+    private static final double SOULFLAYER_GARGOYLE_SCALE             = 1.5;
+
+    private BufferedImage[] soulflayerGargoyleIdleFrames;
+    private BufferedImage[] soulflayerGargoyleHurtFrames;
+    private BufferedImage[] soulflayerGargoyleAttackFrames;
+    private BufferedImage[] soulflayerGargoyleEntranceFrames;
+
+    private boolean isPlayingSoulflayerGargoyleHurt     = false;
+    private boolean isPlayingSoulflayerGargoyleAttack   = false;
+    private boolean isPlayingSoulflayerGargoyleDefeat   = false;
+    private boolean isPlayingSoulflayerGargoyleEntrance = false;
+
+    // Zyrryl
+    private static final int ZYRRYL_IDLE_FRAME_COUNT      = 4;
+    private static final int ZYRRYL_HURT_FRAME_COUNT      = 4;
+    private static final int ZYRRYL_BONE_SHIELD_FRAME_COUNT = 4;
+    private static final int ZYRRYL_GREAT_CLEAVER_FRAME_COUNT = 4;
+    private static final int ZYRRYL_ENTRANCE_FRAME_COUNT  = 4;
+    private static final int ZYRRYL_SPEED                 = 200;
+    private static final int ZYRRYL_ENTRANCE_START_X      = 1300;
+    private static final int ZYRRYL_X                     = ENEMY_X;
+    private static final int ZYRRYL_Y                     = ENEMY_Y - 250;
+    private static final double ZYRRYL_SCALE              = 1.5;
+
+    private BufferedImage[] zyrrylIdleFrames;
+    private BufferedImage[] zyrrylHurtFrames;
+    private BufferedImage[] zyrrylBoneShieldFrames;
+    private BufferedImage[] zyrrylGreatCleaverFrames;
+    private BufferedImage[] zyrrylEntranceFrames;
+
+    private boolean isPlayingZyrrylHurt        = false;
+    private boolean isPlayingZyrrylBoneShield  = false;
+    private boolean isPlayingZyrrylGreatCleaver = false;
+    private boolean isPlayingZyrrylDefeat      = false;
+    private boolean isPlayingZyrrylEntrance    = false;
+
+    // Khai the Necromancer
+    private static final int KHAI_NECRO_IDLE_FRAME_COUNT      = 4;
+    private static final int KHAI_NECRO_HURT_FRAME_COUNT      = 4;
+    private static final int KHAI_NECRO_SOUL_DRAIN_FRAME_COUNT = 4;
+    private static final int KHAI_NECRO_ENCAPSULATION_FRAME_COUNT = 4;
+    private static final int KHAI_NECRO_DARK_ASCENSION_FRAME_COUNT = 4;
+    private static final int KHAI_NECRO_ENTRANCE_FRAME_COUNT  = 4;
+    private static final int KHAI_NECRO_SPEED                 = 200;
+    private static final int KHAI_NECRO_ENTRANCE_START_X      = 1300;
+    private static final int KHAI_NECRO_X                     = ENEMY_X;
+    private static final int KHAI_NECRO_Y                     = ENEMY_Y - 130;
+    private static final double KHAI_NECRO_SCALE              = 1.0;
+
+    private BufferedImage[] khaiNecroIdleFrames;
+    private BufferedImage[] khaiNecroHurtFrames;
+    private BufferedImage[] khaiNecroSoulDrainFrames;
+    private BufferedImage[] khaiNecroEncapsulationFrames;
+    private BufferedImage[] khaiNecroDarkAscensionFrames;
+    private BufferedImage[] khaiNecroEntranceFrames;
+
+    private boolean isPlayingKhaiNecroHurt          = false;
+    private boolean isPlayingKhaiNecroSoulDrain     = false;
+    private boolean isPlayingKhaiNecroEncapsulation = false;
+    private boolean isPlayingKhaiNecroDarkAscension = false;
+    private boolean isPlayingKhaiNecroDefeat        = false;
+    private boolean isPlayingKhaiNecroEntrance      = false;
+
     // ════════════════════════════════════════════
     // ★ POSITION CONSTANTS
     // ════════════════════════════════════════════
@@ -431,10 +586,7 @@ public class BattlePanel extends JPanel {
     }
 
     public void startEnemySequence(HeroDefinition hero, List<EnemyDefinition> sequence, Runnable onComplete) {
-        if (sequence == GameGUI.model.entity.HeroData.WORLD1_ENEMIES) {
-            this.currentHero = null;
-        }
-
+        System.out.println(">>> BattlePanel heroDef set to: " + (hero != null ? hero.name : "null")); // debug
         this.heroDef = hero;
         this.enemySequence = new ArrayList<>(sequence);
         this.enemySequenceIndex = 0;
@@ -452,16 +604,23 @@ public class BattlePanel extends JPanel {
         EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
         this.enemyDef = eDef;
 
-        // Right after:  this.enemyDef = eDef;
+        // Right after: this.enemyDef = eDef;
 
-        if (isWorld2Battle) {
+        if (eDef.name.equals("Khai the Gray")) {
+            setBattleBackground("/assets/Backgrounds/NecroBackground.png");
+        } else if (isWorld2Battle) {
             String bg = switch (eDef.name) {
                 case "Plague Vermin"     -> "/assets/Backgrounds/World2BattleBackground.png";
                 case "Forsaken Cultist"  -> "/assets/Backgrounds/World2BattleBackground2.png";
                 case "Blight Hound"      -> "/assets/Backgrounds/World2BattleBackground3.png";
                 case "Ghoul Footman"     -> "/assets/Backgrounds/World2BattleBackground4.png";
                 case "The Black Jailer"  -> "/assets/Backgrounds/World2BattleBackground5.png";
-                case "Luther Von" -> "/assets/Backgrounds/World2BattleBackgroundLast.png";
+                case "Luther Von"        -> "/assets/Backgrounds/World2BattleBackgroundLast.png";
+                default -> currentBattleBgPath;
+            };
+            setBattleBackground(bg);
+        } else if (isWorld3Battle()) {
+            String bg = switch (eDef.name) {
                 default -> currentBattleBgPath;
             };
             setBattleBackground(bg);
@@ -792,10 +951,108 @@ public class BattlePanel extends JPanel {
         }
     }
 
+    // Raw frames (no black removal) for World 3
+    private BufferedImage[] idleFramesRaw;
+    private BufferedImage[] bladeRushFramesRaw;
+    private BufferedImage[] piercingSlashFramesRaw;
+    private BufferedImage[] eternalCrossFramesRaw;
+    private BufferedImage[] kaelHurtFramesRaw;
+
     // ════════════════════════════════════════════════════════════════════════
     // ★ SPRITE LOADERS
     // ════════════════════════════════════════════════════════════════════════
     private JLabel buildHeroSpriteLabel() {
+
+        // Kael Idle
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_FRAME_COUNT, fh = sheet.getHeight();
+                idleFrames    = new BufferedImage[SPRITE_FRAME_COUNT];
+                idleFramesRaw = new BufferedImage[SPRITE_FRAME_COUNT];
+                for (int i = 0; i < SPRITE_FRAME_COUNT; i++) {
+                    BufferedImage sub = sheet.getSubimage(i * fw, 0, fw, fh);
+                    idleFrames[i]    = removeBlackBg(sub);
+                    BufferedImage argb = new BufferedImage(sub.getWidth(), sub.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(sub, 0, 0, null);
+                    idleFramesRaw[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+// Kael BladeRush
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelBladeRush.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BLADE_RUSH_FRAME_COUNT, fh = sheet.getHeight();
+                bladeRushFrames    = new BufferedImage[BLADE_RUSH_FRAME_COUNT];
+                bladeRushFramesRaw = new BufferedImage[BLADE_RUSH_FRAME_COUNT];
+                for (int i = 0; i < BLADE_RUSH_FRAME_COUNT; i++) {
+                    BufferedImage sub = sheet.getSubimage(i * fw, 0, fw, fh);
+                    bladeRushFrames[i]    = removeBlackBg(sub);
+                    BufferedImage argb = new BufferedImage(sub.getWidth(), sub.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(sub, 0, 0, null);
+                    bladeRushFramesRaw[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+// Kael PiercingSlash
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelPiercingSlash.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / PIERCING_SLASH_FRAME_COUNT, fh = sheet.getHeight();
+                piercingSlashFrames    = new BufferedImage[PIERCING_SLASH_FRAME_COUNT];
+                piercingSlashFramesRaw = new BufferedImage[PIERCING_SLASH_FRAME_COUNT];
+                for (int i = 0; i < PIERCING_SLASH_FRAME_COUNT; i++) {
+                    BufferedImage sub = sheet.getSubimage(i * fw, 0, fw, fh);
+                    piercingSlashFrames[i]    = removeBlackBg(sub);
+                    BufferedImage argb = new BufferedImage(sub.getWidth(), sub.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(sub, 0, 0, null);
+                    piercingSlashFramesRaw[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+// Kael EternalCrossSlash
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelEternalCrossSlash.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ETERNAL_CROSS_FRAME_COUNT, fh = sheet.getHeight();
+                eternalCrossFrames    = new BufferedImage[ETERNAL_CROSS_FRAME_COUNT];
+                eternalCrossFramesRaw = new BufferedImage[ETERNAL_CROSS_FRAME_COUNT];
+                for (int i = 0; i < ETERNAL_CROSS_FRAME_COUNT; i++) {
+                    BufferedImage sub = sheet.getSubimage(i * fw, 0, fw, fh);
+                    eternalCrossFrames[i]    = removeBlackBg(sub);
+                    BufferedImage argb = new BufferedImage(sub.getWidth(), sub.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(sub, 0, 0, null);
+                    eternalCrossFramesRaw[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+// Kael Hurt
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KAEL_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                kaelHurtFrames    = new BufferedImage[KAEL_HURT_FRAME_COUNT];
+                kaelHurtFramesRaw = new BufferedImage[KAEL_HURT_FRAME_COUNT];
+                for (int i = 0; i < KAEL_HURT_FRAME_COUNT; i++) {
+                    BufferedImage sub = sheet.getSubimage(i * fw, 0, fw, fh);
+                    kaelHurtFrames[i]    = removeBlackBg(sub);
+                    BufferedImage argb = new BufferedImage(sub.getWidth(), sub.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(sub, 0, 0, null);
+                    kaelHurtFramesRaw[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
         try {
             java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelIdle.png");
             if (url != null) {
@@ -807,6 +1064,17 @@ public class BattlePanel extends JPanel {
             }
         } catch (Exception ex) {
         }
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SPRITE_FRAME_COUNT, fh = sheet.getHeight();
+                idleFrames = new BufferedImage[SPRITE_FRAME_COUNT];
+                for (int i = 0; i < SPRITE_FRAME_COUNT; i++)
+                    idleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
 
         try {
             java.net.URL url = getClass().getResource("/assets/KaelAssets/KaelBladeRush.png");
@@ -855,15 +1123,80 @@ public class BattlePanel extends JPanel {
             }
         } catch (Exception ex) {
         }
+        //for World3 Issue transparent being too aggresive causes pixel difflation in sprites
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KarlAssets/KarlIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KARL_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                karlIdleFrames = new BufferedImage[KARL_IDLE_FRAME_COUNT];
+                for (int i = 0; i < KARL_IDLE_FRAME_COUNT; i++)
+                    karlIdleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KarlAssets/KarlHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KARL_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                karlHurtFrames = new BufferedImage[KARL_HURT_FRAME_COUNT];
+                for (int i = 0; i < KARL_HURT_FRAME_COUNT; i++)
+                    karlHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KarlAssets/KarlPiercingShot.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KARL_PIERCING_SHOT_FRAME_COUNT, fh = sheet.getHeight();
+                karlPiercingShotFrames = new BufferedImage[KARL_PIERCING_SHOT_FRAME_COUNT];
+                for (int i = 0; i < KARL_PIERCING_SHOT_FRAME_COUNT; i++)
+                    karlPiercingShotFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KarlAssets/KarlBullseye.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KARL_BULLSEYE_FRAME_COUNT, fh = sheet.getHeight();
+                karlBullseyeFrames = new BufferedImage[KARL_BULLSEYE_FRAME_COUNT];
+                for (int i = 0; i < KARL_BULLSEYE_FRAME_COUNT; i++)
+                    karlBullseyeFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/KarlAssets/KarlRainOfaThousandArrows.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KARL_RAIN_FRAME_COUNT, fh = sheet.getHeight();
+                karlRainFrames = new BufferedImage[KARL_RAIN_FRAME_COUNT];
+                for (int i = 0; i < KARL_RAIN_FRAME_COUNT; i++)
+                    karlRainFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
 
         JLabel sprite = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
+                boolean isKarl = heroDef != null && heroDef.name.equals("Karl Clover Dior IV");
+                boolean useRaw = !isKarl && isWorld3Battle();
+
                 BufferedImage[] frames =
-                        isPlayingBladeRush ? bladeRushFrames :
-                                isPlayingPiercingSlash ? piercingSlashFrames :
-                                        isPlayingEternalCross ? eternalCrossFrames :
-                                                isPlayingKaelHurt ? kaelHurtFrames : idleFrames;
+                        isPlayingBladeRush       ? (useRaw ? bladeRushFramesRaw     : bladeRushFrames) :
+                                isPlayingPiercingSlash   ? (useRaw ? piercingSlashFramesRaw : piercingSlashFrames) :
+                                        isPlayingEternalCross    ? (useRaw ? eternalCrossFramesRaw  : eternalCrossFrames) :
+                                                isPlayingKaelHurt        ? (useRaw ? kaelHurtFramesRaw      : kaelHurtFrames) :
+                                                        isPlayingKarlPiercingShot ? karlPiercingShotFrames :
+                                                                isPlayingKarlBullseye    ? karlBullseyeFrames :
+                                                                        isPlayingKarlRain        ? karlRainFrames :
+                                                                                isPlayingKarlHurt        ? karlHurtFrames :
+                                                                                        isKarl                   ? karlIdleFrames :
+                                                                                                useRaw                   ? idleFramesRaw : idleFrames;
                 if (frames == null || heroSpriteFrame >= frames.length) return;
                 BufferedImage frame = frames[heroSpriteFrame];
                 if (frame == null) return;
@@ -896,11 +1229,23 @@ public class BattlePanel extends JPanel {
             }
         };
 
-        int labelW = idleFrames != null ? (int) (idleFrames[0].getWidth() * SPRITE_SCALE) : SPRITE_W;
-        int labelH = idleFrames != null ? (int) (idleFrames[0].getHeight() * SPRITE_SCALE) : SPRITE_H;
+        int labelW = SPRITE_W;
+        int labelH = SPRITE_H;
+        if (idleFrames != null) {
+            labelW = Math.max(labelW, (int)(idleFrames[0].getWidth() * SPRITE_SCALE));
+            labelH = Math.max(labelH, (int)(idleFrames[0].getHeight() * SPRITE_SCALE));
+        }
+        if (karlIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(karlIdleFrames[0].getWidth() * KARL_SPRITE_SCALE));
+            labelH = Math.max(labelH, (int)(karlIdleFrames[0].getHeight() * KARL_SPRITE_SCALE));
+        }
         sprite.setBounds(IDLE_X, IDLE_Y, labelW, labelH);
-        sprite.setOpaque(false);
+
         return sprite;
+    }
+
+    private boolean isWorld3Battle() {
+        return currentBattleBgPath.contains("World3BG");
     }
 
     private JLabel buildEnemySpriteLabel() {
@@ -1631,6 +1976,411 @@ public class BattlePanel extends JPanel {
             }
         } catch (Exception ex) {}
 
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/FlameRevenantIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FLAME_REVENANT_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                flameRevenantIdleFrames = new BufferedImage[FLAME_REVENANT_IDLE_FRAME_COUNT];
+                for (int i = 0; i < FLAME_REVENANT_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    flameRevenantIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/FlameRevenantHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FLAME_REVENANT_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                flameRevenantHurtFrames = new BufferedImage[FLAME_REVENANT_HURT_FRAME_COUNT];
+                for (int i = 0; i < FLAME_REVENANT_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    flameRevenantHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/FlameRevenantEmberBurst.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FLAME_REVENANT_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                flameRevenantAttackFrames = new BufferedImage[FLAME_REVENANT_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < FLAME_REVENANT_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    flameRevenantAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/FlameRevenantWalk.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / FLAME_REVENANT_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                flameRevenantEntranceFrames = new BufferedImage[FLAME_REVENANT_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < FLAME_REVENANT_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    flameRevenantEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/BoneWarlockIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BONE_WARLOCK_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                boneWarlockIdleFrames = new BufferedImage[BONE_WARLOCK_IDLE_FRAME_COUNT];
+                for (int i = 0; i < BONE_WARLOCK_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    boneWarlockIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/BoneWarlockHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BONE_WARLOCK_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                boneWarlockHurtFrames = new BufferedImage[BONE_WARLOCK_HURT_FRAME_COUNT];
+                for (int i = 0; i < BONE_WARLOCK_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    boneWarlockHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/BoneWarlockMarrowBolt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BONE_WARLOCK_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                boneWarlockAttackFrames = new BufferedImage[BONE_WARLOCK_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < BONE_WARLOCK_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    boneWarlockAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/BoneWarlockWalk.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / BONE_WARLOCK_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                boneWarlockEntranceFrames = new BufferedImage[BONE_WARLOCK_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < BONE_WARLOCK_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    boneWarlockEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ObsidianCrusherIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / OBSIDIAN_CRUSHER_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                obsidianCrusherIdleFrames = new BufferedImage[OBSIDIAN_CRUSHER_IDLE_FRAME_COUNT];
+                for (int i = 0; i < OBSIDIAN_CRUSHER_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    obsidianCrusherIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ObsidianCrusherHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / OBSIDIAN_CRUSHER_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                obsidianCrusherHurtFrames = new BufferedImage[OBSIDIAN_CRUSHER_HURT_FRAME_COUNT];
+                for (int i = 0; i < OBSIDIAN_CRUSHER_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    obsidianCrusherHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ObsidianCrusherMagmaSlam.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / OBSIDIAN_CRUSHER_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                obsidianCrusherAttackFrames = new BufferedImage[OBSIDIAN_CRUSHER_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < OBSIDIAN_CRUSHER_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    obsidianCrusherAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ObsidianCrusherWalk.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / OBSIDIAN_CRUSHER_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                obsidianCrusherEntranceFrames = new BufferedImage[OBSIDIAN_CRUSHER_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < OBSIDIAN_CRUSHER_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    obsidianCrusherEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/SoulFlayerGargoyleIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SOULFLAYER_GARGOYLE_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                soulflayerGargoyleIdleFrames = new BufferedImage[SOULFLAYER_GARGOYLE_IDLE_FRAME_COUNT];
+                for (int i = 0; i < SOULFLAYER_GARGOYLE_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    soulflayerGargoyleIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/SoulFlayerGargoyleHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SOULFLAYER_GARGOYLE_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                soulflayerGargoyleHurtFrames = new BufferedImage[SOULFLAYER_GARGOYLE_HURT_FRAME_COUNT];
+                for (int i = 0; i < SOULFLAYER_GARGOYLE_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    soulflayerGargoyleHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/SoulFlayerGargoyleSoulScream.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SOULFLAYER_GARGOYLE_ATTACK_FRAME_COUNT, fh = sheet.getHeight();
+                soulflayerGargoyleAttackFrames = new BufferedImage[SOULFLAYER_GARGOYLE_ATTACK_FRAME_COUNT];
+                for (int i = 0; i < SOULFLAYER_GARGOYLE_ATTACK_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    soulflayerGargoyleAttackFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/SoulFlayerGargoyleWalk.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SOULFLAYER_GARGOYLE_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                soulflayerGargoyleEntranceFrames = new BufferedImage[SOULFLAYER_GARGOYLE_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < SOULFLAYER_GARGOYLE_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    soulflayerGargoyleEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ZyrrylIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ZYRRYL_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                zyrrylIdleFrames = new BufferedImage[ZYRRYL_IDLE_FRAME_COUNT];
+                for (int i = 0; i < ZYRRYL_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    zyrrylIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ZyrrylHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ZYRRYL_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                zyrrylHurtFrames = new BufferedImage[ZYRRYL_HURT_FRAME_COUNT];
+                for (int i = 0; i < ZYRRYL_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    zyrrylHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ZyrrylBoneShield.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ZYRRYL_BONE_SHIELD_FRAME_COUNT, fh = sheet.getHeight();
+                zyrrylBoneShieldFrames = new BufferedImage[ZYRRYL_BONE_SHIELD_FRAME_COUNT];
+                for (int i = 0; i < ZYRRYL_BONE_SHIELD_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    zyrrylBoneShieldFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ZyrrylGreatCleaver.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ZYRRYL_GREAT_CLEAVER_FRAME_COUNT, fh = sheet.getHeight();
+                zyrrylGreatCleaverFrames = new BufferedImage[ZYRRYL_GREAT_CLEAVER_FRAME_COUNT];
+                for (int i = 0; i < ZYRRYL_GREAT_CLEAVER_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    zyrrylGreatCleaverFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/World3EnemyAssets/ZyrrylWalk.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / ZYRRYL_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                zyrrylEntranceFrames = new BufferedImage[ZYRRYL_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < ZYRRYL_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    zyrrylEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/FinalBossAssets/KhaiIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KHAI_NECRO_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                khaiNecroIdleFrames = new BufferedImage[KHAI_NECRO_IDLE_FRAME_COUNT];
+                for (int i = 0; i < KHAI_NECRO_IDLE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    khaiNecroIdleFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/FinalBossAssets/KhaiHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KHAI_NECRO_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                khaiNecroHurtFrames = new BufferedImage[KHAI_NECRO_HURT_FRAME_COUNT];
+                for (int i = 0; i < KHAI_NECRO_HURT_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    khaiNecroHurtFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/FinalBossAssets/KhaiSoulDrain.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KHAI_NECRO_SOUL_DRAIN_FRAME_COUNT, fh = sheet.getHeight();
+                khaiNecroSoulDrainFrames = new BufferedImage[KHAI_NECRO_SOUL_DRAIN_FRAME_COUNT];
+                for (int i = 0; i < KHAI_NECRO_SOUL_DRAIN_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    khaiNecroSoulDrainFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/FinalBossAssets/KhaiEncapsulation.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KHAI_NECRO_ENCAPSULATION_FRAME_COUNT, fh = sheet.getHeight();
+                khaiNecroEncapsulationFrames = new BufferedImage[KHAI_NECRO_ENCAPSULATION_FRAME_COUNT];
+                for (int i = 0; i < KHAI_NECRO_ENCAPSULATION_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    khaiNecroEncapsulationFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/FinalBossAssets/KhaiDarkAscension.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KHAI_NECRO_DARK_ASCENSION_FRAME_COUNT, fh = sheet.getHeight();
+                khaiNecroDarkAscensionFrames = new BufferedImage[KHAI_NECRO_DARK_ASCENSION_FRAME_COUNT];
+                for (int i = 0; i < KHAI_NECRO_DARK_ASCENSION_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    khaiNecroDarkAscensionFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/FinalBossAssets/KhaiWalk.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / KHAI_NECRO_ENTRANCE_FRAME_COUNT, fh = sheet.getHeight();
+                khaiNecroEntranceFrames = new BufferedImage[KHAI_NECRO_ENTRANCE_FRAME_COUNT];
+                for (int i = 0; i < KHAI_NECRO_ENTRANCE_FRAME_COUNT; i++) {
+                    BufferedImage frame = sheet.getSubimage(i * fw, 0, fw, fh);
+                    BufferedImage argb = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    argb.getGraphics().drawImage(frame, 0, 0, null);
+                    khaiNecroEntranceFrames[i] = argb;
+                }
+            }
+        } catch (Exception ex) {}
+
         JLabel sprite = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -1687,6 +2437,34 @@ public class BattlePanel extends JPanel {
                 else if (isPlayingLutherVonWrath)     frames = lutherVonWrathFrames;
                 else if (isPlayingLutherVonDefeat)    frames = lutherVonDefeatedFrames;
                 else if (isPlayingLutherVonEntrance)  frames = lutherVonEntranceFrames;
+                else if (isPlayingFlameRevenantHurt)     frames = flameRevenantHurtFrames;
+                else if (isPlayingFlameRevenantAttack)   frames = flameRevenantAttackFrames;
+                else if (isPlayingFlameRevenantDefeat)   frames = flameRevenantHurtFrames;
+                else if (isPlayingFlameRevenantEntrance) frames = flameRevenantEntranceFrames;
+                else if (isPlayingBoneWarlockHurt)     frames = boneWarlockHurtFrames;
+                else if (isPlayingBoneWarlockAttack)   frames = boneWarlockAttackFrames;
+                else if (isPlayingBoneWarlockDefeat)   frames = boneWarlockHurtFrames;
+                else if (isPlayingBoneWarlockEntrance) frames = boneWarlockEntranceFrames;
+                else if (isPlayingObsidianCrusherHurt)     frames = obsidianCrusherHurtFrames;
+                else if (isPlayingObsidianCrusherAttack)   frames = obsidianCrusherAttackFrames;
+                else if (isPlayingObsidianCrusherDefeat)   frames = obsidianCrusherHurtFrames;
+                else if (isPlayingObsidianCrusherEntrance) frames = obsidianCrusherEntranceFrames;
+                else if (isPlayingSoulflayerGargoyleHurt)     frames = soulflayerGargoyleHurtFrames;
+                else if (isPlayingSoulflayerGargoyleAttack)   frames = soulflayerGargoyleAttackFrames;
+                else if (isPlayingSoulflayerGargoyleDefeat)   frames = soulflayerGargoyleHurtFrames;
+                else if (isPlayingSoulflayerGargoyleEntrance) frames = soulflayerGargoyleEntranceFrames;
+                else if (isPlayingZyrrylHurt)         frames = zyrrylHurtFrames;
+                else if (isPlayingZyrrylBoneShield)   frames = zyrrylBoneShieldFrames;
+                else if (isPlayingZyrrylGreatCleaver) frames = zyrrylGreatCleaverFrames;
+                else if (isPlayingZyrrylDefeat)       frames = zyrrylHurtFrames;
+                else if (isPlayingZyrrylEntrance)     frames = zyrrylEntranceFrames;
+                else if (isPlayingKhaiNecroHurt)          frames = khaiNecroHurtFrames;
+                else if (isPlayingKhaiNecroSoulDrain)     frames = khaiNecroSoulDrainFrames;
+                else if (isPlayingKhaiNecroEncapsulation) frames = khaiNecroEncapsulationFrames;
+                else if (isPlayingKhaiNecroDarkAscension) frames = khaiNecroDarkAscensionFrames;
+                else if (isPlayingKhaiNecroDefeat)        frames = khaiNecroHurtFrames;
+                else if (isPlayingKhaiNecroEntrance)      frames = khaiNecroEntranceFrames;
+                else if (isKhaiNecro())                   frames = khaiNecroIdleFrames;
                 else if (isStag)                            frames = stagIdleFrames;
                 else if (isStag)                   frames = stagIdleFrames;
                 else if (isTreant)                 frames = treantIdleFrames;
@@ -1697,6 +2475,11 @@ public class BattlePanel extends JPanel {
                 else if (isGhoulFootman())         frames = ghoulFootmanIdleFrames;
                 else if (isBlackJailer())          frames = blackJailerIdleFrames;
                 else if (isLutherVon())        frames = lutherVonIdleFrames;
+                else if (isFlameRevenant())        frames = flameRevenantIdleFrames;
+                else if (isBoneWarlock())    frames = boneWarlockIdleFrames;
+                else if (isObsidianCrusher())    frames = obsidianCrusherIdleFrames;
+                else if (isSoulflayerGargoyle()) frames = soulflayerGargoyleIdleFrames;
+                else if (isZyrryl()) frames = zyrrylIdleFrames;
                 else if (isShade)                  frames = spriteIdleFrames;
                 else                               frames = wolfIdleFrames;
 
@@ -1717,6 +2500,7 @@ public class BattlePanel extends JPanel {
                 boolean isBlackJailerEnemy = enemyDef != null && enemyDef.name.equals("The Black Jailer");
                 boolean isLutherVonEnemy = enemyDef != null && enemyDef.name.equals("Luther Von");
 
+
                 double scale = isTreantEntrance    ? TREANT_SCALE
                         : isTreantAttack       ? TREANT_ATTACK_SCALE
                         : isTreantEnemy        ? TREANT_IDLE_SCALE
@@ -1727,6 +2511,12 @@ public class BattlePanel extends JPanel {
                         : isGhoulFootmanEnemy  ? GHOUL_FOOTMAN_SCALE
                         : isBlackJailerEnemy   ? BLACK_JAILER_SCALE
                         : isLutherVonEnemy     ? LUTHER_VON_SCALE
+                        : isFlameRevenant()    ? FLAME_REVENANT_SCALE
+                        : isBoneWarlock()      ? BONE_WARLOCK_SCALE
+                        : isObsidianCrusher()    ? OBSIDIAN_CRUSHER_SCALE
+                        : isSoulflayerGargoyle() ? SOULFLAYER_GARGOYLE_SCALE
+                        : isZyrryl() ? ZYRRYL_SCALE
+                        : isKhaiNecro()        ? KHAI_NECRO_SCALE
                         : ENEMY_SCALE;
                 g2.drawImage(frame, 0, 0, (int) (frame.getWidth() * scale), (int) (frame.getHeight() * scale), null);
 
@@ -1780,6 +2570,30 @@ public class BattlePanel extends JPanel {
             labelW = Math.max(labelW, (int)(lutherVonIdleFrames[0].getWidth()  * LUTHER_VON_SCALE));
             labelH = Math.max(labelH, (int)(lutherVonIdleFrames[0].getHeight() * LUTHER_VON_SCALE));
         }
+        if (flameRevenantIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(flameRevenantIdleFrames[0].getWidth()  * FLAME_REVENANT_SCALE));
+            labelH = Math.max(labelH, (int)(flameRevenantIdleFrames[0].getHeight() * FLAME_REVENANT_SCALE));
+        }
+        if (boneWarlockIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(boneWarlockIdleFrames[0].getWidth()  * BONE_WARLOCK_SCALE));
+            labelH = Math.max(labelH, (int)(boneWarlockIdleFrames[0].getHeight() * BONE_WARLOCK_SCALE));
+        }
+        if (obsidianCrusherIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(obsidianCrusherIdleFrames[0].getWidth()  * OBSIDIAN_CRUSHER_SCALE));
+            labelH = Math.max(labelH, (int)(obsidianCrusherIdleFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE));
+        }
+        if (soulflayerGargoyleIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(soulflayerGargoyleIdleFrames[0].getWidth()  * SOULFLAYER_GARGOYLE_SCALE));
+            labelH = Math.max(labelH, (int)(soulflayerGargoyleIdleFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE));
+        }
+        if (zyrrylIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(zyrrylIdleFrames[0].getWidth()  * ZYRRYL_SCALE));
+            labelH = Math.max(labelH, (int)(zyrrylIdleFrames[0].getHeight() * ZYRRYL_SCALE));
+        }
+        if (khaiNecroIdleFrames != null) {
+            labelW = Math.max(labelW, (int)(khaiNecroIdleFrames[0].getWidth()  * KHAI_NECRO_SCALE));
+            labelH = Math.max(labelH, (int)(khaiNecroIdleFrames[0].getHeight() * KHAI_NECRO_SCALE));
+        }
 
         if (labelW == 0) labelW = SPRITE_W;
         if (labelH == 0) labelH = SPRITE_H;
@@ -1806,6 +2620,26 @@ public class BattlePanel extends JPanel {
         return out;
     }
 
+    private int getHeroIdleX() {
+        if (currentBattleBgPath.contains("World3BG21.5")) {
+            return IDLE_X - 30;
+        }
+        if (currentBattleBgPath.contains("World3BG15.5")) {
+            return IDLE_X + 100;
+        }
+        return IDLE_X;
+    }
+
+    private int getHeroActionX_W3() {
+        if (currentBattleBgPath.contains("World3BG21.5")) {
+            return ACTION_X_BASE - 30;
+        }
+        if (currentBattleBgPath.contains("World3BG15.5")) {
+            return ACTION_X_BASE + 100;
+        }
+        return ACTION_X_BASE;
+    }
+
     private int getHeroIdleY() {
         if (currentBattleBgPath.contains("ForsakenCultist") || currentBattleBgPath.contains("World2BattleBackground2")) {
             return IDLE_Y_W2 + 70;
@@ -1819,9 +2653,24 @@ public class BattlePanel extends JPanel {
         if (currentBattleBgPath.contains("World2BattleBackground5")) {
             return IDLE_Y_W2 + 160;
         }
-        if (currentBattleBgPath.contains("World2BattleBackgroundLast")) {  // ADD THIS
-            return IDLE_Y_W2 + 80;                                          // ADD THIS
-        }                                                                    // ADD THIS
+        if (currentBattleBgPath.contains("World2BattleBackgroundLast")) {
+            return IDLE_Y_W2 + 80;
+        }
+        if (currentBattleBgPath.contains("World3BG15.5")) {
+            return IDLE_Y + 80;
+        }
+        if (currentBattleBgPath.contains("World3BG21.5")) {
+            return IDLE_Y + 80;
+        }
+        if (currentBattleBgPath.contains("World3BG27")) {
+            return IDLE_Y - 100;
+        }
+        if (currentBattleBgPath.contains("World3BG30.5")) {
+            return IDLE_Y - 50;
+        }
+        if (currentBattleBgPath.contains("NecroBackground")){
+            return IDLE_Y + 80;
+        }
         return isWorld2Battle ? IDLE_Y_W2 : IDLE_Y;
     }
 
@@ -1838,10 +2687,29 @@ public class BattlePanel extends JPanel {
         if (currentBattleBgPath.contains("World2BattleBackground5")) {
             return ACTION_Y_W2 + 160;
         }
-        if (currentBattleBgPath.contains("World2BattleBackgroundLast")) {  // ADD THIS
-            return ACTION_Y_W2 + 80;                                        // ADD THIS
-        }                                                                    // ADD THIS
+        if (currentBattleBgPath.contains("World2BattleBackgroundLast")) {
+            return ACTION_Y_W2 + 80;
+        }
+        if (currentBattleBgPath.contains("World3BG15.5")) {
+            return ACTION_Y + 80;
+        }
+        if (currentBattleBgPath.contains("World3BG21.5")) {
+            return ACTION_Y + 80;
+        }
+        if (currentBattleBgPath.contains("World3BG27")) {
+            return ACTION_Y - 100;
+        }
+        if (currentBattleBgPath.contains("World3BG30.5")) {
+            return ACTION_Y - 50;
+        }
+        if (currentBattleBgPath.contains("NecroBackground")){
+            return ACTION_Y+ 80;
+        }
         return isWorld2Battle ? ACTION_Y_W2 : ACTION_Y;
+    }
+
+    private boolean isKarlHero() {
+        return heroDef != null && heroDef.name.equals("Karl Clover Dior IV");
     }
 
     //Enemy
@@ -1857,18 +2725,29 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     private void startHeroIdleAnimation() {
         if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
-        isPlayingBladeRush = false;
-        isPlayingPiercingSlash = false;
-        isPlayingEternalCross = false;
-        isPlayingKaelHurt = false;
+        isPlayingBladeRush = false; isPlayingPiercingSlash = false;
+        isPlayingEternalCross = false; isPlayingKaelHurt = false;
+        isPlayingKarlHurt = false; isPlayingKarlPiercingShot = false;
+        isPlayingKarlBullseye = false; isPlayingKarlRain = false;
         heroSpriteFrame = 0;
-        if (idleFrames != null) {
-            int w = (int) (idleFrames[0].getWidth() * SPRITE_SCALE);
-            int h = (int) (idleFrames[0].getHeight() * SPRITE_SCALE);
-            heroSpriteLabel.setBounds(IDLE_X, getHeroIdleY(), w, h);
+
+        boolean karl = isKarlHero();
+
+        // ★ DEBUG — remove these after fixing
+        System.out.println("Karl frames loaded: " + (karlIdleFrames != null));
+        System.out.println("isKarlHero: " + karl);
+        System.out.println("heroDef name: " + (heroDef != null ? heroDef.name : "null"));
+
+        BufferedImage[] heroIdle = karl ? karlIdleFrames : idleFrames;
+        int frameCount = karl ? KARL_IDLE_FRAME_COUNT : SPRITE_FRAME_COUNT;
+
+        if (heroIdle != null) {
+            int w = (int) (heroIdle[0].getWidth() * SPRITE_SCALE);
+            int h = (int) (heroIdle[0].getHeight() * SPRITE_SCALE);
+            heroSpriteLabel.setBounds(getHeroIdleX(), getHeroIdleY(), w, h);
         }
         heroIdleTimer = new javax.swing.Timer(220, e -> {
-            heroSpriteFrame = (heroSpriteFrame + 1) % SPRITE_FRAME_COUNT;
+            heroSpriteFrame = (heroSpriteFrame + 1) % frameCount;
             if (heroSpriteLabel != null) heroSpriteLabel.repaint();
         });
         heroIdleTimer.start();
@@ -1900,6 +2779,20 @@ public class BattlePanel extends JPanel {
         isPlayingLutherVonHurt = false; isPlayingLutherVonCrown = false;
         isPlayingLutherVonAscension = false; isPlayingLutherVonWrath = false;
         isPlayingLutherVonDefeat = false; isPlayingLutherVonEntrance = false;
+        isPlayingFlameRevenantHurt = false; isPlayingFlameRevenantAttack = false;
+        isPlayingFlameRevenantDefeat = false; isPlayingFlameRevenantEntrance = false;
+        isPlayingBoneWarlockHurt = false; isPlayingBoneWarlockAttack = false;
+        isPlayingBoneWarlockDefeat = false; isPlayingBoneWarlockEntrance = false;
+        isPlayingObsidianCrusherHurt = false; isPlayingObsidianCrusherAttack = false;
+        isPlayingObsidianCrusherDefeat = false; isPlayingObsidianCrusherEntrance = false;
+        isPlayingSoulflayerGargoyleHurt = false; isPlayingSoulflayerGargoyleAttack = false;
+        isPlayingSoulflayerGargoyleDefeat = false; isPlayingSoulflayerGargoyleEntrance = false;
+        isPlayingZyrrylHurt = false; isPlayingZyrrylBoneShield = false;
+        isPlayingZyrrylGreatCleaver = false; isPlayingZyrrylDefeat = false;
+        isPlayingZyrrylEntrance = false;
+        isPlayingKhaiNecroHurt = false; isPlayingKhaiNecroSoulDrain = false;
+        isPlayingKhaiNecroEncapsulation = false; isPlayingKhaiNecroDarkAscension = false;
+        isPlayingKhaiNecroDefeat = false; isPlayingKhaiNecroEntrance = false;
         enemySpriteFrame = 0;
 
         if (eDef.name.equals("Rotfang Wolf") && wolfIdleFrames != null) {
@@ -2012,6 +2905,66 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
+        }else if (eDef.name.equals("Flame Revenant") && flameRevenantIdleFrames != null) {
+            int w = (int) (flameRevenantIdleFrames[0].getWidth() * FLAME_REVENANT_SCALE);
+            int h = (int) (flameRevenantIdleFrames[0].getHeight() * FLAME_REVENANT_SCALE);
+            enemySpriteLabel.setBounds(FLAME_REVENANT_X, FLAME_REVENANT_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(FLAME_REVENANT_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % FLAME_REVENANT_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Bone Warlock") && boneWarlockIdleFrames != null) {
+            int w = (int) (boneWarlockIdleFrames[0].getWidth() * BONE_WARLOCK_SCALE);
+            int h = (int) (boneWarlockIdleFrames[0].getHeight() * BONE_WARLOCK_SCALE);
+            enemySpriteLabel.setBounds(BONE_WARLOCK_X, BONE_WARLOCK_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(BONE_WARLOCK_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % BONE_WARLOCK_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Obsidian Crusher") && obsidianCrusherIdleFrames != null) {
+            int w = (int) (obsidianCrusherIdleFrames[0].getWidth() * OBSIDIAN_CRUSHER_SCALE);
+            int h = (int) (obsidianCrusherIdleFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE);
+            enemySpriteLabel.setBounds(OBSIDIAN_CRUSHER_X, OBSIDIAN_CRUSHER_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(OBSIDIAN_CRUSHER_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % OBSIDIAN_CRUSHER_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Soulflayer Gargoyle") && soulflayerGargoyleIdleFrames != null) {
+            int w = (int) (soulflayerGargoyleIdleFrames[0].getWidth() * SOULFLAYER_GARGOYLE_SCALE);
+            int h = (int) (soulflayerGargoyleIdleFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE);
+            enemySpriteLabel.setBounds(SOULFLAYER_GARGOYLE_X, SOULFLAYER_GARGOYLE_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(SOULFLAYER_GARGOYLE_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % SOULFLAYER_GARGOYLE_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Zyrryl") && zyrrylIdleFrames != null) {
+            int w = (int) (zyrrylIdleFrames[0].getWidth() * ZYRRYL_SCALE);
+            int h = (int) (zyrrylIdleFrames[0].getHeight() * ZYRRYL_SCALE);
+            enemySpriteLabel.setBounds(ZYRRYL_X, ZYRRYL_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(ZYRRYL_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % ZYRRYL_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
+        } else if (eDef.name.equals("Khai the Necromancer") && khaiNecroIdleFrames != null) {
+            int w = (int)(khaiNecroIdleFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+            int h = (int)(khaiNecroIdleFrames[0].getHeight() * KHAI_NECRO_SCALE);
+            enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(KHAI_NECRO_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % KHAI_NECRO_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
         }else {
             enemySpriteLabel.setVisible(false);
         }
@@ -2032,6 +2985,12 @@ public class BattlePanel extends JPanel {
     private boolean isGhoulFootman() { return enemyDef != null && enemyDef.name.equals("Ghoul Footman"); }
     private boolean isBlackJailer() { return enemyDef != null && enemyDef.name.equals("The Black Jailer"); }
     private boolean isLutherVon() { return enemyDef != null && enemyDef.name.equals("Luther Von"); }
+    private boolean isFlameRevenant() { return enemyDef != null && enemyDef.name.equals("Flame Revenant"); }
+    private boolean isBoneWarlock() { return enemyDef != null && enemyDef.name.equals("Bone Warlock"); }
+    private boolean isObsidianCrusher() { return enemyDef != null && enemyDef.name.equals("Obsidian Crusher"); }
+    private boolean isSoulflayerGargoyle() { return enemyDef != null && enemyDef.name.equals("Soulflayer Gargoyle"); }
+    private boolean isZyrryl() { return enemyDef != null && enemyDef.name.equals("Zyrryl"); }
+    private boolean isKhaiNecro() { return enemyDef != null && enemyDef.name.equals("Khai the Necromancer"); }
 
 
     private boolean isStag() {
@@ -2049,6 +3008,12 @@ public class BattlePanel extends JPanel {
         else if (isGhoulFootman())     playGhoulFootmanHurtAnimation(onDone);
         else if (isBlackJailer())      playBlackJailerHurtAnimation(onDone);
         else if (isLutherVon())        playLutherVonHurtAnimation(onDone);
+        else if (isFlameRevenant())    playFlameRevenantHurtAnimation(onDone);
+        else if (isBoneWarlock())      playBoneWarlockHurtAnimation(onDone);
+        else if (isObsidianCrusher())    playObsidianCrusherHurtAnimation(onDone);
+        else if (isSoulflayerGargoyle()) playSoulflayerGargoyleHurtAnimation(onDone);
+        else if (isZyrryl()) playZyrrylHurtAnimation(onDone);
+        else if (isKhaiNecro()) playKhaiNecroHurtAnimation(onDone);
         else                           playWolfHurtAnimation(onDone);
     }
 
@@ -2064,6 +3029,10 @@ public class BattlePanel extends JPanel {
         else if (isBlightHound())        playBlightHoundAttackAnimation(onDone);
         else if (isShadeSprite())        playSpriteTricksterAnimation(onDone);
         else if (isGhoulFootman())       playGhoulFootmanAttackAnimation(onDone);
+        else if (isFlameRevenant())    playFlameRevenantAttackAnimation(onDone);
+        else if (isBoneWarlock())    playBoneWarlockAttackAnimation(onDone);
+        else if (isObsidianCrusher())    playObsidianCrusherAttackAnimation(onDone);
+        else if (isSoulflayerGargoyle()) playSoulflayerGargoyleAttackAnimation(onDone);
         else if (isBlackJailer()) {
             String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
             if ("Shackling Chains".equals(lastSkill)) playBlackJailerChainsAnimation(onDone);
@@ -2073,6 +3042,15 @@ public class BattlePanel extends JPanel {
             if ("Crown of Despair".equals(lastSkill))   playLutherVonCrownAnimation(onDone);
             else if ("Dark Ascension".equals(lastSkill)) playLutherVonAscensionAnimation(onDone);
             else                                          playLutherVonWrathAnimation(onDone);
+        } else if (isZyrryl()) {
+            String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
+            if ("Bone Shield".equals(lastSkill))    playZyrrylBoneShieldAnimation(onDone);
+            else                                     playZyrrylGreatCleaverAnimation(onDone);
+        }else if (isKhaiNecro()) {
+            String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
+            if ("Soul Drain".equals(lastSkill))      playKhaiNecroSoulDrainAnimation(onDone);
+            else if ("Encapsulation".equals(lastSkill)) playKhaiNecroEncapsulationAnimation(onDone);
+            else                                      playKhaiNecroDarkAscensionAnimation(onDone);
         }
         else                             playWolfSavageHowlAnimation(onDone);
     }
@@ -2088,6 +3066,12 @@ public class BattlePanel extends JPanel {
         else if (isShadeSprite())      playSpriteDefeatAnimation(onDone);
         else if (isBlackJailer())      playBlackJailerDefeatAnimation(onDone);
         else if (isLutherVon())        playLutherVonDefeatAnimation(onDone);
+        else if (isFlameRevenant())    playFlameRevenantDefeatAnimation(onDone);
+        else if (isBoneWarlock())    playBoneWarlockDefeatAnimation(onDone);
+        else if (isObsidianCrusher())    playObsidianCrusherDefeatAnimation(onDone);
+        else if (isSoulflayerGargoyle()) playSoulflayerGargoyleDefeatAnimation(onDone);
+        else if (isZyrryl()) playZyrrylDefeatAnimation(onDone);
+        else if (isKhaiNecro()) playKhaiNecroDefeatAnimation(onDone);
         else                           playWolfDefeatAnimation(onDone);
     }
 
@@ -2102,6 +3086,12 @@ public class BattlePanel extends JPanel {
         else if (isBlackJailer())      playBlackJailerEntranceAnimation(onDone);
         else if (isShadeSprite())      playSpriteEntranceAnimation(onDone);
         else if (isLutherVon())        playLutherVonEntranceAnimation(onDone);
+        else if (isFlameRevenant())    playFlameRevenantEntranceAnimation(onDone);
+        else if (isBoneWarlock())    playBoneWarlockEntranceAnimation(onDone);
+        else if (isObsidianCrusher())    playObsidianCrusherEntranceAnimation(onDone);
+        else if (isSoulflayerGargoyle()) playSoulflayerGargoyleEntranceAnimation(onDone);
+        else if (isZyrryl()) playZyrrylEntranceAnimation(onDone);
+        else if (isKhaiNecro()) playKhaiNecroEntranceAnimation(onDone);
         else                           playWolfEntranceAnimation(onDone);
     }
 
@@ -3203,8 +4193,484 @@ public class BattlePanel extends JPanel {
         t.start();
     }
 
+    private void playFlameRevenantEntranceAnimation(Runnable onDone) {
+        if (flameRevenantEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingFlameRevenantEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(flameRevenantEntranceFrames[0].getWidth()  * FLAME_REVENANT_SCALE);
+        int h = (int)(flameRevenantEntranceFrames[0].getHeight() * FLAME_REVENANT_SCALE);
+        enemySpriteLabel.setBounds(FLAME_REVENANT_ENTRANCE_START_X, FLAME_REVENANT_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(FLAME_REVENANT_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % FLAME_REVENANT_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {FLAME_REVENANT_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= FLAME_REVENANT_X) {
+                enemySpriteLabel.setLocation(FLAME_REVENANT_X, FLAME_REVENANT_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingFlameRevenantEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], FLAME_REVENANT_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playFlameRevenantHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (flameRevenantHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingFlameRevenantHurt = true; enemySpriteFrame = 0;
+        int w = (int)(flameRevenantHurtFrames[0].getWidth()  * FLAME_REVENANT_SCALE);
+        int h = (int)(flameRevenantHurtFrames[0].getHeight() * FLAME_REVENANT_SCALE);
+        enemySpriteLabel.setBounds(FLAME_REVENANT_X, FLAME_REVENANT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < FLAME_REVENANT_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingFlameRevenantHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playFlameRevenantAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (flameRevenantAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingFlameRevenantAttack = true; enemySpriteFrame = 0;
+        int w = (int)(flameRevenantAttackFrames[0].getWidth()  * FLAME_REVENANT_SCALE);
+        int h = (int)(flameRevenantAttackFrames[0].getHeight() * FLAME_REVENANT_SCALE);
+        enemySpriteLabel.setBounds(FLAME_REVENANT_X, FLAME_REVENANT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < FLAME_REVENANT_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingFlameRevenantAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playFlameRevenantDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (flameRevenantHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingFlameRevenantDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(flameRevenantHurtFrames[0].getWidth()  * FLAME_REVENANT_SCALE);
+        int h = (int)(flameRevenantHurtFrames[0].getHeight() * FLAME_REVENANT_SCALE);
+        enemySpriteLabel.setBounds(FLAME_REVENANT_X, FLAME_REVENANT_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < FLAME_REVENANT_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingFlameRevenantDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playBoneWarlockEntranceAnimation(Runnable onDone) {
+        if (boneWarlockEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingBoneWarlockEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(boneWarlockEntranceFrames[0].getWidth()  * BONE_WARLOCK_SCALE);
+        int h = (int)(boneWarlockEntranceFrames[0].getHeight() * BONE_WARLOCK_SCALE);
+        enemySpriteLabel.setBounds(BONE_WARLOCK_ENTRANCE_START_X, BONE_WARLOCK_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(BONE_WARLOCK_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % BONE_WARLOCK_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {BONE_WARLOCK_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= BONE_WARLOCK_X) {
+                enemySpriteLabel.setLocation(BONE_WARLOCK_X, BONE_WARLOCK_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingBoneWarlockEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], BONE_WARLOCK_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playBoneWarlockHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (boneWarlockHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBoneWarlockHurt = true; enemySpriteFrame = 0;
+        int w = (int)(boneWarlockHurtFrames[0].getWidth()  * BONE_WARLOCK_SCALE);
+        int h = (int)(boneWarlockHurtFrames[0].getHeight() * BONE_WARLOCK_SCALE);
+        enemySpriteLabel.setBounds(BONE_WARLOCK_X, BONE_WARLOCK_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BONE_WARLOCK_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBoneWarlockHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBoneWarlockAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (boneWarlockAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingBoneWarlockAttack = true; enemySpriteFrame = 0;
+        int w = (int)(boneWarlockAttackFrames[0].getWidth()  * BONE_WARLOCK_SCALE);
+        int h = (int)(boneWarlockAttackFrames[0].getHeight() * BONE_WARLOCK_SCALE);
+        enemySpriteLabel.setBounds(BONE_WARLOCK_X, BONE_WARLOCK_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < BONE_WARLOCK_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingBoneWarlockAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playBoneWarlockDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (boneWarlockHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingBoneWarlockDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(boneWarlockHurtFrames[0].getWidth()  * BONE_WARLOCK_SCALE);
+        int h = (int)(boneWarlockHurtFrames[0].getHeight() * BONE_WARLOCK_SCALE);
+        enemySpriteLabel.setBounds(BONE_WARLOCK_X, BONE_WARLOCK_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < BONE_WARLOCK_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingBoneWarlockDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playObsidianCrusherEntranceAnimation(Runnable onDone) {
+        if (obsidianCrusherEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingObsidianCrusherEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(obsidianCrusherEntranceFrames[0].getWidth()  * OBSIDIAN_CRUSHER_SCALE);
+        int h = (int)(obsidianCrusherEntranceFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE);
+        enemySpriteLabel.setBounds(OBSIDIAN_CRUSHER_ENTRANCE_START_X, OBSIDIAN_CRUSHER_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(OBSIDIAN_CRUSHER_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % OBSIDIAN_CRUSHER_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {OBSIDIAN_CRUSHER_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= OBSIDIAN_CRUSHER_X) {
+                enemySpriteLabel.setLocation(OBSIDIAN_CRUSHER_X, OBSIDIAN_CRUSHER_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingObsidianCrusherEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], OBSIDIAN_CRUSHER_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playObsidianCrusherHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (obsidianCrusherHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingObsidianCrusherHurt = true; enemySpriteFrame = 0;
+        int w = (int)(obsidianCrusherHurtFrames[0].getWidth()  * OBSIDIAN_CRUSHER_SCALE);
+        int h = (int)(obsidianCrusherHurtFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE);
+        enemySpriteLabel.setBounds(OBSIDIAN_CRUSHER_X, OBSIDIAN_CRUSHER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < OBSIDIAN_CRUSHER_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingObsidianCrusherHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playObsidianCrusherAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (obsidianCrusherAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingObsidianCrusherAttack = true; enemySpriteFrame = 0;
+        int w = (int)(obsidianCrusherAttackFrames[0].getWidth()  * OBSIDIAN_CRUSHER_SCALE);
+        int h = (int)(obsidianCrusherAttackFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE);
+        enemySpriteLabel.setBounds(OBSIDIAN_CRUSHER_X, OBSIDIAN_CRUSHER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < OBSIDIAN_CRUSHER_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingObsidianCrusherAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playObsidianCrusherDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (obsidianCrusherHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingObsidianCrusherDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(obsidianCrusherHurtFrames[0].getWidth()  * OBSIDIAN_CRUSHER_SCALE);
+        int h = (int)(obsidianCrusherHurtFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE);
+        enemySpriteLabel.setBounds(OBSIDIAN_CRUSHER_X, OBSIDIAN_CRUSHER_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < OBSIDIAN_CRUSHER_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingObsidianCrusherDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playSoulflayerGargoyleEntranceAnimation(Runnable onDone) {
+        if (soulflayerGargoyleEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingSoulflayerGargoyleEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(soulflayerGargoyleEntranceFrames[0].getWidth()  * SOULFLAYER_GARGOYLE_SCALE);
+        int h = (int)(soulflayerGargoyleEntranceFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE);
+        enemySpriteLabel.setBounds(SOULFLAYER_GARGOYLE_ENTRANCE_START_X, SOULFLAYER_GARGOYLE_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(SOULFLAYER_GARGOYLE_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % SOULFLAYER_GARGOYLE_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {SOULFLAYER_GARGOYLE_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= SOULFLAYER_GARGOYLE_X) {
+                enemySpriteLabel.setLocation(SOULFLAYER_GARGOYLE_X, SOULFLAYER_GARGOYLE_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingSoulflayerGargoyleEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], SOULFLAYER_GARGOYLE_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playSoulflayerGargoyleHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (soulflayerGargoyleHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingSoulflayerGargoyleHurt = true; enemySpriteFrame = 0;
+        int w = (int)(soulflayerGargoyleHurtFrames[0].getWidth()  * SOULFLAYER_GARGOYLE_SCALE);
+        int h = (int)(soulflayerGargoyleHurtFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE);
+        enemySpriteLabel.setBounds(SOULFLAYER_GARGOYLE_X, SOULFLAYER_GARGOYLE_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < SOULFLAYER_GARGOYLE_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSoulflayerGargoyleHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playSoulflayerGargoyleAttackAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (soulflayerGargoyleAttackFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingSoulflayerGargoyleAttack = true; enemySpriteFrame = 0;
+        int w = (int)(soulflayerGargoyleAttackFrames[0].getWidth()  * SOULFLAYER_GARGOYLE_SCALE);
+        int h = (int)(soulflayerGargoyleAttackFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE);
+        enemySpriteLabel.setBounds(SOULFLAYER_GARGOYLE_X, SOULFLAYER_GARGOYLE_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < SOULFLAYER_GARGOYLE_ATTACK_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSoulflayerGargoyleAttack = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playSoulflayerGargoyleDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (soulflayerGargoyleHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingSoulflayerGargoyleDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(soulflayerGargoyleHurtFrames[0].getWidth()  * SOULFLAYER_GARGOYLE_SCALE);
+        int h = (int)(soulflayerGargoyleHurtFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE);
+        enemySpriteLabel.setBounds(SOULFLAYER_GARGOYLE_X, SOULFLAYER_GARGOYLE_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < SOULFLAYER_GARGOYLE_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingSoulflayerGargoyleDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playZyrrylEntranceAnimation(Runnable onDone) {
+        if (zyrrylEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingZyrrylEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(zyrrylEntranceFrames[0].getWidth()  * ZYRRYL_SCALE);
+        int h = (int)(zyrrylEntranceFrames[0].getHeight() * ZYRRYL_SCALE);
+        enemySpriteLabel.setBounds(ZYRRYL_ENTRANCE_START_X, ZYRRYL_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(ZYRRYL_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % ZYRRYL_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {ZYRRYL_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= ZYRRYL_X) {
+                enemySpriteLabel.setLocation(ZYRRYL_X, ZYRRYL_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingZyrrylEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], ZYRRYL_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playZyrrylHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (zyrrylHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingZyrrylHurt = true; enemySpriteFrame = 0;
+        int w = (int)(zyrrylHurtFrames[0].getWidth()  * ZYRRYL_SCALE);
+        int h = (int)(zyrrylHurtFrames[0].getHeight() * ZYRRYL_SCALE);
+        enemySpriteLabel.setBounds(ZYRRYL_X, ZYRRYL_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < ZYRRYL_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingZyrrylHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playZyrrylBoneShieldAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (zyrrylBoneShieldFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingZyrrylBoneShield = true; enemySpriteFrame = 0;
+        int w = (int)(zyrrylBoneShieldFrames[0].getWidth()  * ZYRRYL_SCALE);
+        int h = (int)(zyrrylBoneShieldFrames[0].getHeight() * ZYRRYL_SCALE);
+        enemySpriteLabel.setBounds(ZYRRYL_X, ZYRRYL_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < ZYRRYL_BONE_SHIELD_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingZyrrylBoneShield = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playZyrrylGreatCleaverAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (zyrrylGreatCleaverFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingZyrrylGreatCleaver = true; enemySpriteFrame = 0;
+        int w = (int)(zyrrylGreatCleaverFrames[0].getWidth()  * ZYRRYL_SCALE);
+        int h = (int)(zyrrylGreatCleaverFrames[0].getHeight() * ZYRRYL_SCALE);
+        enemySpriteLabel.setBounds(ZYRRYL_X, ZYRRYL_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < ZYRRYL_GREAT_CLEAVER_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingZyrrylGreatCleaver = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playZyrrylDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (zyrrylHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingZyrrylDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(zyrrylHurtFrames[0].getWidth()  * ZYRRYL_SCALE);
+        int h = (int)(zyrrylHurtFrames[0].getHeight() * ZYRRYL_SCALE);
+        enemySpriteLabel.setBounds(ZYRRYL_X, ZYRRYL_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < ZYRRYL_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingZyrrylDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
+    private void playKhaiNecroEntranceAnimation(Runnable onDone) {
+        if (khaiNecroEntranceFrames == null) { if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); return; }
+        isPlayingKhaiNecroEntrance = true; enemySpriteFrame = 0;
+        int w = (int)(khaiNecroEntranceFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+        int h = (int)(khaiNecroEntranceFrames[0].getHeight() * KHAI_NECRO_SCALE);
+        enemySpriteLabel.setBounds(KHAI_NECRO_ENTRANCE_START_X, KHAI_NECRO_Y, w, h);
+        enemySpriteLabel.setVisible(true); enemySpriteLabel.repaint();
+        javax.swing.Timer frameTimer = new javax.swing.Timer(KHAI_NECRO_SPEED, e -> {
+            enemySpriteFrame = (enemySpriteFrame + 1) % KHAI_NECRO_ENTRANCE_FRAME_COUNT;
+            enemySpriteLabel.repaint();
+        });
+        frameTimer.start();
+        int[] currentX = {KHAI_NECRO_ENTRANCE_START_X};
+        javax.swing.Timer slideTimer = new javax.swing.Timer(16, e -> {
+            currentX[0] -= 12;
+            if (currentX[0] <= KHAI_NECRO_X) {
+                enemySpriteLabel.setLocation(KHAI_NECRO_X, KHAI_NECRO_Y);
+                ((javax.swing.Timer)e.getSource()).stop(); frameTimer.stop();
+                isPlayingKhaiNecroEntrance = false;
+                if (enemyDef != null) startEnemyIdleAnimation(enemyDef);
+                if (onDone != null) onDone.run();
+            } else { enemySpriteLabel.setLocation(currentX[0], KHAI_NECRO_Y); }
+        });
+        slideTimer.start();
+    }
+
+    private void playKhaiNecroHurtAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (khaiNecroHurtFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingKhaiNecroHurt = true; enemySpriteFrame = 0;
+        int w = (int)(khaiNecroHurtFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+        int h = (int)(khaiNecroHurtFrames[0].getHeight() * KHAI_NECRO_SCALE);
+        enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < KHAI_NECRO_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKhaiNecroHurt = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playKhaiNecroSoulDrainAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (khaiNecroSoulDrainFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingKhaiNecroSoulDrain = true; enemySpriteFrame = 0;
+        int w = (int)(khaiNecroSoulDrainFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+        int h = (int)(khaiNecroSoulDrainFrames[0].getHeight() * KHAI_NECRO_SCALE);
+        enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < KHAI_NECRO_SOUL_DRAIN_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKhaiNecroSoulDrain = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playKhaiNecroEncapsulationAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (khaiNecroEncapsulationFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingKhaiNecroEncapsulation = true; enemySpriteFrame = 0;
+        int w = (int)(khaiNecroEncapsulationFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+        int h = (int)(khaiNecroEncapsulationFrames[0].getHeight() * KHAI_NECRO_SCALE);
+        enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < KHAI_NECRO_ENCAPSULATION_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKhaiNecroEncapsulation = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playKhaiNecroDarkAscensionAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (khaiNecroDarkAscensionFrames == null || !enemySpriteLabel.isVisible()) { if (onDone != null) onDone.run(); return; }
+        isPlayingKhaiNecroDarkAscension = true; enemySpriteFrame = 0;
+        int w = (int)(khaiNecroDarkAscensionFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+        int h = (int)(khaiNecroDarkAscensionFrames[0].getHeight() * KHAI_NECRO_SCALE);
+        enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(170, e -> {
+            if (frame[0] < KHAI_NECRO_DARK_ASCENSION_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKhaiNecroDarkAscension = false; if (enemyDef != null) startEnemyIdleAnimation(enemyDef); if (onDone != null) onDone.run(); }
+        });
+        t.start();
+    }
+
+    private void playKhaiNecroDefeatAnimation(Runnable onDone) {
+        if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
+        if (khaiNecroHurtFrames == null) { enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); return; }
+        isPlayingKhaiNecroDefeat = true; enemySpriteFrame = 0;
+        int w = (int)(khaiNecroHurtFrames[0].getWidth()  * KHAI_NECRO_SCALE);
+        int h = (int)(khaiNecroHurtFrames[0].getHeight() * KHAI_NECRO_SCALE);
+        enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h); enemySpriteLabel.repaint();
+        int[] frame = {0};
+        javax.swing.Timer t = new javax.swing.Timer(300, e -> {
+            if (frame[0] < KHAI_NECRO_HURT_FRAME_COUNT) { enemySpriteFrame = frame[0]++; enemySpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); delay(400, () -> { isPlayingKhaiNecroDefeat = false; enemySpriteLabel.setVisible(false); if (onDone != null) onDone.run(); }); }
+        });
+        t.start();
+    }
+
 
     // HERO ACTIONS
+    private void playHeroHurtAnimation(Runnable onDone) {
+        if (isKarlHero()) playKarlHurtAnimation(onDone);
+        else              playKaelHurtAnimation(onDone);
+    }
+
     private void playKaelHurtAnimation(Runnable onDone) {
         if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
         if (kaelHurtFrames == null) {
@@ -3216,7 +4682,7 @@ public class BattlePanel extends JPanel {
         heroSpriteFrame = 0;
         int w = (int) (kaelHurtFrames[0].getWidth() * SPRITE_SCALE);
         int h = (int) (kaelHurtFrames[0].getHeight() * SPRITE_SCALE);
-        heroSpriteLabel.setBounds(IDLE_X, getHeroIdleY(), w, h);
+        heroSpriteLabel.setBounds(getHeroIdleX(), getHeroIdleY(), w, h);
         heroSpriteLabel.repaint();
         int[] frame = {0};
         javax.swing.Timer t = new javax.swing.Timer(150, e -> {
@@ -3234,9 +4700,16 @@ public class BattlePanel extends JPanel {
     }
 
     private int getActionX(BufferedImage[] frames) {
-        int labelW = (int) (frames[0].getWidth() * SPRITE_SCALE);
-        int idleW = idleFrames != null ? (int) (idleFrames[0].getWidth() * SPRITE_SCALE) : SPRITE_W;
-        return ACTION_X_BASE - (labelW - idleW) / 2;
+        boolean karl = isKarlHero();
+        double scale = karl ? KARL_SPRITE_SCALE : SPRITE_SCALE;
+        int labelW = (int)(frames[0].getWidth() * scale);
+        BufferedImage[] idleRef = karl ? karlIdleFrames : idleFrames;
+        double idleScale = karl ? KARL_SPRITE_SCALE : SPRITE_SCALE;
+        int idleW = idleRef != null ? (int)(idleRef[0].getWidth() * idleScale) : SPRITE_W;
+        int baseX = (currentBattleBgPath.contains("World3BG15.5") || currentBattleBgPath.contains("World3BG21.5"))
+                ? ACTION_X_BASE + 100 : ACTION_X_BASE;
+        return baseX - (labelW - idleW) / 2;
+
     }
 
     private void playBladeRushAnimation(Runnable onDone) {
@@ -3330,6 +4803,66 @@ public class BattlePanel extends JPanel {
         t.start();
     }
 
+    private void playKarlHurtAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (karlHurtFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingKarlHurt = true; heroSpriteFrame = 0;
+        int w = (int)(karlHurtFrames[0].getWidth() * SPRITE_SCALE);
+        int h = (int)(karlHurtFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getHeroIdleX(), getHeroIdleY(), w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(150, e -> {
+            if (frame[0] < KARL_HURT_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKarlHurt = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
+    private void playKarlPiercingShotAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (karlPiercingShotFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingKarlPiercingShot = true; heroSpriteFrame = 0;
+        int w = (int)(karlPiercingShotFrames[0].getWidth() * SPRITE_SCALE);
+        int h = (int)(karlPiercingShotFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(karlPiercingShotFrames), getHeroActionY(), w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(130, e -> {
+            if (frame[0] < KARL_PIERCING_SHOT_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKarlPiercingShot = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
+    private void playKarlBullseyeAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (karlBullseyeFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingKarlBullseye = true; heroSpriteFrame = 0;
+        int w = (int)(karlBullseyeFrames[0].getWidth() * SPRITE_SCALE);
+        int h = (int)(karlBullseyeFrames[0].getHeight() * SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(karlBullseyeFrames), getHeroActionY(), w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(110, e -> {
+            if (frame[0] < KARL_BULLSEYE_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKarlBullseye = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
+    private void playKarlRainAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (karlRainFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingKarlRain = true; heroSpriteFrame = 0;
+        int w = (int)(karlRainFrames[0].getWidth() * KARL_SPRITE_SCALE);
+        int h = (int)(karlRainFrames[0].getHeight() * KARL_SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(karlRainFrames), getHeroActionY(), w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(130, e -> {
+            if (frame[0] < KARL_RAIN_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingKarlRain = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // ★ BATTLE LOGIC
     // ════════════════════════════════════════════════════════════════════════
@@ -3372,24 +4905,80 @@ public class BattlePanel extends JPanel {
             }
         };
 
-        if (action == BattleManager.BattleAction.SKILL1) playBladeRushAnimation(afterHeroAnim);
-        else if (action == BattleManager.BattleAction.SKILL2) playPiercingSlashAnimation(afterHeroAnim);
-        else if (action == BattleManager.BattleAction.ULTIMATE) playEternalCrossSlashAnimation(afterHeroAnim);
-        else {
-            // Skip turn / Defend
-            refreshBattleUI(); // Update immediately for skip turn
-            if (pResult != null) addLogFromResult(pResult, true);
-            if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
-                handleVictory();
-                animating = false;
-                return;
+        if (isKarlHero()) {
+            if (action == BattleManager.BattleAction.SKILL1)        playKarlPiercingShotAnimation(afterHeroAnim);
+            else if (action == BattleManager.BattleAction.SKILL2)   playKarlBullseyeAnimation(afterHeroAnim);
+            else if (action == BattleManager.BattleAction.ULTIMATE) playKarlRainAnimation(afterHeroAnim);
+            else {
+                if (pResult != null) addLogFromResult(pResult, true);
+                if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
+                    handleVictory();
+                    animating = false;
+                    return;
+                }
+                Timer t1 = new Timer(900, e -> {
+                    engine.advanceToEnemyTurn();
+                    setTurnLabel(false);
+                    BattleManager.ActionResult er = engine.enemyTurn();
+                    refreshBattleUI();
+                    playEnemyAttack(() -> {
+                        playHeroHurtAnimation(() -> {
+                            clearLog();
+                            if (er != null) addEnemyAttackLog(er);
+                            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
+                            else {
+                                Timer t3 = new Timer(800, ev2 -> {
+                                    clearLog();
+                                    setTurnLabel(true);
+                                    setActionsEnabled(true);
+                                    animating = false;
+                                });
+                                t3.setRepeats(false);
+                                t3.start();
+                            }
+                        });
+                    });
+                });
+                t1.setRepeats(false);
+                t1.start();
             }
-            Timer t1 = new Timer(1500, e -> {
-                clearLog();
-                executeEnemyTurnSequence();
-            });
-            t1.setRepeats(false);
-            t1.start();
+        } else {
+            if (action == BattleManager.BattleAction.SKILL1)        playBladeRushAnimation(afterHeroAnim);
+            else if (action == BattleManager.BattleAction.SKILL2)   playPiercingSlashAnimation(afterHeroAnim);
+            else if (action == BattleManager.BattleAction.ULTIMATE) playEternalCrossSlashAnimation(afterHeroAnim);
+            else {
+                if (pResult != null) addLogFromResult(pResult, true);
+                if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
+                    handleVictory();
+                    animating = false;
+                    return;
+                }
+                Timer t1 = new Timer(900, e -> {
+                    engine.advanceToEnemyTurn();
+                    setTurnLabel(false);
+                    BattleManager.ActionResult er = engine.enemyTurn();
+                    refreshBattleUI();
+                    playEnemyAttack(() -> {
+                        playHeroHurtAnimation(() -> {
+                            clearLog();
+                            if (er != null) addEnemyAttackLog(er);
+                            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
+                            else {
+                                Timer t3 = new Timer(800, ev2 -> {
+                                    clearLog();
+                                    setTurnLabel(true);
+                                    setActionsEnabled(true);
+                                    animating = false;
+                                });
+                                t3.setRepeats(false);
+                                t3.start();
+                            }
+                        });
+                    });
+                });
+                t1.setRepeats(false);
+                t1.start();
+            }
         }
     }
     private void addEnemyAttackLog(BattleManager.ActionResult r) {
@@ -3450,16 +5039,25 @@ public class BattlePanel extends JPanel {
             clearLog();
             if (er != null) addLogFromResult(er, false);
 
-            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
-                handleDefeat();
-            } else {
-                Timer t3 = new Timer(1500, ev2 -> {
-                    clearLog();
-                    beginPlayerTurnSequence(); // Hand turn back to player
-                });
-                t3.setRepeats(false);
-                t3.start();
-            }
+        msg = switch (enemyDef.name) {
+            case "Rotfang Wolf" -> "Rotfang Wolf uses Savage Howl" + damage;
+            case "Shade Sprite" -> "Shade Sprite uses Trickster Strike" + damage;
+            case "Dreadbark Treant" -> "Dreadbark Treant uses Root Snare" + damage;
+            case "Carrion Bat" -> "Carrion Bat uses Screech" + damage;
+            case "The Hollow Stag"  -> "The Hollow Stag uses " + engine.getLastEnemySkillName() + damage;
+            case "Plague Vermin" -> "Plague Vermin uses Plague Bite" + damage;
+            case "Forsaken Cultist" -> "Forsaken Cultist uses Shadow Bolt" + damage;
+            case "Blight Hound" -> "Blight Hound uses Corpse Explosion" + damage;
+            case "Ghoul Footman" -> "Ghoul Footman uses Rotten Cleave" + damage;
+            case "The Black Jailer" -> "The Black Jailer uses " + engine.getLastEnemySkillName() + damage;
+            case "Luther Von" -> "Luther Von uses " + engine.getLastEnemySkillName() + damage;
+            case "Flame Revenant" -> "Flame Revenant uses Ember Burst" + damage;
+            case "Bone Warlock" -> "Bone Warlock uses Marrow Bolt" + damage;
+            case "Obsidian Crusher" -> "Obsidian Crusher uses Magma Slam" + damage;
+            case "Soulflayer Gargoyle" -> "Soulflayer Gargoyle uses Soul Scream" + damage;
+            case "Zyrryl" -> "Zyrryl uses " + engine.getLastEnemySkillName() + damage;
+            case "Khai the Necromancer" -> "Khai the Necromancer uses " + engine.getLastEnemySkillName() + damage;
+            default                 -> null;
         };
 
         if (enemyAttacked) {

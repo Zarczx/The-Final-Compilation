@@ -176,9 +176,7 @@ public class GameTester {
         sec.add(warpPanel, "WORLD 1", new String[]{"Full W1 Run", "Rotfang Wolf", "Shade Sprite", "Dreadbark Treant", "Carrion Bat", "Hollow Stag (Boss)"}, 1);
         sec.add(warpPanel, "WORLD 2", new String[]{"Full W2 Run", "Plague Vermin", "Forsaken Cultist", "Blight Hound", "Ghoul Footman", "The Black Jailer", "Luther Von (Boss)"}, 7);
         sec.add(warpPanel, "WORLD 3", new String[]{"Full W3 Run", "Flame Revenant", "Bone Warlock", "Obsidian Crusher", "Soulflayer Gargoyle", "Zyrryl (Mini-Boss)"}, 14);
-
-        // ★ FIX: Added "Prefi Encounter" to the MISC section array
-        sec.add(warpPanel, "MISC", new String[]{"Magic Shop", "Prefi Encounter", "Final Boss (Khai)"}, 20);
+        sec.add(warpPanel, "MISC", new String[]{"Magic Shop", "Final Boss (Khai)", "Khai (Debug)"}, 20);
 
         tabs.addTab("2. Launch Game", warpPanel);
         dialog.add(tabs, BorderLayout.CENTER);
@@ -238,8 +236,9 @@ public class GameTester {
             case 18 -> { mainScreen.debugSkipToEnemy(customTestHero, "Soulflayer Gargoyle", 3);       battleStarted[0] = true; }
             case 19 -> { mainScreen.debugSkipToEnemy(customTestHero, "Zyrryl",              3);       battleStarted[0] = true; }
             case 20 -> mainScreen.debugSkipToShop(customTestHero);
-            case 21 -> mainScreen.debugSkipToPrefiEncounter(customTestHero);
-            case 22 -> { mainScreen.debugSkipToFinalBoss(customTestHero);                             battleStarted[0] = true; }
+            case 21 -> { mainScreen.debugSkipToFinalBoss(customTestHero);                             battleStarted[0] = true; }
+            case 22 -> { mainScreen.debugSkipToEnemy(customTestHero, "Khai the Gray", 3);                      battleStarted[0] = true; }
+
         }
 
         if (battleStarted[0]) {
