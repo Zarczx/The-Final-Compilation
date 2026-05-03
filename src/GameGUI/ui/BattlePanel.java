@@ -7,6 +7,12 @@ import GameGUI.model.HeroFactory;
 import GameGUI.logic.BattleManager;
 import GameGUI.logic.ProgressionService;
 
+import GameGUI.model.equipment.Armor;
+import GameGUI.model.equipment.Bow;
+import GameGUI.model.equipment.Staff;
+import GameGUI.model.equipment.Sword;
+import GameGUI.model.equipment.Weapon;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -31,6 +37,8 @@ public class BattlePanel extends JPanel {
     private boolean animating = false;
 
     private JLabel battleBg;
+    private JLabel heroConditionLabel;
+    private JLabel enemyConditionLabel;
 
     // ════════════════════════════════════════════
     // ★ HERO SPRITE FIELDS
@@ -561,6 +569,10 @@ public class BattlePanel extends JPanel {
         return currentHero;
     }
 
+    public void setCurrentHero(Combatant hero) {
+        this.currentHero = hero; // (Change 'currentHero' to whatever your hero variable is named)
+    }
+
     public void setOnReturnToSelection(Runnable r) {
         this.onReturnToSelection = r;
     }
@@ -614,8 +626,22 @@ public class BattlePanel extends JPanel {
             setBattleBackground(bg);
         }
 
-        currentHero = (savedHeroCombatant != null) ? savedHeroCombatant : HeroFactory.createHero(heroDef);
-        savedHeroCombatant = null;
+        if (this.currentHero == null) {
+            // Case 1: Brand new game! Make a hero from the blueprint.
+            this.currentHero = HeroFactory.createHero(heroDef);
+        } else if (savedHeroCombatant != null) {
+            // Case 2: Mid-Horde (e.g. Wolf 1 to Wolf 2). Keep current hero exactly as is.
+            this.currentHero = savedHeroCombatant;
+            savedHeroCombatant = null;
+        } else {
+            // Case 3: Entering a New World or Boss fight with our veteran hero!
+            // Clean up old poisons/stuns, but KEEP ALL ITEMS AND HP!
+            this.currentHero.getStatusManager().resetAllEffects();
+            this.currentHero.defending = false;
+            this.currentHero.specialCooldown = 0;
+        }
+
+
         currentEnemy = HeroFactory.createEnemy(eDef);
 
         this.engine = new BattleManager(currentHero, currentEnemy, heroDef, false);
@@ -670,8 +696,7 @@ public class BattlePanel extends JPanel {
                         repaint();
 
                         playEnemyEntrance(() -> {
-                            setActionsEnabled(true);
-                            animating = false;
+                            beginPlayerTurnSequence();
                         });
                     }
                 });
@@ -680,8 +705,7 @@ public class BattlePanel extends JPanel {
 
         } else {
             playEnemyEntrance(() -> {
-                setActionsEnabled(true);
-                animating = false;
+                beginPlayerTurnSequence();
             });
         }
     }
@@ -4849,10 +4873,14 @@ public class BattlePanel extends JPanel {
         clearLog();
         setTurnLabel(true);
 
+        // Math is calculated in the background
         BattleManager.ActionResult pResult = engine.playerAction(action);
-        refreshBattleUI();
+        engine.advanceToEnemyTurn();
 
         Runnable afterHeroAnim = () -> {
+            // ★ UI updates precisely when the hit connects!
+            refreshBattleUI();
+
             if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
                 playEnemyHurt(() -> {
                     clearLog();
@@ -4866,29 +4894,10 @@ public class BattlePanel extends JPanel {
                 playEnemyHurt(() -> {
                     clearLog();
                     if (pResult != null) addLogFromResult(pResult, true);
-                    Timer t1 = new Timer(900, e -> {
-                        engine.advanceToEnemyTurn();
-                        setTurnLabel(false);
-                        BattleManager.ActionResult er = engine.enemyTurn(); // run first
-                        refreshBattleUI();
-                        playEnemyAttack(() -> {                             // then animate
-                            playKaelHurtAnimation(() -> {
-                                clearLog();
-                                if (er != null) addEnemyAttackLog(er);
-                                if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
-                                    handleDefeat();
-                                } else {
-                                    Timer t3 = new Timer(800, ev2 -> {
-                                        clearLog();
-                                        setTurnLabel(true);
-                                        setActionsEnabled(true);
-                                        animating = false;
-                                    });
-                                    t3.setRepeats(false);
-                                    t3.start();
-                                }
-                            });
-                        });
+
+                    Timer t1 = new Timer(1500, e -> {
+                        clearLog();
+                        executeEnemyTurnSequence();
                     });
                     t1.setRepeats(false);
                     t1.start();
@@ -4972,21 +4981,63 @@ public class BattlePanel extends JPanel {
             }
         }
     }
-
     private void addEnemyAttackLog(BattleManager.ActionResult r) {
-        if (enemyDef == null) {
-            addLogFromResult(r, false);
-            return;
+        // We no longer need the massive switch statement because
+        // BattleManager now formats the string perfectly for us
+        addLogFromResult(r, false);
+    }
+
+    private void beginPlayerTurnSequence() {
+        setTurnLabel(true);
+        BattleManager.ActionResult preCheck = engine.startPlayerTurnCheck();
+
+        if (preCheck != null && preCheck.logMessage != null && !preCheck.logMessage.isEmpty()) {
+            addLogFromResult(preCheck, true);
+        }
+        refreshBattleUI();
+
+        // If the Pre-Check caused the turn to immediately pass to the enemy (e.g., Stunned/Frozen)
+        if (engine.getCurrentTurn() == BattleManager.TurnOwner.ENEMY) {
+            animating = true;
+            setActionsEnabled(false);
+
+            // Check if player died to DoT before the enemy even acts
+            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+                handleDefeat();
+                return;
+            }
+
+            // Wait a moment so the player can read the "Turn Skipped" message, then start enemy turn
+            Timer skipTimer = new Timer(1800, e -> {
+                clearLog();
+                executeEnemyTurnSequence();
+            });
+            skipTimer.setRepeats(false);
+            skipTimer.start();
+        } else {
+            // Player is free to move. Enable the buttons!
+            setActionsEnabled(true);
+            animating = false;
+        }
+    }
+
+    private void executeEnemyTurnSequence() {
+        setTurnLabel(false);
+        // Math is calculated in the background
+        BattleManager.ActionResult er = engine.enemyTurn();
+
+        boolean enemyAttacked = false;
+        if (er != null && er.logMessage != null) {
+            if (er.logMessage.contains("uses")) {
+                enemyAttacked = true;
+            }
         }
 
-        String msg;
-        String damage = "";
-        if (r.logMessage != null && !r.logMessage.isEmpty()) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(r.logMessage);
-            damage = m.find() ? " and dealt " + m.group() + " damage!" : "!";
-        } else {
-            damage = "!";
-        }
+        Runnable postEnemyAction = () -> {
+            // ★ UI updates precisely when the hit connects!
+            refreshBattleUI();
+            clearLog();
+            if (er != null) addLogFromResult(er, false);
 
         msg = switch (enemyDef.name) {
             case "Rotfang Wolf" -> "Rotfang Wolf uses Savage Howl" + damage;
@@ -5009,32 +5060,59 @@ public class BattlePanel extends JPanel {
             default                 -> null;
         };
 
-        if (msg != null) {
-            addLog(msg, RED);
-            if (r.dotDamageApplied > 0) addLog("Burn tick: " + r.dotDamageApplied, new Color(150, 60, 0));
+        if (enemyAttacked) {
+            // Animation plays first, THEN postEnemyAction updates the HP and log
+            playEnemyAttack(() -> playKaelHurtAnimation(postEnemyAction));
         } else {
-            addLogFromResult(r, false);
+            // If Stunned/Frozen, just update UI and logs immediately
+            refreshBattleUI();
+            postEnemyAction.run();
         }
     }
-
     private void handleVictory() {
         if (enemySequence != null) {
             EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
             enemyFightIndex++;
+
+            // 1. Calculate Per-Kill Rewards
+            int individualXp = eDef.xpReward;
+            boolean isBoss = eDef.name.equals("The Hollow Stag") ||
+                    eDef.name.equals("The Black Jailer") ||
+                    eDef.name.equals("Luther Von") ||
+                    eDef.name.equals("The Tower Warden");
+            int individualShards = isBoss ? 10 : 1;
+
+            // 2. Apply Rewards Immediately (Math only, no summary yet)
+            boolean leveledUp = ProgressionService.gainExp(currentHero, individualXp, 1);
+            currentHero.soulShards += individualShards;
+
+            refreshBattleUI();
+
+            // 3. Clear the log FIRST, then print the kill info so it stays on screen
             clearLog();
+            addLog(getPerKillMessage(eDef, enemyFightIndex), GREEN);
+            addLog("✨ Gained " + individualXp + " XP and " + individualShards + " Shard(s)!", GOLD);
+
+            if (leveledUp) {
+                addLog("🌟 LEVEL UP! Stats increased!", new Color(130, 85, 0));
+                // Note: The actual stat breakdown UI will happen at the end of the horde
+            }
+
+            // 4. Branch based on whether the horde is finished
             if (enemyFightIndex < eDef.count) {
+                // --- MID-HORDE ---
                 savedHeroCombatant = engine.getHero();
-                addLog(getPerKillMessage(eDef, enemyFightIndex), GREEN);
-                delay(1500, () -> {
+
+                // Wait 2 seconds so the player can read the XP, then spawn next enemy
+                delay(2000, () -> {
                     clearLog();
                     addLog(getNextApproachMessage(eDef, enemyFightIndex), GOLD);
-                    delay(800, () -> {
-                        // startNextFight sets up the new enemy then plays entrance itself,
-                        // so just call it directly — no extra entrance here
+                    delay(1000, () -> {
                         startNextFight();
                     });
                 });
             } else {
+                // --- END OF HORDE ---
                 savedHeroCombatant = engine.getHero();
                 enemySequenceIndex++;
                 enemyFightIndex = 0;
@@ -5050,7 +5128,10 @@ public class BattlePanel extends JPanel {
                     }
                 };
 
-                startPostVictorySequence(eDef, afterSequence);
+                // Wait 2 seconds so they can read the final kill's XP, then show summary
+                delay(2000, () -> {
+                    startPostVictorySequence(eDef, afterSequence);
+                });
             }
         } else {
             showResult(true);
@@ -5063,21 +5144,30 @@ public class BattlePanel extends JPanel {
         postVictoryStep = PostVictoryStep.LOOT;
         lvlUp_level = 0;
 
-        int xp = eDef.xpReward * eDef.count;
-        boolean leveledUp = ProgressionService.gainExp(currentHero, xp, 1);
+        // NO XP OR SHARDS ARE ADDED TO THE HERO HERE!
+        // They were already paid out per-kill.
 
-        if (leveledUp && currentHero.lastLevelUpData != null) {
+        // If the player leveled up at ANY point during the horde, the data is waiting here:
+        if (currentHero.lastLevelUpData != null) {
             parseLevelUpMsg(currentHero.lastLevelUpData);
-            currentHero.lastLevelUpData = null;
+            currentHero.lastLevelUpData = null; // Clear it after reading
         }
 
         setLogFontSmall();
         clearLog();
-        addLog("You received:", GOLD);
-        int shards = eDef.name.equals("The Hollow Stag") ? 10 : 1;
-        addLog("  " + shards + " Soul Shard" + (shards > 1 ? "s" : ""), new Color(20, 80, 160));
-        currentHero.soulShards += shards;
-        addLog("  +" + xp + " XP", new Color(140, 90, 0));
+
+        // Calculate the summary totals strictly for the UI text
+        int totalXp = eDef.xpReward * eDef.count;
+        boolean isBoss = eDef.name.equals("The Hollow Stag") ||
+                eDef.name.equals("The Black Jailer") ||
+                eDef.name.equals("Luther Von") ||
+                eDef.name.equals("The Tower Warden");
+        int totalShards = (isBoss ? 10 : 1) * eDef.count;
+
+        addLog("⚔️ HORDE CLEARED!", GOLD);
+        addLog("Total Rewards Secured:", new Color(200, 200, 200));
+        addLog("  +" + totalShards + " Soul Shard(s)", new Color(20, 80, 160));
+        addLog("  +" + totalXp + " XP", new Color(140, 90, 0));
 
         battleContinueBtn.setEnabled(true);
         turnLabel.setText("");
@@ -5139,14 +5229,19 @@ public class BattlePanel extends JPanel {
             }
             case LOOT_FLAVOUR -> {
                 postVictoryStep = PostVictoryStep.NONE;
+                EnemyDefinition savedEnemy = postVictoryEnemy; // Save a reference
                 postVictoryEnemy = null;
                 clearLog();
                 setLogFontNormal();
-                if (postVictoryNext != null) {
-                    Runnable next = postVictoryNext;
-                    postVictoryNext = null;
-                    next.run();
-                }
+
+                // ★ INJECT MINI-BOSS LOOT HERE ★
+                grantMiniBossLoot(savedEnemy, () -> {
+                    if (postVictoryNext != null) {
+                        Runnable next = postVictoryNext;
+                        postVictoryNext = null;
+                        next.run();
+                    }
+                });
             }
         }
     }
@@ -5268,11 +5363,37 @@ public class BattlePanel extends JPanel {
     }
 
     private void addLogFromResult(BattleManager.ActionResult r, boolean isPlayer) {
-        Color c = isPlayer ? GREEN : RED;
-        if (r.wasDefend) c = BLUE;
-        if (r.isSpecial) c = PURPLE;
-        addLog(r.logMessage, c);
-        if (r.dotDamageApplied > 0) addLog("Status tick: " + r.dotDamageApplied, new Color(150, 60, 0));
+        // Safety check to prevent null errors
+        if (r == null || r.logMessage == null || r.logMessage.trim().isEmpty()) {
+            return;
+        }
+
+        Color baseColor = isPlayer ? GREEN : RED;
+        if (r.wasDefend) baseColor = BLUE;
+        if (r.isSpecial) baseColor = PURPLE;
+
+        // Split the large block of text back into individual lines
+        String[] logLines = r.logMessage.split("\n");
+
+        for (String log : logLines) {
+            log = log.trim();
+            if (log.isEmpty()) continue; // Skip blank lines
+
+            Color logColor = baseColor;
+
+            // Dynamic text coloring based on effect emojis!
+            if (log.contains("☠️") || log.contains("🩸") || log.contains("🔥")) {
+                logColor = new Color(220, 100, 20); // Orange-red for DoT
+            } else if (log.contains("❄️") || log.contains("💫") || log.contains("🌀")) {
+                logColor = new Color(180, 100, 250); // Purple for CC
+            } else if (log.contains("💖") || log.contains("✨")) {
+                logColor = new Color(50, 200, 100); // Bright green for heal/mana
+            } else if (log.contains("🛡️") || log.contains("📉") || log.contains("🔻") || log.contains("💪")) {
+                logColor = new Color(150, 150, 150); // Gray for buff expirations
+            }
+
+            addLog(log, logColor);
+        }
     }
 
     private void addLog(String text, Color color) {
@@ -5335,6 +5456,11 @@ public class BattlePanel extends JPanel {
     }
 
     private void refreshBattleUI() {
+        // ★ FIX: Constantly update the maximums so mid-fight level-ups scale the bars correctly!
+        heroHpBar.setMaximum(currentHero.maxHp);
+        enemyHpBar.setMaximum(currentEnemy.maxHp);
+        if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.maxEnergy);
+
         heroHpBar.setValue(currentHero.currentHp);
         heroHpText.setText(currentHero.currentHp + "/" + currentHero.maxHp);
         if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.level);
@@ -5355,8 +5481,14 @@ public class BattlePanel extends JPanel {
         skill2Btn.setEnabled(engine == null || engine.canUseSkill2());
         ultimateBtn.setEnabled(cd == 0 && (engine == null || engine.canUseUltimate()));
 
-        heroStatusLbl.setText(currentHero.defending ? "Defending" : " ");
-        enemyStatusLbl.setText(currentEnemy.defending ? "Defending" : " ");
+        // ★ REMOVED the heroStatusLbl and enemyStatusLbl "Defending" checks here!
+
+        if (heroConditionLabel != null && currentHero != null && currentHero.getStatusManager() != null) {
+            heroConditionLabel.setText(currentHero.getStatusManager().getActiveStatusesDisplay());
+        }
+        if (enemyConditionLabel != null && currentEnemy != null && currentEnemy.getStatusManager() != null) {
+            enemyConditionLabel.setText(currentEnemy.getStatusManager().getActiveStatusesDisplay());
+        }
     }
 
     private void initLogFonts() {
@@ -5510,8 +5642,15 @@ public class BattlePanel extends JPanel {
         JLabel role = new JLabel("");
         role.setFont(new Font("Monospaced", Font.ITALIC, 9));
         role.setForeground(TEXT_DIM);
-        role.setBounds(50, 20, 215, 14);
+        role.setBounds(50, 20, 150, 14);
         card.add(role);
+
+        // Moved "Defending" label up here next to the role so it doesn't overlap
+        JLabel statusLbl = new JLabel(" ");
+        statusLbl.setFont(new Font("Monospaced", Font.BOLD, 10));
+        statusLbl.setForeground(BLUE);
+        statusLbl.setBounds(200, 20, 100, 14);
+        card.add(statusLbl);
 
         JLabel hpLbl = new JLabel("HP");
         hpLbl.setFont(FONT_STAT);
@@ -5533,11 +5672,12 @@ public class BattlePanel extends JPanel {
         hpText.setBounds(228, 34, 62, 16);
         card.add(hpText);
 
-        JLabel statusLbl = new JLabel(" ");
-        statusLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
-        statusLbl.setForeground(BLUE);
-        statusLbl.setBounds(50, 72, 215, 14);
-        card.add(statusLbl);
+        // ★ NEW: Condition Label (Poisoned, Stunned, etc.)
+        JLabel conditionLbl = new JLabel("Cond: Normal");
+        conditionLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
+        conditionLbl.setForeground(new Color(255, 200, 50));
+        conditionLbl.setBounds(50, 72, 280, 14);
+        card.add(conditionLbl);
 
         if (isHero) {
             heroEmojiLbl = emoji;
@@ -5547,6 +5687,7 @@ public class BattlePanel extends JPanel {
             heroHpBar = hpBar;
             heroHpText = hpText;
             heroStatusLbl = statusLbl;
+            heroConditionLabel = conditionLbl; // Assigning Hero Label
 
             JLabel epLbl = new JLabel("EP");
             epLbl.setFont(FONT_STAT);
@@ -5577,6 +5718,7 @@ public class BattlePanel extends JPanel {
             enemyHpBar = hpBar;
             enemyHpText = hpText;
             enemyStatusLbl = statusLbl;
+            enemyConditionLabel = conditionLbl; // Assigning Enemy Label
         }
         return card;
     }
@@ -5866,5 +6008,107 @@ public class BattlePanel extends JPanel {
         setComponentZOrder(devPanel, 0);
         revalidate();
         repaint();
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ MINI-BOSS LOOT SYSTEM
+    // ════════════════════════════════════════════════════════════════════════
+    private void grantMiniBossLoot(EnemyDefinition eDef, Runnable onDone) {
+        if (currentHero == null || eDef == null) {
+            onDone.run();
+            return;
+        }
+
+        String role = currentHero.role;
+
+        if (eDef.name.equals("The Hollow Stag")) {
+            Weapon w = switch(role) {
+                case "Swordsman" -> new Sword(Sword.IRON_SHORTSWORD);
+                case "Archer"    -> new Bow(Bow.OAK_LONGBOW);
+                default          -> new Staff(Staff.APPRENTICE_STAFF);
+            };
+            Armor a = new Armor(GameGUI.model.entity.HeroData.IRON_VANGUARD);
+
+            currentHero.inventory.setEquippedWeapon(w);
+            currentHero.inventory.setEquippedArmor(a);
+            currentHero.recalculateBuffs();
+
+            addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(200, 180, 50));
+            delay(2000, onDone);
+        }
+        else if (eDef.name.equals("The Black Jailer") || eDef.name.equals("Luther Von")) {
+            // World 2 Mini-boss gives a choice!
+            showWorld2LootChoice(role, onDone);
+        }
+        else if (eDef.name.equals("Zyrryl")) {
+            Weapon w = switch(role) {
+                case "Swordsman" -> new Sword(Sword.ECLIPSE_GREATSWORD);
+                case "Archer"    -> new Bow(Bow.AETHERSTRIKE_BOW);
+                default          -> new Staff(Staff.AETHERIC_STAFF);
+            };
+            Armor a = new Armor(GameGUI.model.entity.HeroData.SKYFORGE_PLATE);
+
+            currentHero.inventory.setEquippedWeapon(w);
+            currentHero.inventory.setEquippedArmor(a);
+            currentHero.recalculateBuffs();
+
+            addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(200, 180, 50));
+            delay(2000, onDone);
+        } else {
+            // Not a mini-boss, just proceed
+            onDone.run();
+        }
+    }
+
+    private void showWorld2LootChoice(String role, Runnable onDone) {
+        Weapon w1, w2;
+        if (role.equals("Swordsman")) {
+            w1 = new Sword(Sword.TWINSTRIKE_BLADE);
+            w2 = new Sword(Sword.LIFEBOND_BLADE);
+        } else if (role.equals("Archer")) {
+            w1 = new Bow(Bow.TWINSHOT_BOW);
+            w2 = new Bow(Bow.LIFEBLOOM_BOW);
+        } else {
+            w1 = new Staff(Staff.MYSTIC_MIND_STAFF);
+            w2 = new Staff(Staff.FLAMEHEART_STAFF);
+        }
+
+        lootChoiceOverlay.setVisible(true);
+        setComponentZOrder(lootChoiceOverlay, 0);
+
+        // Setup Item 1 (Offensive Weapon + Aegis Mail)
+        lootItem1Icon.setText("⚔️");
+        lootItem1Name.setText(w1.name);
+        lootItem1Desc.setText("ATK: +" + w1.atkBuff + "\n" + getWeaponEffectDesc(w1) + "\n\nIncludes: Aegis Mail (+25 DEF)");
+        for (ActionListener al : lootItem1Btn.getActionListeners()) lootItem1Btn.removeActionListener(al);
+        lootItem1Btn.addActionListener(e -> {
+            lootChoiceOverlay.setVisible(false);
+            currentHero.inventory.setEquippedWeapon(w1);
+            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.AEGIS_MAIL));
+            currentHero.recalculateBuffs();
+            addLog("🎁 Chose: " + w1.name + " & Aegis Mail!", new Color(200, 180, 50));
+            delay(1500, onDone);
+        });
+
+        // Setup Item 2 (Utility Weapon + Vanguard Robe)
+        lootItem2Icon.setText("⚔️");
+        lootItem2Name.setText(w2.name);
+        lootItem2Desc.setText("ATK: +" + w2.atkBuff + "\n" + getWeaponEffectDesc(w2) + "\n\nIncludes: Vanguard Robe (+25 DEF)");
+        for (ActionListener al : lootItem2Btn.getActionListeners()) lootItem2Btn.removeActionListener(al);
+        lootItem2Btn.addActionListener(e -> {
+            lootChoiceOverlay.setVisible(false);
+            currentHero.inventory.setEquippedWeapon(w2);
+            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.VANGUARD_ROBE));
+            currentHero.recalculateBuffs();
+            addLog("🎁 Chose: " + w2.name + " & Vanguard Robe!", new Color(200, 180, 50));
+            delay(1500, onDone);
+        });
+    }
+
+    private String getWeaponEffectDesc(Weapon w) {
+        if (w.extraHitChance > 0) return "20% chance to deal extra damage";
+        if (w.lifestealPercent > 0) return "Restores " + w.lifestealPercent + "% HP of damage dealt";
+        if (w.stunChance > 0) return "30% chance to Stun enemy";
+        return "A powerful weapon.";
     }
 }

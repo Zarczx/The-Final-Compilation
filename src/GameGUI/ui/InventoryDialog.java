@@ -253,16 +253,32 @@ public class InventoryDialog extends JDialog {
 
     // --- HTML Tooltip Generators ---
 
+    // --- HTML Tooltip Generators ---
+
     private String generateWeaponTooltip(Weapon w) {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><div style='padding:5px;'>");
         sb.append("<b style='color:#A08C5A;'>").append(w.name).append(" ").append(w.rarity).append("</b><br><br>");
-        sb.append("Attack Power: <font color='#C85A5A'>+").append(w.atkBuff).append("</font><br>");
-        if (w.lifestealPercent > 0) sb.append("Lifesteal: ").append(w.lifestealPercent).append("%<br>");
+        sb.append("Attack Power: <font color='#C85A5A'>+").append(w.getAtkBuff()).append("</font><br>");
+
+        // Calculate combined totals (Base + Magic Shop upgrades)
+        int totalLifesteal = w.lifestealPercent + w.addLifestealPercent;
+        if (totalLifesteal > 0) sb.append("Lifesteal: ").append(totalLifesteal).append("%<br>");
         if (w.energyPerAttack > 0) sb.append("Energy Regained: ").append(w.energyPerAttack).append("<br>");
         if (w.poisonChance > 0) sb.append("Poison Build-up: ").append(w.poisonChance).append("%<br>");
+        if (w.bleedChance > 0) sb.append("Bleed Chance: ").append(w.bleedChance).append("%<br>");
         if (w.stunChance > 0) sb.append("Stagger Chance: ").append(w.stunChance).append("%<br>");
+        if (w.freezeChance > 0) sb.append("Freeze Chance: ").append(w.freezeChance).append("%<br>");
         if (w.extraHitChance > 0) sb.append("Twin-strike Chance: ").append(w.extraHitChance).append("%<br>");
+
+        // Show specific enchantments if they exist
+        if (!w.enchantments.isEmpty()) {
+            sb.append("<br><b style='color:#D0A0FF;'>Active Enchantments:</b><br>");
+            for (java.util.Map.Entry<String, String> entry : w.enchantments.entrySet()) {
+                sb.append("&nbsp;&nbsp;").append(entry.getKey()).append(" <font color='gray'>").append(entry.getValue()).append("</font><br>");
+            }
+        }
+
         sb.append("</div></html>");
         return sb.toString();
     }
@@ -271,11 +287,21 @@ public class InventoryDialog extends JDialog {
         StringBuilder sb = new StringBuilder();
         sb.append("<html><div style='padding:5px;'>");
         sb.append("<b style='color:#A08C5A;'>").append(a.name).append(" ").append(a.rarity).append("</b><br><br>");
+
+        // Use getDefBuff() because in Armor.java it returns (defBuff + addDefBuff)
         sb.append("Physical Defense: <font color='#789678'>+").append(a.getDefBuff()).append("</font><br>");
+
         if (a.hpBuff > 0) sb.append("Vitality Boost: +").append(a.hpBuff).append("<br>");
         if (a.immuneDebuff) sb.append("Resists Debuffs<br>");
         if (a.immuneEffects) sb.append("Resists Status Ailments<br>");
         if (a.reflectChance > 0) sb.append("Thorns: ").append(a.reflectChance).append("% chance (").append(a.reflectPercent).append("% DMG)<br>");
+
+        // Check if the Magic Shop fortified it
+        if (a.hasEnchantment) {
+            sb.append("<br><b style='color:#D0A0FF;'>Active Enchantments:</b><br>");
+            sb.append("&nbsp;&nbsp;🛡️ Fortified Plating <font color='gray'>(+10 DEF)</font><br>");
+        }
+
         sb.append("</div></html>");
         return sb.toString();
     }

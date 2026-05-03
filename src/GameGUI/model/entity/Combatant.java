@@ -1,22 +1,10 @@
 package GameGUI.model.entity;
 
 import GameGUI.model.system.InventoryManager;
+import GameGUI.model.logic.StatusManager;
 
 /**
  * Combatant — The live state of a hero during a run.
- *
- * Responsibilities (this file only):
- *   - Hero identity: name, role, emoji.
- *   - Current and base stats: HP, attack, defense, energy.
- *   - Battle-state flags: defending, stunned, modifiers, DoT.
- *   - Progression and currency: level, exp, soul shards.
- *   - Shop passives (boolean flags).
- *   - Stat mutators: heal(), takeDamage(), restoreEnergy(), spendEnergy().
- *   - Stat recalculation from gear (recalculateBuffs).
- *   - Identity helpers: getClassType(), getEnergyName(), getEnergyEmoji().
- *
- * Does NOT own: gear slots, flask counts, loot logic — those live in
- * Inventory and Potions respectively.
  */
 public class Combatant {
 
@@ -31,11 +19,10 @@ public class Combatant {
     // ── Battle State ──────────────────────────────────────────────────────────
     public boolean defending;
     public int specialCooldown;
-    public int attackModifier, defenseModifier;
-    public int dotDamage, dotTurnsLeft;
 
-    // ── Status Effects ────────────────────────────────────────────────────────
-    public boolean stunned, frozen, confused, nimble;
+    // REMOVED: dotDamage, dotTurnsLeft, attackModifier, defenseModifier
+    // REMOVED: stunned, frozen, confused, nimble
+    // (These are now entirely handled by StatusManager!)
 
     // ── Progression & Currency ────────────────────────────────────────────────
     public int level        = 1;
@@ -54,8 +41,9 @@ public class Combatant {
     public boolean hasFortifiedPlating = false;
     public boolean hasPhoenixSoulstone = false;
 
-    // ── Inventory (gear + flasks) ─────────────────────────────────────────────
+    // ── Inventory & Status ────────────────────────────────────────────────────
     public final InventoryManager inventory;
+    private final StatusManager statusManager;
 
     // =========================================================================
     // CONSTRUCTOR
@@ -76,16 +64,15 @@ public class Combatant {
         this.maxEnergy = maxEnergy;
 
         this.inventory = new InventoryManager(this);
+        this.statusManager = new StatusManager(this);
     }
 
     // =========================================================================
     // IDENTITY HELPERS
     // =========================================================================
 
-    /** Class label used by Potions for the energy-restore switch. */
     public String getClassType() { return role; }
 
-    /** Human-readable energy resource name shown in flask feedback and UI labels. */
     public String getEnergyName() {
         return switch (role) {
             case "Swordsman" -> "Stamina";
@@ -95,7 +82,6 @@ public class Combatant {
         };
     }
 
-    /** Energy resource emoji, useful for dynamic UI labels. */
     public String getEnergyEmoji() {
         return switch (role) {
             case "Swordsman" -> "⚡";
@@ -105,31 +91,26 @@ public class Combatant {
         };
     }
 
+    public StatusManager getStatusManager() {
+        return statusManager;
+    }
+
     // =========================================================================
     // STAT MUTATORS
-    // All HP and energy changes route through here for consistent clamping.
-    // Never set currentHp or energy directly from outside this class.
     // =========================================================================
 
-    /** Adds {@code amount} HP, clamped to maxHp. */
     public void heal(int amount) {
         currentHp = Math.min(currentHp + amount, maxHp);
     }
 
-    /** Subtracts {@code amount} HP, clamped to 0. */
     public void takeDamage(int amount) {
         currentHp = Math.max(0, currentHp - amount);
     }
 
-    /** Adds {@code amount} energy, clamped to maxEnergy. */
     public void restoreEnergy(int amount) {
         energy = Math.min(energy + amount, maxEnergy);
     }
 
-    /**
-     * Spends {@code amount} energy.
-     * @return true if the cost was paid; false if the hero couldn't afford it.
-     */
     public boolean spendEnergy(int amount) {
         if (energy < amount) return false;
         energy -= amount;
@@ -141,34 +122,25 @@ public class Combatant {
     // =========================================================================
 
     public boolean isAlive()      { return currentHp > 0; }
-    public int effectiveAttack()  { return Math.max(1, attack  + attackModifier); }
-    public int effectiveDefense() { return Math.max(0, defense + defenseModifier); }
+
+    // Because StatusManager directly modifies this.attack and this.defense,
+    // we no longer need to add "modifiers" here. Just return the stat!
+    public int effectiveAttack()  { return Math.max(1, attack); }
+    public int effectiveDefense() { return Math.max(0, defense); }
 
     /**
      * Resets all transient battle state so this Combatant is ready for a new fight.
-     * Call this on both hero and enemy at the start of every BattleManager session.
-     * Does NOT reset progression, inventory, or soul shards.
      */
     public void resetForNewBattle() {
         currentHp       = maxHp;
         energy          = maxEnergy;
         defending       = false;
-        stunned         = false;
-        frozen          = false;
-        confused        = false;
-        nimble          = false;
         specialCooldown = 0;
-        attackModifier  = 0;
-        defenseModifier = 0;
-        dotDamage       = 0;
-        dotTurnsLeft    = 0;
+
+        // Tell the StatusManager to wipe all DoTs, CC, and Buffs!
+        statusManager.resetAllEffects();
     }
 
-    /**
-     * Recomputes attack and defense from base stats + equipped gear.
-     * Called automatically by Inventory whenever a weapon or armor changes.
-     * HP buff from armor is managed separately in Inventory.setEquippedArmor().
-     */
     public void recalculateBuffs() {
         int weaponAtk = (inventory.getEquippedWeapon() != null)
                 ? inventory.getEquippedWeapon().getAtkBuff() : 0;

@@ -1,10 +1,18 @@
 package GameGUI.model.entity;
 
+import GameGUI.model.equipment.Bow;
+import GameGUI.model.equipment.Staff;
+import GameGUI.model.equipment.Sword;
+
 import java.util.List;
 
 /**
  * HeroData — Strictly a Data Registry.
  * Contains only definitions and static constants for heroes, enemies, and items.
+ * Weapon constants have been moved to their respective classes:
+ *   - Sword.java  → sword weapon defs
+ *   - Bow.java    → bow weapon defs
+ *   - Staff.java  → staff weapon defs
  */
 public class HeroData {
 
@@ -14,7 +22,7 @@ public class HeroData {
     // ─── Skill Definition ────────────────────────────────────────────────────
     public static class SkillDef {
         public final String icon, name, description;
-        public final double minMultiplier, maxMultiplier; // Replaced single multiplier
+        public final double minMultiplier, maxMultiplier;
         public final boolean pierceArmor;
         public final int cooldown;
         public final int energyCost;
@@ -31,7 +39,7 @@ public class HeroData {
 
     // ─── Weapon Definition ───────────────────────────────────────────────────
     public static class WeaponDef {
-        public final WeaponType type; // <--- ADDED WEAPON TYPE
+        public final WeaponType type;
         public final String name, rarity;
         public final int atkBuff;
         public final int lifestealPercent, poisonChance, bleedChance, stunChance;
@@ -40,7 +48,7 @@ public class HeroData {
         public WeaponDef(WeaponType type, String name, String rarity, int atkBuff, int lifestealPercent,
                          int poisonChance, int bleedChance, int stunChance,
                          int freezeChance, int confuseChance, int energyPerAttack, int extraHitChance) {
-            this.type = type; // <--- ASSIGNED WEAPON TYPE
+            this.type = type;
             this.name = name; this.rarity = rarity; this.atkBuff = atkBuff;
             this.lifestealPercent = lifestealPercent; this.poisonChance = poisonChance;
             this.bleedChance = bleedChance; this.stunChance = stunChance;
@@ -99,37 +107,13 @@ public class HeroData {
         }
     }
 
-    // ─── Shared Item Constants ───────────────────────────────────────────────
-    // ⚔️ SWORDS (Focus on Extra Hit Chance)
-    public static final WeaponDef OLD_BROADSWORD     = new WeaponDef(WeaponType.SWORD, "Old Broadsword", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef IRON_SHORTSWORD    = new WeaponDef(WeaponType.SWORD, "Iron Shortsword", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef TWINSTRIKE_BLADE   = new WeaponDef(WeaponType.SWORD, "Twinstrike Blade", "🔵", 20, 0, 0, 0, 0, 0, 0, 0, 20);
-    public static final WeaponDef LIFEBOND_BLADE     = new WeaponDef(WeaponType.SWORD, "Lifebond Blade", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef ECLIPSE_GREATSWORD = new WeaponDef(WeaponType.SWORD, "Eclipse Greatsword", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
-    public static final WeaponDef CELESTIAL_EDGE     = new WeaponDef(WeaponType.SWORD, "Celestial Edge", "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
-
-    // 🏹 BOWS (Focus on Extra Hit Chance & Lifesteal)
-    public static final WeaponDef WOODEN_BOW         = new WeaponDef(WeaponType.BOW, "Wooden Bow", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef OAK_LONGBOW        = new WeaponDef(WeaponType.BOW, "Oak Longbow", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef TWINSHOT_BOW       = new WeaponDef(WeaponType.BOW, "Twinshot Bow", "🔵", 20, 0, 0, 0, 0, 0, 0, 0, 20);
-    public static final WeaponDef LIFEBLOOM_BOW      = new WeaponDef(WeaponType.BOW, "Lifebloom Bow", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef AETHERSTRIKE_BOW   = new WeaponDef(WeaponType.BOW, "Aetherstrike Bow", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
-    public static final WeaponDef GOLDEN_TALON       = new WeaponDef(WeaponType.BOW, "Golden Talon", "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
-
-    // 🔮 STAFFS (Focus on Confuse Chance)
-    public static final WeaponDef WOODEN_STAFF       = new WeaponDef(WeaponType.STAFF, "Wooden Staff", "⚪", 5, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef APPRENTICE_STAFF   = new WeaponDef(WeaponType.STAFF, "Apprentice's Staff", "🟢", 10, 0, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef MYSTIC_MIND_STAFF  = new WeaponDef(WeaponType.STAFF, "Mystic Mind Staff", "🔵", 20, 0, 0, 0, 0, 0, 30, 0, 0);
-    public static final WeaponDef FLAMEHEART_STAFF   = new WeaponDef(WeaponType.STAFF, "Flameheart Staff", "🔵", 20, 8, 0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef AETHERIC_STAFF     = new WeaponDef(WeaponType.STAFF, "Aetheric Staff", "🟣", 35, 12, 0, 0, 0, 0, 25, 0, 0);
-    public static final WeaponDef CHRONOMANCER_STAFF = new WeaponDef(WeaponType.STAFF, "Chronomancer Staff", "🟡", 50, 15, 0, 0, 0, 0, 35, 0, 0);
-    // 🛡️ ARMORS
-    public static final ArmorDef  LEATHER_GUARD      = new ArmorDef("Leather Guard", "⚪", 0, 5, false, false, 0, 0);
-    public static final ArmorDef  IRON_VANGUARD      = new ArmorDef("Iron Vanguard", "🟢", 0, 10, false, false, 0, 0);
-    public static final ArmorDef  AEGIS_MAIL         = new ArmorDef("Aegis Mail", "🔵", 0, 25, true, false, 0, 0);
-    public static final ArmorDef  VANGUARD_ROBE      = new ArmorDef("Vanguard Robe", "🟣", 0, 25, false, true, 0, 0);
-    public static final ArmorDef  SKYFORGE_PLATE     = new ArmorDef("Skyforge Plate", "🟣", 0, 40, true, true, 20, 15);
-    public static final ArmorDef  CELESTIAL_BATTLEGEAR = new ArmorDef("Celestial Battlegear", "🟡", 0, 50, true, true, 30, 20);
+    // ─── Armor Constants ─────────────────────────────────────────────────────
+    public static final ArmorDef LEATHER_GUARD       = new ArmorDef("Leather Guard",       "⚪", 0, 5,  false, false, 0,  0);
+    public static final ArmorDef IRON_VANGUARD       = new ArmorDef("Iron Vanguard",       "🟢", 0, 10, false, false, 0,  0);
+    public static final ArmorDef AEGIS_MAIL          = new ArmorDef("Aegis Mail",          "🔵", 0, 25, true,  false, 0,  0);
+    public static final ArmorDef VANGUARD_ROBE       = new ArmorDef("Vanguard Robe",       "🟣", 0, 25, false, true,  0,  0);
+    public static final ArmorDef SKYFORGE_PLATE      = new ArmorDef("Skyforge Plate",      "🟣", 0, 40, true,  true,  20, 15);
+    public static final ArmorDef CELESTIAL_BATTLEGEAR = new ArmorDef("Celestial Battlegear","🟡", 0, 50, true,  true,  30, 20);
 
     // ─── Hero Registry ───────────────────────────────────────────────────────
     public static final List<HeroDefinition> HEROES = List.of(
@@ -143,19 +127,19 @@ public class HeroData {
                             new SkillDef("⚔️", "Piercing Slash", "A powerful, focused strike aimed to pierce enemy's armor.\n⚡ Effects: 30% chance to Stun (1 turn).", 1.35, 1.55, true, 0, 10),
                             new SkillDef("✝️", "Eternal Cross Slash", "Unleashes a flurry of crossing strikes. Hits 3 times.\n⚡ Effects: Applies Bleed for 2 turns. Grants Fortified (+20% DEF for 2 turns).", 1.00, 1.80, false, 3, 20)
                     },
-                    OLD_BROADSWORD, LEATHER_GUARD
+                    Sword.OLD_BROADSWORD, LEATHER_GUARD
             ),
             new HeroDefinition(
                     "Karl Clover Dior IV", "Archer", "🏹",
                     "Born in the Forest of Silence, Karl's arrows never miss their mark.",
                     "Hunter's Instinct - +20% damage to enemies below 30% HP.",
-                    80, 14, 3, 24,
+                    100000, 10000, 1000, 10000,
                     new SkillDef[]{
                             new SkillDef("🏹", "Piercing Arrow", "Fires an arrow that slices through armor and flesh alike.\n⚡ Effects: 30% chance to inflict Bleed (2 turns).", 1.00, 1.25, true, 0, 1),
                             new SkillDef("🎯", "Bullseye", "Steadies breath for a deadly precise shot. Guaranteed Critical Hit.\n⚡ Effects: 30% chance to apply Weakness (-30% DEF for 2 turns).", 1.10, 1.30, false, 0, 3),
                             new SkillDef("🌩️", "Rain of a Thousand Arrows", "Releases a rapid flurry of arrows. Hits 5 times.\n⚡ Effects: Grants Nimble. Grants Strengthen (+20% ATK for 2 turns).", 0.70, 0.80, false, 3, 5)
                     },
-                    WOODEN_BOW, LEATHER_GUARD
+                    Bow.WOODEN_BOW, LEATHER_GUARD
             ),
             new HeroDefinition(
                     "Simon Versace", "Mage", "🧙",
@@ -167,7 +151,7 @@ public class HeroData {
                             new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.00, 1.25, false, 0, 25),
                             new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 0.60, 0.90, false, 3, 40)
                     },
-                    WOODEN_STAFF, LEATHER_GUARD
+                    Staff.WOODEN_STAFF, LEATHER_GUARD
             ),
             new HeroDefinition(
                     "Null", "Mage", "🌌",
@@ -185,29 +169,30 @@ public class HeroData {
 
     // ─── World 1 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD1_ENEMIES = List.of(
-            new EnemyDefinition("Rotfang Wolf", "Undead Beast", "W", 40, 14, 3, 1, 3, 34),
-            new EnemyDefinition("Shade Sprite", "Lost Soul", "S", 80, 24, 4, 1, 2, 170),
-            new EnemyDefinition("Dreadbark Treant", "Ancient", "T", 200, 46, 5, 1, 2, 164),
-            new EnemyDefinition("Carrion Bat", "Predator", "B", 260, 64, 6, 1, 4, 108),
-            new EnemyDefinition("The Hollow Stag", "Guardian", "H", 450, 100, 21, 1, 1, 926)
+            new EnemyDefinition("Rotfang Wolf",     "Undead Beast", "W", 40,  14,  3,  1, 3, 34),
+            new EnemyDefinition("Shade Sprite",     "Lost Soul",    "S", 80,  24,  4,  1, 2, 170),
+            new EnemyDefinition("Dreadbark Treant", "Ancient",      "T", 200, 46,  5,  1, 2, 164),
+            new EnemyDefinition("Carrion Bat",      "Predator",     "B", 260, 64,  6,  1, 4, 108),
+            new EnemyDefinition("The Hollow Stag",  "Guardian",     "H", 450, 100, 21, 1, 1, 926)
     );
 
+    // ─── World 2 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD2_ENEMIES = List.of(
-            new EnemyDefinition("Plague Vermin", "Infected Beast", "🐀", 520, 13, 90, 2, 3, 540),
-            new EnemyDefinition("Forsaken Cultist", "Dark Mage", "🔮", 580, 14, 105, 2, 2, 620),
-            new EnemyDefinition("Blight Hound", "Undead Beast", "🐕‍🦺", 620, 13, 112, 2, 2, 680),
-            new EnemyDefinition("Ghoul Footman", "Undead Soldier", "🧟‍♂️", 700, 18, 128, 2, 4, 820),
-            new EnemyDefinition("The Black Jailer", "Miniboss", "⛓️", 1000, 24, 200, 2, 1, 1800),
-            new EnemyDefinition("Luther Von", "Corrupted King", "👑", 1250, 29, 250, 2, 1, 2500)
+            new EnemyDefinition("Plague Vermin",    "Infected Beast",  "🐀",      520,  13, 90,  2, 3, 540),
+            new EnemyDefinition("Forsaken Cultist", "Dark Mage",       "🔮",      580,  14, 105, 2, 2, 620),
+            new EnemyDefinition("Blight Hound",     "Undead Beast",    "🐕‍🦺",  620,  13, 112, 2, 2, 680),
+            new EnemyDefinition("Ghoul Footman",    "Undead Soldier",  "🧟‍♂️", 700,  18, 128, 2, 4, 820),
+            new EnemyDefinition("The Black Jailer", "Miniboss",        "⛓️",      1000, 24, 200, 2, 1, 1800),
+            new EnemyDefinition("Luther Von",       "Corrupted King",  "👑",      1250, 29, 250, 2, 1, 2500)
     );
 
     // ─── World 3 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD3_ENEMIES = List.of(
-            new EnemyDefinition("Flame Revenant", "Fire Spirit", "🔥", 1080, 28, 220, 3, 3, 950),
-            new EnemyDefinition("Bone Warlock", "Undead Mage", "💀", 1280, 41, 262, 3, 2, 1150),
-            new EnemyDefinition("Obsidian Crusher", "Magma Golem", "🗿", 1580, 48, 286, 3, 2, 1400),
-            new EnemyDefinition("Soulflayer Gargoyle", "Demon Beast", "🦇", 1420, 48, 280, 3, 2, 1300),
-            new EnemyDefinition("Zyrryl", "The Tower Warden", "🛡️", 3880, 67, 320, 3, 1, 4000)
+            new EnemyDefinition("Flame Revenant",      "Fire Spirit",  "🔥", 1080, 28, 220, 3, 3, 950),
+            new EnemyDefinition("Bone Warlock",        "Undead Mage",  "💀", 1280, 41, 262, 3, 2, 1150),
+            new EnemyDefinition("Obsidian Crusher",    "Magma Golem",  "🗿", 1580, 48, 286, 3, 2, 1400),
+            new EnemyDefinition("Soulflayer Gargoyle", "Demon Beast",  "🦇", 1420, 48, 280, 3, 2, 1300),
+            new EnemyDefinition("Zyrryl",              "Tower Warden", "🛡️", 3880, 67, 320, 3, 1, 4000)
     );
 
     // ─── Final Boss Registry ─────────────────────────────────────────────────
