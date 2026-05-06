@@ -127,8 +127,9 @@ public class TitleScreen extends JPanel {
 
         // Buttons — small equal gap so all four fit comfortably on screen
         gbc.insets = new Insets(5, 10, 5, 10);
-        gbc.gridy = 1; add(continueBtn, gbc);
-        gbc.gridy = 2; add(startBtn,    gbc);
+
+        gbc.gridy = 1; add(startBtn,    gbc);
+        gbc.gridy = 2; add(continueBtn, gbc);
         gbc.gridy = 3; add(creditsBtn,  gbc);
         gbc.gridy = 4; add(exitBtn,     gbc);
     }
