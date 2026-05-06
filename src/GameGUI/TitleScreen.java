@@ -96,7 +96,7 @@ public class TitleScreen extends JPanel {
 
         JButton exitBtn = makeImageButton(
                 "/assets/GUIButtons/ExitButton.png",
-                "/assets/GUIButtons/ExitHover.png",
+                "/assets/GUIButtons/ExitButtonHover.png",
                 "Exit", BTN_W, BTN_H);
 
         // ── Actions ───────────────────────────────────────────────────────
