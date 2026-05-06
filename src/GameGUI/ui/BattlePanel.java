@@ -92,6 +92,25 @@ public class BattlePanel extends JPanel {
     private boolean isPlayingKarlBullseye = false;
     private boolean isPlayingKarlRain = false;
 
+    // Simon sprite constants
+    private static final double SIMON_SPRITE_SCALE = 1.5;
+    private static final int SIMON_IDLE_FRAME_COUNT = 8;
+    private static final int SIMON_HURT_FRAME_COUNT = 8;
+    private static final int SIMON_FIREBALL_FRAME_COUNT = 8;
+    private static final int SIMON_ICE_PRISON_FRAME_COUNT = 8;
+    private static final int SIMON_METEOR_STORM_FRAME_COUNT = 8;
+
+    private BufferedImage[] simonIdleFrames;
+    private BufferedImage[] simonHurtFrames;
+    private BufferedImage[] simonFireballFrames;
+    private BufferedImage[] simonIcePrisonFrames;
+    private BufferedImage[] simonMeteorStormFrames;
+
+    private boolean isPlayingSimonHurt = false;
+    private boolean isPlayingSimonFireball = false;
+    private boolean isPlayingSimonIcePrison = false;
+    private boolean isPlayingSimonMeteorStorm = false;
+
     // ════════════════════════════════════════════
     // ★ ENEMY SPRITE FIELDS
     // ════════════════════════════════════════════
@@ -751,7 +770,7 @@ public class BattlePanel extends JPanel {
         add(enemySpriteLabel);
 
         JPanel enemyCard = buildStatCard(false);
-        enemyCard.setBounds(920, 8, 340, 90);
+        enemyCard.setBounds(925, 8, 340, 90);
         add(enemyCard);
 
         JLabel dialogueBg = new JLabel();
@@ -761,17 +780,56 @@ public class BattlePanel extends JPanel {
             dialogueBg.setIcon(new ImageIcon(new ImageIcon(dbUrl).getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH)));
         add(dialogueBg);
 
+        // ── Combined HUD bar: [YOUR TURN] | [Round 1] | [CD: 3] ──────────
+        int hudW = 430, hudH = 30, hudX = (1280 - hudW) / 2;
+
+        JPanel hudBar = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Boolean isPlayer = (Boolean) getClientProperty("isPlayer");
+                boolean hero = isPlayer == null || isPlayer;
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(5, 5, 15, 215));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                // Border changes color based on whose turn it is
+                g2.setColor(hero ? new Color(0, 160, 55) : new Color(180, 20, 20));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRect(1, 1, getWidth() - 2, getHeight() - 2);
+                // Divider lines
+                g2.setColor(hero ? new Color(0, 100, 35) : new Color(120, 10, 10));
+                g2.setStroke(new BasicStroke(1));
+                g2.drawLine(200, 5, 200, getHeight() - 5);
+                g2.drawLine(316, 5, 316, getHeight() - 5);
+                g2.dispose();
+            }
+        };
+        hudBar.putClientProperty("isPlayer", true); // default state
+        hudBar.setOpaque(false);
+        hudBar.setBounds(hudX, 6, hudW, hudH);
+
         turnLabel = new JLabel("YOUR TURN", SwingConstants.CENTER);
-        turnLabel.setBounds(0, 8, 1280, 26);
-        turnLabel.setFont(new Font("Monospaced", Font.BOLD, 16));
-        turnLabel.setForeground(GREEN);
-        add(turnLabel);
+        turnLabel.setBounds(0, 0, 200, hudH);
+        turnLabel.setFont(new Font("Monospaced", Font.BOLD, 13));
+        turnLabel.setForeground(new Color(0, 224, 96));
+        turnLabel.setOpaque(false);
+        hudBar.add(turnLabel);
 
         roundLabel = new JLabel("Round 1", SwingConstants.CENTER);
-        roundLabel.setBounds(0, 36, 1280, 22);
+        roundLabel.setBounds(200, 0, 116, hudH);
         roundLabel.setFont(new Font("Monospaced", Font.BOLD, 13));
-        roundLabel.setForeground(GOLD);
-        add(roundLabel);
+        roundLabel.setForeground(new Color(224, 184, 0));
+        roundLabel.setOpaque(false);
+        hudBar.add(roundLabel);
+
+        specialCdLabel = new JLabel("", SwingConstants.CENTER);
+        specialCdLabel.setBounds(316, 0, 114, hudH);
+        specialCdLabel.setFont(new Font("Monospaced", Font.BOLD, 13));
+        specialCdLabel.setForeground(new Color(224, 80, 32));
+        specialCdLabel.setOpaque(false);
+        hudBar.add(specialCdLabel);
+
+        add(hudBar);
 
         logArea = new javax.swing.JTextPane();
         logArea.setBounds(160, 575, 780, 100);
@@ -803,7 +861,6 @@ public class BattlePanel extends JPanel {
         add(backBtn);
         add(exitBtn);
 
-        // Updated sizes for a rounder, balanced button!
         int btnY = 453, btnW = 78, btnH = 78, btnGap = 24;
         int startX = (1280 - (4 * btnW + 3 * btnGap)) / 2;
 
@@ -822,13 +879,6 @@ public class BattlePanel extends JPanel {
         add(skipTurnBtn);
         add(ultimateBtn);
 
-        specialCdLabel = new JLabel("");
-        specialCdLabel.setBounds(0, 60, 1280, 20);
-        specialCdLabel.setFont(new Font("Monospaced", Font.BOLD, 12));
-        specialCdLabel.setForeground(new Color(200, 100, 50));
-        specialCdLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        add(specialCdLabel);
-
         resultOverlay = buildResultOverlay();
         resultOverlay.setBounds(0, 0, 1280, 720);
         resultOverlay.setVisible(false);
@@ -840,25 +890,23 @@ public class BattlePanel extends JPanel {
         add(lootChoiceOverlay);
 
         setComponentZOrder(resultOverlay, 0);
-        setComponentZOrder(specialCdLabel, 1);
-        setComponentZOrder(roundLabel, 2);
-        setComponentZOrder(turnLabel, 3);
-        setComponentZOrder(logArea, 3);
-        setComponentZOrder(battleContinueBtn, 4);
-        setComponentZOrder(menuBtn, 5);
-        setComponentZOrder(backBtn, 6);
-        setComponentZOrder(exitBtn, 7);
-        setComponentZOrder(skill1Btn, 8);
-        setComponentZOrder(skill2Btn, 9);
-        setComponentZOrder(skipTurnBtn, 10);
-        setComponentZOrder(ultimateBtn, 11);
-        setComponentZOrder(dialogueBg, 13);
-        setComponentZOrder(heroCard, 14);
-        setComponentZOrder(enemyCard, 15);
-        setComponentZOrder(heroSpriteLabel, 16);
-        setComponentZOrder(enemySpriteLabel, 17);
-        setComponentZOrder(battleBg, 18);
-        setComponentZOrder(theBg, 19);
+        setComponentZOrder(hudBar, 1);
+        setComponentZOrder(logArea, 2);
+        setComponentZOrder(battleContinueBtn, 3);
+        setComponentZOrder(menuBtn, 4);
+        setComponentZOrder(backBtn, 5);
+        setComponentZOrder(exitBtn, 6);
+        setComponentZOrder(skill1Btn, 7);
+        setComponentZOrder(skill2Btn, 8);
+        setComponentZOrder(skipTurnBtn, 9);
+        setComponentZOrder(ultimateBtn, 10);
+        setComponentZOrder(dialogueBg, 11);
+        setComponentZOrder(heroCard, 12);
+        setComponentZOrder(enemyCard, 13);
+        setComponentZOrder(heroSpriteLabel, 14);
+        setComponentZOrder(enemySpriteLabel, 15);
+        setComponentZOrder(battleBg, 16);
+        setComponentZOrder(theBg, 17);
     }
 
     private void openInventoryDialog() {
@@ -893,11 +941,38 @@ public class BattlePanel extends JPanel {
         } else if (skillName.equals("Eternal Cross Slash")) {
             normalPath = "/assets/KaelAssets/EternalCrossSlash.png";
             hoverPath = "/assets/KaelAssets/EternalCrossSlashHovered.png";
-            disabledPath = null;
         } else if (skillName.equals("Skip Turn")) {
             normalPath = "/assets/KaelAssets/SkipTurn.png";
             hoverPath = "/assets/KaelAssets/SkipTurnHovered.png";
         }
+        // ★ ADD KARL BUTTONS HERE
+        else if (skillName.equals("Piercing Arrow")) {
+            normalPath = "/assets/KarlAssets/KarlPiercingShotButton.png";
+            hoverPath = "/assets/KarlAssets/KarlPiercingShotHover.png";
+        } else if (skillName.equals("Bullseye")) {
+            normalPath = "/assets/KarlAssets/KarlBullseyeButton.png";
+            hoverPath = "/assets/KarlAssets/KarlBullseyeHover.png";
+        } else if (skillName.equals("Rain of a Thousand Arrows")) {
+            normalPath = "/assets/KarlAssets/KarlUltimateButton.png";
+            hoverPath = "/assets/KarlAssets/KarlUltimateHover.png";
+
+        } else if (skillName.equals("Rain of a Thousand Arrows")) {
+            normalPath = "/assets/KarlAssets/KarlUltimateButton.png";
+            hoverPath = "/assets/KarlAssets/KarlUltimateHover.png";
+        }
+        // ★ ADD SIMON BUTTONS HERE
+        else if (skillName.equals("Fireball")) {
+            normalPath = "/assets/SimonAssets/SimonFireballButton.png";
+            hoverPath = "/assets/SimonAssets/SimonFireballHover.png";
+        } else if (skillName.equals("Ice Prison")) {
+            normalPath = "/assets/SimonAssets/SimonIcePrisonButton.png";
+            hoverPath = "/assets/SimonAssets/SimonIcePrisonHover.png";
+        } else if (skillName.equals("Meteor Storm")) {
+            normalPath = "/assets/SimonAssets/SimonMeteorStormButton.png";
+            hoverPath = "/assets/SimonAssets/SimonMeteorStormHover.png";
+        }
+        //SIMON BUTTONS
+
 
         java.net.URL nUrl = (normalPath != null) ? getClass().getResource(normalPath) : null;
 
@@ -909,37 +984,32 @@ public class BattlePanel extends JPanel {
 
             try {
                 btn.setIcon(new ImageIcon(new ImageIcon(nUrl).getImage().getScaledInstance(73, 73, Image.SCALE_SMOOTH)));
-                java.net.URL hUrl = null;
-                if (hoverPath != null) {
-                    hUrl = getClass().getResource(hoverPath);
-                    if (hUrl != null)
-                        btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(78, 78, Image.SCALE_SMOOTH)));
-                } else
-                    btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(73, 73, Image.SCALE_SMOOTH)));
 
-                if (disabledPath != null) {
-                    java.net.URL dUrl = getClass().getResource(disabledPath);
-                    if (dUrl != null)
-                        btn.setDisabledIcon(new ImageIcon(new ImageIcon(dUrl).getImage().getScaledInstance(150, 65, Image.SCALE_SMOOTH)));
-                } else btn.setDisabledIcon(null);
+                java.net.URL hUrl = (hoverPath != null) ? getClass().getResource(hoverPath) : null;
+                if (hUrl != null)
+                    btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(78, 78, Image.SCALE_SMOOTH)));
+
+                // ★ WHITE MASK FOR DISABLED/COOLDOWN STATE
+                try {
+                    BufferedImage base = ImageIO.read(nUrl);
+                    BufferedImage out = new BufferedImage(73, 73, BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D gx = out.createGraphics();
+                    gx.drawImage(base, 0, 0, 73, 73, null);
+                    gx.setColor(new Color(255, 255, 255, 140));
+                    gx.fillRect(0, 0, 73, 73);
+                    gx.dispose();
+                    btn.setDisabledIcon(new ImageIcon(out));
+                } catch (Exception ex) {
+                    btn.setDisabledIcon(null);
+                }
+
             } catch (Exception e) {
                 System.out.println("Error loading image for " + skillName);
             }
         } else {
+            // fallback text button
             btn.setIcon(null);
             btn.setRolloverIcon(null);
-            try {
-                java.awt.image.BufferedImage base = ImageIO.read(nUrl);
-                java.awt.image.BufferedImage out = new java.awt.image.BufferedImage(73, 73, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-                Graphics2D gx = out.createGraphics();
-                gx.drawImage(base, 0, 0, 73, 73, null);
-                gx.setColor(new Color(255, 255, 255, 140));
-                gx.fillRect(0, 0, 150, 65);
-                gx.dispose();
-                btn.setDisabledIcon(new ImageIcon(out));
-            } catch (Exception ex) {
-                btn.setDisabledIcon(null);
-            }
             btn.setContentAreaFilled(true);
             btn.setBorderPainted(true);
             btn.setOpaque(true);
@@ -948,6 +1018,23 @@ public class BattlePanel extends JPanel {
             btn.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(border, 2),
                     BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        }
+        // ★ WHITE MASK FOR DISABLED/COOLDOWN STATE - circular
+        // ★ WHITE MASK - matches button shape
+        try {
+            BufferedImage base = ImageIO.read(nUrl);
+            BufferedImage out = new BufferedImage(73, 73, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D gx = out.createGraphics();
+            gx.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            gx.drawImage(base, 0, 0, 73, 73, null);
+            gx.setColor(new Color(255, 255, 255, 140));
+            // Follow the actual pixels of the image instead of a rectangle
+            gx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.55f));
+            gx.fillRect(0, 0, 73, 73);
+            gx.dispose();
+            btn.setDisabledIcon(new ImageIcon(out));
+        } catch (Exception ex) {
+            btn.setDisabledIcon(null);
         }
     }
 
@@ -1195,8 +1282,13 @@ public class BattlePanel extends JPanel {
                                                                 isPlayingKarlBullseye    ? karlBullseyeFrames :
                                                                         isPlayingKarlRain        ? karlRainFrames :
                                                                                 isPlayingKarlHurt        ? karlHurtFrames :
-                                                                                        isKarl                   ? karlIdleFrames :
-                                                                                                useRaw                   ? idleFramesRaw : idleFrames;
+                                                                                        isPlayingSimonFireball   ? simonFireballFrames :
+                                                                                                isPlayingSimonIcePrison  ? simonIcePrisonFrames :
+                                                                                                        isPlayingSimonMeteorStorm ? simonMeteorStormFrames :
+                                                                                                                isPlayingSimonHurt       ? simonHurtFrames :
+                                                                                                                        isSimonHero()            ? simonIdleFrames :
+                                                                                                                                isKarl                   ? karlIdleFrames :
+                                                                                                                                        useRaw                   ? idleFramesRaw : idleFrames;
                 if (frames == null || heroSpriteFrame >= frames.length) return;
                 BufferedImage frame = frames[heroSpriteFrame];
                 if (frame == null) return;
@@ -1228,6 +1320,61 @@ public class BattlePanel extends JPanel {
                 double scale = (isShade || isStag) ? SPRITE_SCALE : ENEMY_SCALE;
             }
         };
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/SimonAssets/SimonIdle.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SIMON_IDLE_FRAME_COUNT, fh = sheet.getHeight();
+                simonIdleFrames = new BufferedImage[SIMON_IDLE_FRAME_COUNT];
+                for (int i = 0; i < SIMON_IDLE_FRAME_COUNT; i++)
+                    simonIdleFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/SimonAssets/SimonHurt.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SIMON_HURT_FRAME_COUNT, fh = sheet.getHeight();
+                simonHurtFrames = new BufferedImage[SIMON_HURT_FRAME_COUNT];
+                for (int i = 0; i < SIMON_HURT_FRAME_COUNT; i++)
+                    simonHurtFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/SimonAssets/SimonFireball.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SIMON_FIREBALL_FRAME_COUNT, fh = sheet.getHeight();
+                simonFireballFrames = new BufferedImage[SIMON_FIREBALL_FRAME_COUNT];
+                for (int i = 0; i < SIMON_FIREBALL_FRAME_COUNT; i++)
+                    simonFireballFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/SimonAssets/SimonIcePrison.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SIMON_ICE_PRISON_FRAME_COUNT, fh = sheet.getHeight();
+                simonIcePrisonFrames = new BufferedImage[SIMON_ICE_PRISON_FRAME_COUNT];
+                for (int i = 0; i < SIMON_ICE_PRISON_FRAME_COUNT; i++)
+                    simonIcePrisonFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
+
+        try {
+            java.net.URL url = getClass().getResource("/assets/SimonAssets/SimonMeteorStorm.png");
+            if (url != null) {
+                BufferedImage sheet = ImageIO.read(url);
+                int fw = sheet.getWidth() / SIMON_METEOR_STORM_FRAME_COUNT, fh = sheet.getHeight();
+                simonMeteorStormFrames = new BufferedImage[SIMON_METEOR_STORM_FRAME_COUNT];
+                for (int i = 0; i < SIMON_METEOR_STORM_FRAME_COUNT; i++)
+                    simonMeteorStormFrames[i] = removeBlackBg(sheet.getSubimage(i * fw, 0, fw, fh));
+            }
+        } catch (Exception ex) {}
 
         int labelW = SPRITE_W;
         int labelH = SPRITE_H;
@@ -2641,6 +2788,71 @@ public class BattlePanel extends JPanel {
     }
 
     private int getHeroIdleY() {
+
+        // Karl World 1 override
+        if (isKarlHero()) {
+            if (currentBattleBgPath.contains("ForsakenCultist") || currentBattleBgPath.contains("World2BattleBackground2"))
+                return IDLE_Y_W2 + 70 - 40;
+            if (currentBattleBgPath.contains("World2BattleBackground3"))
+                return IDLE_Y_W2 + 60 - 40;
+            if (currentBattleBgPath.contains("World2BattleBackground4"))
+                return IDLE_Y_W2 + 120 - 40;
+            if (currentBattleBgPath.contains("World2BattleBackground5"))
+                return IDLE_Y_W2 + 160 - 40;
+            if (currentBattleBgPath.contains("World2BattleBackgroundLast"))
+                return IDLE_Y_W2 + 80 - 40;
+            if (currentBattleBgPath.contains("World2BattleBackground") &&
+                    !currentBattleBgPath.contains("World2BattleBackground2") &&
+                    !currentBattleBgPath.contains("World2BattleBackground3") &&
+                    !currentBattleBgPath.contains("World2BattleBackground4") &&
+                    !currentBattleBgPath.contains("World2BattleBackground5") &&
+                    !currentBattleBgPath.contains("World2BattleBackgroundLast"))
+                return IDLE_Y_W2 - 40; // Plague Vermin
+            if (currentBattleBgPath.contains("World3BG15.5"))
+                return IDLE_Y + 80 - 40;
+            if (currentBattleBgPath.contains("World3BG21.5"))
+                return IDLE_Y + 80 - 40;
+            if (currentBattleBgPath.contains("World3BG27"))
+                return IDLE_Y - 100 - 40;
+            if (currentBattleBgPath.contains("World3BG30.5"))
+                return IDLE_Y - 50 - 40;
+            if (currentBattleBgPath.contains("NecroBackground"))
+                return IDLE_Y + 80 - 40;
+            return IDLE_Y - 40; // World 1
+        }
+
+        if (isSimonHero()) {
+            if (currentBattleBgPath.contains("ForsakenCultist") || currentBattleBgPath.contains("World2BattleBackground2"))
+                return IDLE_Y_W2 + 70 - 30;
+            if (currentBattleBgPath.contains("World2BattleBackground3"))
+                return IDLE_Y_W2 + 60 - 30;
+            if (currentBattleBgPath.contains("World2BattleBackground4"))
+                return IDLE_Y_W2 + 120 - 30;
+            if (currentBattleBgPath.contains("World2BattleBackground5"))
+                return IDLE_Y_W2 + 160 - 30;
+            if (currentBattleBgPath.contains("World2BattleBackgroundLast"))
+                return IDLE_Y_W2 + 80 - 30;
+            if (currentBattleBgPath.contains("World2BattleBackground") &&
+                    !currentBattleBgPath.contains("World2BattleBackground2") &&
+                    !currentBattleBgPath.contains("World2BattleBackground3") &&
+                    !currentBattleBgPath.contains("World2BattleBackground4") &&
+                    !currentBattleBgPath.contains("World2BattleBackground5") &&
+                    !currentBattleBgPath.contains("World2BattleBackgroundLast"))
+                return IDLE_Y_W2 - 30; // Plague Vermin
+            if (currentBattleBgPath.contains("World3BG15.5"))
+                return IDLE_Y + 80 - 30;
+            if (currentBattleBgPath.contains("World3BG21.5"))
+                return IDLE_Y + 80 - 30;
+            if (currentBattleBgPath.contains("World3BG27"))
+                return IDLE_Y - 100 - 30;
+            if (currentBattleBgPath.contains("World3BG30.5"))
+                return IDLE_Y - 50 - 30;
+            if (currentBattleBgPath.contains("NecroBackground"))
+                return IDLE_Y + 80 - 30;
+            return IDLE_Y - 30; // World 1
+        }
+
+
         if (currentBattleBgPath.contains("ForsakenCultist") || currentBattleBgPath.contains("World2BattleBackground2")) {
             return IDLE_Y_W2 + 70;
         }
@@ -2712,6 +2924,10 @@ public class BattlePanel extends JPanel {
         return heroDef != null && heroDef.name.equals("Karl Clover Dior IV");
     }
 
+    private boolean isSimonHero() {
+        return heroDef != null && heroDef.name.equals("Simon Versace"); // change to exact name
+    }
+
     //Enemy
     private int getEnemyActionY() {
         if (currentBattleBgPath.contains("World2BattleBackground3")) {
@@ -2729,22 +2945,21 @@ public class BattlePanel extends JPanel {
         isPlayingEternalCross = false; isPlayingKaelHurt = false;
         isPlayingKarlHurt = false; isPlayingKarlPiercingShot = false;
         isPlayingKarlBullseye = false; isPlayingKarlRain = false;
+        // ★ ADD
+        isPlayingSimonHurt = false; isPlayingSimonFireball = false;
+        isPlayingSimonIcePrison = false; isPlayingSimonMeteorStorm = false;
         heroSpriteFrame = 0;
 
         boolean karl = isKarlHero();
+        boolean simon = isSimonHero(); // ★ ADD
 
-        // ★ DEBUG — remove these after fixing
-        System.out.println("Karl frames loaded: " + (karlIdleFrames != null));
-        System.out.println("isKarlHero: " + karl);
-        System.out.println("heroDef name: " + (heroDef != null ? heroDef.name : "null"));
-
-        BufferedImage[] heroIdle = karl ? karlIdleFrames : idleFrames;
-        int frameCount = karl ? KARL_IDLE_FRAME_COUNT : SPRITE_FRAME_COUNT;
+        BufferedImage[] heroIdle = simon ? simonIdleFrames : karl ? karlIdleFrames : idleFrames;
+        int frameCount = simon ? SIMON_IDLE_FRAME_COUNT : karl ? KARL_IDLE_FRAME_COUNT : SPRITE_FRAME_COUNT;
 
         if (heroIdle != null) {
-            int w = (int) (heroIdle[0].getWidth() * SPRITE_SCALE);
-            int h = (int) (heroIdle[0].getHeight() * SPRITE_SCALE);
-            heroSpriteLabel.setBounds(getHeroIdleX(), getHeroIdleY(), w, h);
+            int w = (int) (heroIdle[0].getWidth() * SIMON_SPRITE_SCALE);
+            int h = (int) (heroIdle[0].getHeight() * SIMON_SPRITE_SCALE);
+            heroSpriteLabel.setBounds(getHeroIdleX(), getHeroIdleY() - 10, w, h);
         }
         heroIdleTimer = new javax.swing.Timer(220, e -> {
             heroSpriteFrame = (heroSpriteFrame + 1) % frameCount;
@@ -4667,8 +4882,9 @@ public class BattlePanel extends JPanel {
 
     // HERO ACTIONS
     private void playHeroHurtAnimation(Runnable onDone) {
-        if (isKarlHero()) playKarlHurtAnimation(onDone);
-        else              playKaelHurtAnimation(onDone);
+        if (isKarlHero())        playKarlHurtAnimation(onDone);
+        else if (isSimonHero())  playSimonHurtAnimation(onDone); // ★ ADD
+        else                     playKaelHurtAnimation(onDone);
     }
 
     private void playKaelHurtAnimation(Runnable onDone) {
@@ -4863,6 +5079,70 @@ public class BattlePanel extends JPanel {
         }).start();
     }
 
+    private void playSimonHurtAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (simonHurtFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingSimonHurt = true; heroSpriteFrame = 0;
+        int w = (int)(simonHurtFrames[0].getWidth() * SIMON_SPRITE_SCALE);
+        int h = (int)(simonHurtFrames[0].getHeight() * SIMON_SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getHeroIdleX(), getHeroIdleY(), w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(150, e -> {
+            if (frame[0] < SIMON_HURT_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSimonHurt = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
+    private void playSimonFireballAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (simonFireballFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingSimonFireball = true; heroSpriteFrame = 0;
+        int w = (int)(simonFireballFrames[0].getWidth() * SIMON_SPRITE_SCALE);
+        int h = (int)(simonFireballFrames[0].getHeight() * SIMON_SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(simonFireballFrames), getHeroActionY() + 20, w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(130, e -> {
+            if (frame[0] < SIMON_FIREBALL_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSimonFireball = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
+    private void playSimonIcePrisonAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (simonIcePrisonFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingSimonIcePrison = true; heroSpriteFrame = 0;
+        int w = (int)(simonIcePrisonFrames[0].getWidth() * SIMON_SPRITE_SCALE);
+        int h = (int)(simonIcePrisonFrames[0].getHeight() * SIMON_SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(simonIcePrisonFrames), getHeroActionY() + 20, w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0};
+        new javax.swing.Timer(110, e -> {
+            if (frame[0] < SIMON_ICE_PRISON_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSimonIcePrison = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+        }).start();
+    }
+
+    private void playSimonMeteorStormAnimation(Runnable onDone) {
+        if (heroIdleTimer != null && heroIdleTimer.isRunning()) heroIdleTimer.stop();
+        if (simonMeteorStormFrames == null) { startHeroIdleAnimation(); if (onDone != null) onDone.run(); return; }
+        isPlayingSimonMeteorStorm = true; heroSpriteFrame = 0;
+        int w = (int)(simonMeteorStormFrames[0].getWidth() * SIMON_SPRITE_SCALE);
+        int h = (int)(simonMeteorStormFrames[0].getHeight() * SIMON_SPRITE_SCALE);
+        heroSpriteLabel.setBounds(getActionX(simonMeteorStormFrames), getHeroActionY() + 10, w, h);
+        heroSpriteLabel.repaint();
+        int[] frame = {0}, repeat = {0};
+        new javax.swing.Timer(60, e -> {
+            if (frame[0] < SIMON_METEOR_STORM_FRAME_COUNT) { heroSpriteFrame = frame[0]++; heroSpriteLabel.repaint(); }
+            else {
+                repeat[0]++;
+                if (repeat[0] < 2) { frame[0] = 0; heroSpriteFrame = 0; heroSpriteLabel.repaint(); }
+                else { ((javax.swing.Timer)e.getSource()).stop(); isPlayingSimonMeteorStorm = false; startHeroIdleAnimation(); if (onDone != null) onDone.run(); }
+            }
+        }).start();
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // ★ BATTLE LOGIC
     // ════════════════════════════════════════════════════════════════════════
@@ -4909,6 +5189,43 @@ public class BattlePanel extends JPanel {
             if (action == BattleManager.BattleAction.SKILL1)        playKarlPiercingShotAnimation(afterHeroAnim);
             else if (action == BattleManager.BattleAction.SKILL2)   playKarlBullseyeAnimation(afterHeroAnim);
             else if (action == BattleManager.BattleAction.ULTIMATE) playKarlRainAnimation(afterHeroAnim);
+            else {
+                if (pResult != null) addLogFromResult(pResult, true);
+                if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
+                    handleVictory();
+                    animating = false;
+                    return;
+                }
+                Timer t1 = new Timer(900, e -> {
+                    engine.advanceToEnemyTurn();
+                    setTurnLabel(false);
+                    BattleManager.ActionResult er = engine.enemyTurn();
+                    refreshBattleUI();
+                    playEnemyAttack(() -> {
+                        playHeroHurtAnimation(() -> {
+                            clearLog();
+                            if (er != null) addEnemyAttackLog(er);
+                            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
+                            else {
+                                Timer t3 = new Timer(800, ev2 -> {
+                                    clearLog();
+                                    setTurnLabel(true);
+                                    setActionsEnabled(true);
+                                    animating = false;
+                                });
+                                t3.setRepeats(false);
+                                t3.start();
+                            }
+                        });
+                    });
+                });
+                t1.setRepeats(false);
+                t1.start();
+            }
+        } else if (isSimonHero()) {
+            if (action == BattleManager.BattleAction.SKILL1)        playSimonFireballAnimation(afterHeroAnim);
+            else if (action == BattleManager.BattleAction.SKILL2)   playSimonIcePrisonAnimation(afterHeroAnim);
+            else if (action == BattleManager.BattleAction.ULTIMATE) playSimonMeteorStormAnimation(afterHeroAnim);
             else {
                 if (pResult != null) addLogFromResult(pResult, true);
                 if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
@@ -5023,6 +5340,7 @@ public class BattlePanel extends JPanel {
 
     private void executeEnemyTurnSequence() {
         setTurnLabel(false);
+
         // Math is calculated in the background
         BattleManager.ActionResult er = engine.enemyTurn();
 
@@ -5037,38 +5355,32 @@ public class BattlePanel extends JPanel {
             // ★ UI updates precisely when the hit connects!
             refreshBattleUI();
             clearLog();
+
+            // ✅ Use the engine’s formatted message directly
             if (er != null) addLogFromResult(er, false);
 
-        msg = switch (enemyDef.name) {
-            case "Rotfang Wolf" -> "Rotfang Wolf uses Savage Howl" + damage;
-            case "Shade Sprite" -> "Shade Sprite uses Trickster Strike" + damage;
-            case "Dreadbark Treant" -> "Dreadbark Treant uses Root Snare" + damage;
-            case "Carrion Bat" -> "Carrion Bat uses Screech" + damage;
-            case "The Hollow Stag"  -> "The Hollow Stag uses " + engine.getLastEnemySkillName() + damage;
-            case "Plague Vermin" -> "Plague Vermin uses Plague Bite" + damage;
-            case "Forsaken Cultist" -> "Forsaken Cultist uses Shadow Bolt" + damage;
-            case "Blight Hound" -> "Blight Hound uses Corpse Explosion" + damage;
-            case "Ghoul Footman" -> "Ghoul Footman uses Rotten Cleave" + damage;
-            case "The Black Jailer" -> "The Black Jailer uses " + engine.getLastEnemySkillName() + damage;
-            case "Luther Von" -> "Luther Von uses " + engine.getLastEnemySkillName() + damage;
-            case "Flame Revenant" -> "Flame Revenant uses Ember Burst" + damage;
-            case "Bone Warlock" -> "Bone Warlock uses Marrow Bolt" + damage;
-            case "Obsidian Crusher" -> "Obsidian Crusher uses Magma Slam" + damage;
-            case "Soulflayer Gargoyle" -> "Soulflayer Gargoyle uses Soul Scream" + damage;
-            case "Zyrryl" -> "Zyrryl uses " + engine.getLastEnemySkillName() + damage;
-            case "Khai the Necromancer" -> "Khai the Necromancer uses " + engine.getLastEnemySkillName() + damage;
-            default                 -> null;
+            // Continue flow (back to player turn or check defeat)
+            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+                handleDefeat();
+            } else {
+                Timer t = new Timer(800, e -> {
+                    clearLog();
+                    beginPlayerTurnSequence();
+                });
+                t.setRepeats(false);
+                t.start();
+            }
         };
 
         if (enemyAttacked) {
             // Animation plays first, THEN postEnemyAction updates the HP and log
-            playEnemyAttack(() -> playKaelHurtAnimation(postEnemyAction));
+            playEnemyAttack(() -> playHeroHurtAnimation(postEnemyAction));
         } else {
             // If Stunned/Frozen, just update UI and logs immediately
-            refreshBattleUI();
             postEnemyAction.run();
         }
     }
+
     private void handleVictory() {
         if (enemySequence != null) {
             EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
@@ -5415,9 +5727,16 @@ public class BattlePanel extends JPanel {
     }
 
     private void setTurnLabel(boolean isPlayer) {
-        if (turnLabel != null) {
-            turnLabel.setText(isPlayer ? "YOUR TURN" : "ENEMY TURN");
-            turnLabel.setForeground(isPlayer ? GREEN : RED);
+        if (turnLabel == null) return;
+        turnLabel.setText(isPlayer ? "YOUR TURN" : "ENEMY TURN");
+        turnLabel.setForeground(isPlayer ? new Color(0, 224, 96) : new Color(255, 80, 80));
+
+        // Update the hudBar border color to match turn state
+        if (turnLabel.getParent() instanceof JPanel hudBar) {
+            // Swap the border stroke color by repainting with updated state
+            // Store state so paintComponent can read it
+            hudBar.putClientProperty("isPlayer", isPlayer);
+            hudBar.repaint();
         }
     }
 
@@ -5602,12 +5921,9 @@ public class BattlePanel extends JPanel {
 
     private JPanel buildStatCard(boolean isHero) {
         final Color cardBg = new Color(10, 9, 20, 220);
-        final Color cardBorder = isHero ? GREEN_DARK : RED_DARK;
         JPanel card = new JPanel(null) {
             @Override
-            public boolean isOptimizedDrawingEnabled() {
-                return false;
-            }
+            public boolean isOptimizedDrawingEnabled() { return false; }
 
             @Override
             protected void paintComponent(Graphics g) {
@@ -5615,68 +5931,118 @@ public class BattlePanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(cardBg);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.setColor(cardBorder);
-                g2.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+                g2.setColor(isHero ? new Color(0, 200, 83) : new Color(200, 20, 20));
+                g2.fillRect(0, 0, 5, getHeight());
+                g2.setColor(isHero ? new Color(0, 128, 42) : new Color(140, 10, 10));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRect(1, 1, getWidth() - 2, getHeight() - 2);
                 g2.dispose();
             }
         };
         card.setOpaque(false);
 
-        JLabel emoji = new JLabel("", SwingConstants.CENTER);
-        emoji.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
-        emoji.setBounds(4, 4, 40, 40);
-        card.add(emoji);
+        // Emoji circle — fixed position no overlap
+        JPanel emojiCircle = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(isHero ? new Color(0, 60, 20, 180) : new Color(60, 0, 0, 180));
+                g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.setColor(isHero ? new Color(0, 160, 55) : new Color(160, 20, 20));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawOval(1, 1, getWidth() - 2, getHeight() - 2);
+                g2.dispose();
+            }
+        };
+        emojiCircle.setLayout(new GridBagLayout());
+        emojiCircle.setOpaque(false);
+        emojiCircle.setBounds(6, 6, 44, 44);
 
+        JLabel emoji = new JLabel("", SwingConstants.CENTER);
+        emoji.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 20));
+        emojiCircle.add(emoji);
+        card.add(emojiCircle);
+
+        // Name — starts after circle (44 + 6 + 6 = 56)
         JLabel name = new JLabel("");
-        name.setFont(new Font("Monospaced", Font.BOLD, 11));
-        name.setForeground(isHero ? GREEN : RED);
-        name.setBounds(50, 4, 215, 16);
+        name.setFont(new Font("Monospaced", Font.BOLD, 14));
+        name.setForeground(isHero ? new Color(0, 255, 110) : new Color(255, 80, 80));
+        name.setBounds(58, 5, 195, 16);
         card.add(name);
 
-        JLabel lvlLbl = new JLabel("Lv.1");
-        lvlLbl.setFont(new Font("Monospaced", Font.BOLD, 10));
-        lvlLbl.setForeground(GOLD);
-        lvlLbl.setBounds(270, 4, 60, 16);
+        // Level badge — top right
+        JLabel lvlLbl = new JLabel("Lv.1", SwingConstants.CENTER);
+        lvlLbl.setFont(new Font("Monospaced", Font.BOLD, 11));
+        lvlLbl.setForeground(new Color(255, 220, 0));
+        lvlLbl.setOpaque(true);
+        lvlLbl.setBackground(new Color(50, 35, 0, 200));
+        lvlLbl.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 160, 0), 2),
+                BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        lvlLbl.setBounds(272, 5, 60, 20);
         card.add(lvlLbl);
 
+        // Role label
         JLabel role = new JLabel("");
         role.setFont(new Font("Monospaced", Font.ITALIC, 9));
         role.setForeground(TEXT_DIM);
-        role.setBounds(50, 20, 150, 14);
+        role.setBounds(58, 22, 195, 13);
         card.add(role);
 
-        // Moved "Defending" label up here next to the role so it doesn't overlap
+        // Status label — below role
         JLabel statusLbl = new JLabel(" ");
-        statusLbl.setFont(new Font("Monospaced", Font.BOLD, 10));
-        statusLbl.setForeground(BLUE);
-        statusLbl.setBounds(200, 20, 100, 14);
+        statusLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
+        statusLbl.setForeground(new Color(200, 200, 200));
+        statusLbl.setBounds(8, 72, 320, 14);
         card.add(statusLbl);
 
+        // HP label
         JLabel hpLbl = new JLabel("HP");
         hpLbl.setFont(FONT_STAT);
         hpLbl.setForeground(TEXT_DIM);
-        hpLbl.setBounds(4, 38, 40, 14);
+        hpLbl.setBounds(58, 38, 24, 12);
         card.add(hpLbl);
 
-        JProgressBar hpBar = new JProgressBar(0, 100);
+        // HP bar — rounded
+        JProgressBar hpBar = new JProgressBar(0, 100) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // background track
+                g2.setColor(new Color(30, 28, 50));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
+                // fill
+                int fillW = (int)((double) getValue() / getMaximum() * getWidth());
+                if (fillW > 0) {
+                    g2.setColor(getForeground());
+                    g2.fillRoundRect(0, 0, fillW, getHeight(), getHeight(), getHeight());
+                }
+                g2.dispose();
+            }
+        };
         hpBar.setValue(100);
         hpBar.setForeground(isHero ? GREEN : RED);
         hpBar.setBackground(new Color(30, 28, 50));
-        hpBar.setBorder(null);
-        hpBar.setBounds(50, 38, 175, 8);
+        hpBar.setBorderPainted(false);
+        hpBar.setOpaque(false);
+        hpBar.setBounds(82, 38, 170, 10);
         card.add(hpBar);
 
+        // HP text — moved right
         JLabel hpText = new JLabel("—");
-        hpText.setFont(FONT_STAT);
+        hpText.setFont(new Font("Monospaced", Font.BOLD, 11));
         hpText.setForeground(TEXT_BRIGHT);
-        hpText.setBounds(228, 34, 62, 16);
+        hpText.setBounds(256, 35, 80, 14);
         card.add(hpText);
 
-        // ★ NEW: Condition Label (Poisoned, Stunned, etc.)
-        JLabel conditionLbl = new JLabel("Cond: Normal");
+        // Condition label
+        JLabel conditionLbl = new JLabel("Status: Normal");
         conditionLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
-        conditionLbl.setForeground(new Color(255, 200, 50));
-        conditionLbl.setBounds(50, 72, 280, 14);
+        conditionLbl.setForeground(new Color(210, 210, 210));
+        conditionLbl.setBounds(8, 72, 320, 14);
         card.add(conditionLbl);
 
         if (isHero) {
@@ -5687,30 +6053,49 @@ public class BattlePanel extends JPanel {
             heroHpBar = hpBar;
             heroHpText = hpText;
             heroStatusLbl = statusLbl;
-            heroConditionLabel = conditionLbl; // Assigning Hero Label
+            heroConditionLabel = conditionLbl;
 
+            // EP label
             JLabel epLbl = new JLabel("EP");
             epLbl.setFont(FONT_STAT);
             epLbl.setForeground(TEXT_DIM);
-            epLbl.setBounds(4, 54, 40, 14);
+            epLbl.setBounds(58, 54, 24, 12);
             card.add(epLbl);
 
-            JProgressBar energyBar = new JProgressBar(0, 100);
+            // Energy bar — rounded
+            JProgressBar energyBar = new JProgressBar(0, 100) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(30, 28, 50));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
+                    int fillW = (int)((double) getValue() / getMaximum() * getWidth());
+                    if (fillW > 0) {
+                        g2.setColor(getForeground());
+                        g2.fillRoundRect(0, 0, fillW, getHeight(), getHeight(), getHeight());
+                    }
+                    g2.dispose();
+                }
+            };
             energyBar.setValue(100);
             energyBar.setForeground(new Color(200, 180, 80));
             energyBar.setBackground(new Color(30, 28, 50));
-            energyBar.setBorder(null);
-            energyBar.setBounds(50, 54, 175, 6);
+            energyBar.setBorderPainted(false);
+            energyBar.setOpaque(false);
+            energyBar.setBounds(82, 54, 170, 10);
             card.add(energyBar);
 
+            // Energy text — moved right
             JLabel energyText = new JLabel("—");
-            energyText.setFont(FONT_STAT);
+            energyText.setFont(new Font("Monospaced", Font.BOLD, 11));
             energyText.setForeground(TEXT_BRIGHT);
-            energyText.setBounds(228, 50, 62, 14);
+            energyText.setBounds(256, 51, 80, 14);
             card.add(energyText);
 
             heroEnergyBar = energyBar;
             heroEnergyText = energyText;
+
         } else {
             enemyEmojiLbl = emoji;
             enemyNameLbl = name;
@@ -5718,7 +6103,7 @@ public class BattlePanel extends JPanel {
             enemyHpBar = hpBar;
             enemyHpText = hpText;
             enemyStatusLbl = statusLbl;
-            enemyConditionLabel = conditionLbl; // Assigning Enemy Label
+            enemyConditionLabel = conditionLbl;
         }
         return card;
     }
