@@ -50,38 +50,56 @@ public class TitleScreen extends JPanel {
             e.printStackTrace();
         }
 
-        timer = new Timer(120, e -> {  // ~12fps — smooth animated feel
+        timer = new Timer(120, e -> {
             frame = (frame + 1) % backgrounds.length;
             repaint();
         });
-
         timer.start();
-
 
         setLayout(new GridBagLayout());
 
-        // Logo image — scale proportionally to target width of 500px
+        // ── Logo ──────────────────────────────────────────────────────────
         JLabel title = new JLabel();
         java.net.URL logoUrl = getClass().getResource("/assets/GUIButtons/TheFinalCompilationLogo.png");
         if (logoUrl != null) {
             ImageIcon raw = new ImageIcon(logoUrl);
-            int origW = raw.getIconWidth();
-            int origH = raw.getIconHeight();
-            int targetW = 500;
-            int targetH = (origH * targetW) / origW;
-            Image scaled = raw.getImage().getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH);
-            title.setIcon(new ImageIcon(scaled));
+            int origW  = raw.getIconWidth();
+            int origH  = raw.getIconHeight();
+            int targetW = 470;
+            int targetH = (origW > 0) ? (origH * targetW / origW) : 200;
+            title.setIcon(new ImageIcon(
+                    raw.getImage().getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH)));
         } else {
             title.setText("The Final Compilation");
             title.setFont(new Font("Arial", Font.BOLD, 60));
             title.setForeground(Color.WHITE);
         }
 
-        // ── Image buttons ──────────────────────────────────────────────────
-        JButton startBtn  = makeImageButton("/assets/GUIButtons/StartButton.png",  "Start",   235);
-        JButton optionBtn = makeImageButton("/assets/GUIButtons/OptionsButton.png", "Options", 263);
-        JButton exitBtn   = makeImageButton("/assets/GUIButtons/ExitButton.png",    "Exit",    235);
+        // ── Uniform button size for all four buttons ───────────────────────
+        final int BTN_W = 200;
+        final int BTN_H = 70;
 
+        JButton continueBtn = makeImageButton(
+                "/assets/GUIButtons/ContinueButton.png",
+                "/assets/GUIButtons/ContinueButtonHover.png",
+                "Continue", BTN_W, BTN_H);
+
+        JButton startBtn = makeImageButton(
+                "/assets/GUIButtons/StartButton.png",
+                "/assets/GUIButtons/StartButtonHover.png",
+                "Start", BTN_W, BTN_H);
+
+        JButton creditsBtn = makeImageButton(
+                "/assets/GUIButtons/CreditsButton.png",
+                "/assets/GUIButtons/CreditsButtonHover.png",
+                "Credits", BTN_W, BTN_H);
+
+        JButton exitBtn = makeImageButton(
+                "/assets/GUIButtons/ExitButton.png",
+                "/assets/GUIButtons/ExitHover.png",
+                "Exit", BTN_W, BTN_H);
+
+        // ── Actions ───────────────────────────────────────────────────────
         startBtn.addActionListener(e -> {
             JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
             topFrame.getContentPane().removeAll();
@@ -90,27 +108,37 @@ public class TitleScreen extends JPanel {
             topFrame.repaint();
         });
 
+        continueBtn.addActionListener(e -> {
+            // TODO: wire up continue / load-save logic here
+        });
+
         exitBtn.addActionListener(e -> System.exit(0));
 
+        // ── Layout ────────────────────────────────────────────────────────
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
+        gbc.gridx  = 0;
+        gbc.fill   = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
 
-        gbc.insets = new Insets(10, 10, 20, 10);
-        gbc.gridy = 0; add(title,     gbc);
+        // Logo — large top inset pushes it well down from the top edge
+        gbc.insets = new Insets(2, 10, 2, 10);
+        gbc.gridy = 0;
+        add(title, gbc);
 
-        gbc.insets = new Insets(0, 10, 5, 10);
-        gbc.gridy = 1; add(startBtn,  gbc);
-        gbc.insets = new Insets(-60, 10, 5, 10);
-        gbc.gridy = 2; add(optionBtn, gbc);
-        gbc.gridy = 3; add(exitBtn,   gbc);
+        // Buttons — small equal gap so all four fit comfortably on screen
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.gridy = 1; add(continueBtn, gbc);
+        gbc.gridy = 2; add(startBtn,    gbc);
+        gbc.gridy = 3; add(creditsBtn,  gbc);
+        gbc.gridy = 4; add(exitBtn,     gbc);
     }
 
-    /** Creates a transparent image button. Falls back to text if asset missing. */
-    private JButton makeImageButton(String path, String fallback) {
-        return makeImageButton(path, fallback, 210);
-    }
-
-    private JButton makeImageButton(String path, String fallback, int targetW) {
+    /**
+     * Creates a transparent image button scaled to exactly (w x h).
+     * Swaps to the hover icon on mouse-enter, reverts on mouse-exit.
+     */
+    private JButton makeImageButton(String normalPath, String hoverPath,
+                                    String fallback, int w, int h) {
         JButton btn = new JButton();
         btn.setOpaque(false);
         btn.setContentAreaFilled(false);
@@ -118,20 +146,36 @@ public class TitleScreen extends JPanel {
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        java.net.URL url = getClass().getResource(path);
-        if (url != null) {
-            ImageIcon raw = new ImageIcon(url);
-            int origW = raw.getIconWidth();
-            int origH = raw.getIconHeight();
-            int targetH = (origW > 0) ? (origH * targetW / origW) : 60;
-            Image scaled = raw.getImage().getScaledInstance(targetW, targetH, Image.SCALE_SMOOTH);
-            btn.setIcon(new ImageIcon(scaled));
+        // Lock every button to the exact same size so GridBagLayout can't distort them
+        Dimension size = new Dimension(w, h);
+        btn.setPreferredSize(size);
+        btn.setMinimumSize(size);
+        btn.setMaximumSize(size);
+
+        java.net.URL normalUrl = getClass().getResource(normalPath);
+        java.net.URL hoverUrl  = (hoverPath != null) ? getClass().getResource(hoverPath) : null;
+
+        if (normalUrl != null) {
+            ImageIcon normalIcon = new ImageIcon(
+                    new ImageIcon(normalUrl).getImage()
+                            .getScaledInstance(w, h, Image.SCALE_SMOOTH));
+
+            ImageIcon hoverIcon = (hoverUrl != null)
+                    ? new ImageIcon(new ImageIcon(hoverUrl).getImage()
+                    .getScaledInstance(w, h, Image.SCALE_SMOOTH))
+                    : normalIcon;
+
+            btn.setIcon(normalIcon);
+            btn.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon); }
+                @Override public void mouseExited (java.awt.event.MouseEvent e) { btn.setIcon(normalIcon); }
+            });
         } else {
             btn.setText(fallback);
             btn.setFont(new Font("Arial", Font.BOLD, 18));
             btn.setForeground(Color.WHITE);
             btn.setContentAreaFilled(true);
-            System.out.println("[TitleScreen] Missing: " + path);
+            System.out.println("[TitleScreen] Missing: " + normalPath);
         }
         return btn;
     }
@@ -139,8 +183,10 @@ public class TitleScreen extends JPanel {
     @Override
     protected void paintComponent(Graphics g){
         super.paintComponent(g);
-        if(backgrounds[frame] != null){
+        if (backgrounds[frame] != null){
             g.drawImage(backgrounds[frame], 0, 0, getWidth(), getHeight(), null);
         }
     }
+
+
 }
