@@ -8,7 +8,7 @@ public class Main {
             utils.SoundUtil.playLoop("BeforeBGMusic.wav", 0.6f); // ADD THIS
             JFrame frame = new JFrame("The Final Compilation");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1280, 720);
+            frame.setSize(1280, 760);
             frame.setResizable(false);
             frame.setLocationRelativeTo(null);
 
