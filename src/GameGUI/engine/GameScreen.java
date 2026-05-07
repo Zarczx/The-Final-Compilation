@@ -222,6 +222,10 @@ public class GameScreen extends JPanel {
         battlePanel = new BattlePanel();
         battlePanel.setOnReturnToSelection(this::goToSelection);
         battlePanel.setOnRestartBattle(this::restartBattle);
+
+        battlePanel.setOnOpenSaveScreen(this::openSaveScreen);
+        battlePanel.setOnPromptSaveAndExit(this::promptSaveAndExit);
+
         cardPanel.add(battlePanel, SCREEN_BATTLE);
 
         magicShopPanel = new GameGUI.ui.MagicShopPanel();
@@ -375,7 +379,7 @@ public class GameScreen extends JPanel {
             battlePanel.setBattleBackground(bg);
         } else if (currentWorld == 2) {
             String bg = switch (enemyName) {
-                case "Plague Vermin"    -> "/assets/Backgrounds/World2BattleBackground.png";
+                case "Plague Vermin"    -> "/assets/Backgrounds/World2Battle1Background.png";
                 case "Forsaken Cultist" -> "/assets/Backgrounds/World2BattleBackground2.png";
                 case "Blight Hound"     -> "/assets/Backgrounds/World2BattleBackground3.png";
                 case "Ghoul Footman"    -> "/assets/Backgrounds/World2BattleBackground4.png";
@@ -761,6 +765,8 @@ public class GameScreen extends JPanel {
     private void restartBattle() { goToBattle(); }
 
     private void onHeroConfirmed(HeroDefinition hero) {
+        battlePanel.setCurrentHero(null);
+
         this.confirmedHero = hero;
         buildPostSelectDialogues(hero);
 
@@ -901,7 +907,8 @@ public class GameScreen extends JPanel {
                 "/assets/assets.GUIButtons/Exit.png","/assets/assets.GUIButtons/ExitHover.png",
                 1108, 613, 140, 50,"Exit", 19);
 
-        exitBtn.addActionListener(e -> System.exit(0));
+        exitBtn.addActionListener(e -> promptSaveAndExit());
+        backBtn.addActionListener(e -> openSaveScreen());
         continueBtn.addActionListener(e -> continueDialogue());
 
         loginPopup = buildLoginPopup();
@@ -3848,4 +3855,121 @@ public class GameScreen extends JPanel {
         });
         w3TypingTimer.start();
     }
+
+    public void loadSavedGame(GameGUI.model.entity.Combatant loadedHero, GameGUI.model.system.SaveData data) {
+        if (typingTimer != null) typingTimer.stop();
+
+        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.HeroData.HEROES) {
+            if (def.name.equals(loadedHero.name)) {
+                this.confirmedHero = def;
+                break;
+            }
+        }
+
+        this.currentWorld = data.currentWorld;
+        battlePanel.setCurrentHero(loadedHero);
+        utils.SoundUtil.stopLoop();
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+
+        // ★ FIX: Wire up inter-enemy dialogues, same as goToBattle()
+        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
+            if (currentWorld == 1) {
+                showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+            } else if (currentWorld == 2) {
+                if (nextGroupIndex == 1) {
+                    battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                }
+                showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+            } else if (currentWorld == 3) {
+                showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+            } else {
+                resumeFight.run();
+            }
+        });
+
+        if (currentWorld == 1) {
+            utils.SoundUtil.playLoop("World1BGMusic.wav", 0.5f);
+            battlePanel.resumeEnemySequence(
+                    confirmedHero,
+                    GameGUI.model.entity.HeroData.WORLD1_ENEMIES,
+                    data.savedEnemySequenceIndex,
+                    data.savedEnemyFightIndex,
+                    () -> {
+                        currentWorld = 2;
+                        magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
+                        cardLayout.show(cardPanel, SCREEN_SHOP);
+                    }
+            );
+
+        } else if (currentWorld == 2) {
+            utils.SoundUtil.playLoop("World2BGMusic.wav", 0.5f);
+            battlePanel.resumeEnemySequence(
+                    confirmedHero,
+                    GameGUI.model.entity.HeroData.WORLD2_ENEMIES,
+                    data.savedEnemySequenceIndex,
+                    data.savedEnemyFightIndex,
+                    () -> {
+                        playWorldMusic();
+                        showKingVictoryDialogue();
+                    }
+            );
+
+        } else if (currentWorld == 3) {
+            utils.SoundUtil.playLoop("World3BGMusic.wav", 0.5f);
+            battlePanel.resumeEnemySequence(
+                    confirmedHero,
+                    GameGUI.model.entity.HeroData.WORLD3_ENEMIES,
+                    data.savedEnemySequenceIndex,
+                    data.savedEnemyFightIndex,
+                    () -> {
+                        startPrefiEncounter(battlePanel.getCurrentHero());
+                    }
+            );
+        }
+    }
+
+    private void openSaveScreen() {
+        // Prevent saving if the game hasn't fully started
+        if (battlePanel == null || battlePanel.getCurrentHero() == null) {
+            JOptionPane.showMessageDialog(this, "You haven't started your journey yet!", "Cannot Save", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Open the dialog in Save Mode (isSaveMode = true)
+        GameGUI.ui.SaveSlotDialog saveDialog = new GameGUI.ui.SaveSlotDialog(
+                SwingUtilities.getWindowAncestor(this),
+                true,
+                battlePanel.getCurrentHero(),
+                currentWorld,
+                battlePanel.getEnemySequenceIndex(), // ★ GRAB THE ENEMY SEQUENCE
+                battlePanel.getEnemyFightIndex(),
+                null // Not needed for saving
+        );
+        saveDialog.setVisible(true);
+    }
+
+    private void promptSaveAndExit() {
+        // If no hero exists yet, just exit immediately
+        if (battlePanel == null || battlePanel.getCurrentHero() == null) {
+            System.exit(0);
+        }
+
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Do you want to save your progress before exiting?",
+                "Exit Game",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (choice == JOptionPane.YES_OPTION) {
+            openSaveScreen();
+            // Note: After the save dialog closes, the game remains open just in case they cancelled the save.
+            // They can click Exit -> 'No' to fully close the game afterward.
+        } else if (choice == JOptionPane.NO_OPTION) {
+            System.exit(0);
+        }
+    }
+
+
 }

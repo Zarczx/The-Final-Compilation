@@ -1,6 +1,7 @@
 package GameGUI;
 
 import GameGUI.engine.GameScreen;
+import GameGUI.model.entity.Combatant;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,6 +15,12 @@ public class TitleScreen extends JPanel {
     int frame = 0;
 
     Timer timer;
+
+    private GameGUI.engine.GameScreen gameScreen;
+
+    public void setGameScreen(GameGUI.engine.GameScreen gameScreen) {
+        this.gameScreen = gameScreen;
+    }
 
     public TitleScreen(){
 
@@ -109,7 +116,32 @@ public class TitleScreen extends JPanel {
         });
 
         continueBtn.addActionListener(e -> {
-            // TODO: wire up continue / load-save logic here
+            // Open the SaveSlotDialog in LOAD Mode
+            GameGUI.ui.SaveSlotDialog loadDialog = new GameGUI.ui.SaveSlotDialog(
+                    SwingUtilities.getWindowAncestor(this),
+                    false,
+                    null,
+                    1,
+                    0,  // ★ ADDED: Dummy seqIndex for Load Mode
+                    0,  // ★ ADDED: Dummy fightIndex for Load Mode
+                    (GameGUI.model.entity.Combatant loadedHero, GameGUI.model.system.SaveData data) -> {
+                        timer.stop(); // Stop the Title Screen animations
+
+                        // 1. Create the brand new GameScreen!
+                        GameGUI.engine.GameScreen myGame = new GameGUI.engine.GameScreen();
+
+                        // 2. Inject the veteran hero and world into it!
+                        myGame.loadSavedGame(loadedHero, data);
+
+                        // 3. Swap the window to show the GameScreen instead of the Title Screen!
+                        JFrame window = (JFrame) SwingUtilities.getWindowAncestor(this);
+                        window.getContentPane().removeAll();
+                        window.getContentPane().add(myGame);
+                        window.revalidate();
+                        window.repaint();
+                    }
+            );
+            loadDialog.setVisible(true);
         });
 
         exitBtn.addActionListener(e -> System.exit(0));

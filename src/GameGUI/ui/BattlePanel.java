@@ -29,6 +29,9 @@ public class BattlePanel extends JPanel {
     private Runnable onRestartBattle;
     private BiConsumer<Integer, Runnable> onEnemyGroupDefeated;
 
+    private Runnable onOpenSaveScreen;
+    private Runnable onPromptSaveAndExit;
+
     private BattleManager engine;
     private Combatant currentHero;
     private Combatant currentEnemy;
@@ -592,6 +595,10 @@ public class BattlePanel extends JPanel {
         this.currentHero = hero; // (Change 'currentHero' to whatever your hero variable is named)
     }
 
+    public void setWorld2Battle(boolean value) {
+        this.isWorld2Battle = value;
+    }
+
     public void setOnReturnToSelection(Runnable r) {
         this.onReturnToSelection = r;
     }
@@ -603,6 +610,9 @@ public class BattlePanel extends JPanel {
     public void setOnEnemyGroupDefeated(BiConsumer<Integer, Runnable> cb) {
         this.onEnemyGroupDefeated = cb;
     }
+
+    public void setOnOpenSaveScreen(Runnable r) { this.onOpenSaveScreen = r; }
+    public void setOnPromptSaveAndExit(Runnable r) { this.onPromptSaveAndExit = r; }
 
     public void startEnemySequence(HeroDefinition hero, List<EnemyDefinition> sequence, Runnable onComplete) {
         System.out.println(">>> BattlePanel heroDef set to: " + (hero != null ? hero.name : "null")); // debug
@@ -731,8 +741,10 @@ public class BattlePanel extends JPanel {
 
     public void setBattleBackground(String resourcePath) {
         if (battleBg == null) return;
+        System.out.println("★ setBattleBackground called: " + resourcePath);
         currentBattleBgPath = resourcePath; // ADD THIS LINE
         java.net.URL url = getClass().getResource(resourcePath);
+        System.out.println("★ URL resolved: " + url);
         if (url != null) {
             battleBg.setIcon(new ImageIcon(
                     new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
@@ -855,6 +867,17 @@ public class BattlePanel extends JPanel {
         JButton backBtn = makeBtn("/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png", 970, 613, 140, 50, "Back", 20);
         JButton exitBtn = makeBtn("/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png", 1108, 613, 140, 50, "Exit", 19);
         exitBtn.addActionListener(e -> System.exit(0));
+        JButton backBtn = makeBtn("/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png", 970, 613, 140, 50, "Back", 20);
+        // ★ FIRE THE BACK CALLBACK
+        backBtn.addActionListener(e -> {
+            if (onOpenSaveScreen != null) onOpenSaveScreen.run();
+        });
+        JButton exitBtn = makeBtn("/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png", 1108, 613, 140, 50, "Exit", 19);
+        // ★ FIRE THE EXIT CALLBACK
+        exitBtn.addActionListener(e -> {
+            if (onPromptSaveAndExit != null) onPromptSaveAndExit.run();
+            else System.exit(0);
+        });
 
         add(battleContinueBtn);
         add(menuBtn);
@@ -6495,5 +6518,69 @@ public class BattlePanel extends JPanel {
         if (w.lifestealPercent > 0) return "Restores " + w.lifestealPercent + "% HP of damage dealt";
         if (w.stunChance > 0) return "30% chance to Stun enemy";
         return "A powerful weapon.";
+    }
+
+    public int getEnemySequenceIndex() { return enemySequenceIndex; }
+    public int getEnemyFightIndex() { return enemyFightIndex; }
+
+    // ★ ADD THIS METHOD: Allows us to skip the wolves and jump straight to the saved enemy!
+    public void resumeEnemySequence(HeroDefinition hero, List<EnemyDefinition> sequence, int seqIndex, int fightIndex, Runnable onComplete) {
+        this.heroDef = hero;
+        this.enemySequence = new ArrayList<>(sequence);
+        this.enemySequenceIndex = seqIndex;
+        this.enemyFightIndex = fightIndex;
+        this.onSequenceComplete = onComplete;
+
+        if (!sequence.isEmpty() && seqIndex < sequence.size()) {
+            EnemyDefinition firstEnemy = sequence.get(seqIndex);
+            String preloadBg = switch (firstEnemy.name) {
+                // World 2
+                case "Plague Vermin"       -> "/assets/Backgrounds/World2Battle1Background.png";
+                case "Forsaken Cultist"    -> "/assets/Backgrounds/World2BattleBackground2.png";
+                case "Blight Hound"        -> "/assets/Backgrounds/World2BattleBackground3.png";
+                case "Ghoul Footman"       -> "/assets/Backgrounds/World2BattleBackground4.png";
+                case "The Black Jailer"    -> "/assets/Backgrounds/World2BattleBackground5.png";
+                case "Luther Von"          -> "/assets/Backgrounds/World2BattleBackgroundLast.png";
+                // World 3 ★ ADD THESE
+                case "Flame Revenant"      -> "/assets/Backgrounds/World3BG9.png";
+                case "Bone Warlock"        -> "/assets/Backgrounds/World3BG15.5.png";
+                case "Obsidian Crusher"    -> "/assets/Backgrounds/World3BG21.5.png";
+                case "Soulflayer Gargoyle" -> "/assets/Backgrounds/World3BG27.png";
+                case "Zyrryl"              -> "/assets/Backgrounds/World3BG30.5.png";
+                case "Khai the Gray"       -> "/assets/Backgrounds/NecroBackground.png";
+                // World 1 default
+                default -> "/assets/Backgrounds/World1BattleBackground.png";
+            };
+            setBattleBackground(preloadBg);
+        }
+
+        startNextFight();
+    }
+
+    public void setBackgroundImage(String resourcePath) {
+        try {
+            java.net.URL bgUrl = getClass().getResource(resourcePath);
+            if (bgUrl != null) {
+                Image bgImage = new ImageIcon(bgUrl).getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH);
+
+                if (battleBg != null) {
+                    battleBg.setIcon(new ImageIcon(bgImage));
+
+                    // ★ ADD THESE LINES: Force Java to instantly redraw the screen!
+                    battleBg.repaint();
+                    this.revalidate();
+                    this.repaint();
+
+                } else {
+                    // ★ If you see this in your console, you have the "Shadowing" bug mentioned in Step 1!
+                    System.err.println("CRITICAL: battleBg is null! The image loaded, but it has nowhere to go.");
+                }
+            } else {
+                System.err.println("Could not find background image: " + resourcePath);
+            }
+        } catch (Exception e) {
+            System.err.println("Error setting battle background.");
+            e.printStackTrace();
+        }
     }
 }
