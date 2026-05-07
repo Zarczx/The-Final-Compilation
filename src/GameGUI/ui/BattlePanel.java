@@ -774,10 +774,10 @@ public class BattlePanel extends JPanel {
         add(enemyCard);
 
         JLabel dialogueBg = new JLabel();
-        dialogueBg.setBounds(-40, 453, 1053, 343);
-        java.net.URL dbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
+        dialogueBg.setBounds(-15, 468, 1053, 300);
+        java.net.URL dbUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
         if (dbUrl != null)
-            dialogueBg.setIcon(new ImageIcon(new ImageIcon(dbUrl).getImage().getScaledInstance(1053, 343, Image.SCALE_SMOOTH)));
+            dialogueBg.setIcon(new ImageIcon(new ImageIcon(dbUrl).getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH)));
         add(dialogueBg);
 
         // ── Combined HUD bar: [YOUR TURN] | [Round 1] | [CD: 3] ──────────
@@ -832,7 +832,7 @@ public class BattlePanel extends JPanel {
         add(hudBar);
 
         logArea = new javax.swing.JTextPane();
-        logArea.setBounds(160, 575, 780, 100);
+        logArea.setBounds(2, 575, 780, 100);
         logArea.setEditable(false);
         logArea.setOpaque(false);
         logArea.setBackground(new Color(0, 0, 0, 0));
@@ -843,17 +843,17 @@ public class BattlePanel extends JPanel {
         } catch (Exception ex) {
             logArea.setFont(new Font("Dialog", Font.BOLD, 16));
         }
-        logArea.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        logArea.setBorder(BorderFactory.createEmptyBorder(5, 70, 5, 10));
         add(logArea);
 
-        battleContinueBtn = makeBtn("/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png", 964, 554, 154, 64, "Continue", 10);
+        battleContinueBtn = makeBtn("/assets/assets.GUIButtons/Continue.png", "/assets/assets.GUIButtons/ContinueHover.png", 964, 554, 154, 64, "Continue", 10);
         battleContinueBtn.addActionListener(e -> onContinuePressed());
 
-        JButton menuBtn = makeBtn("/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png", 1103, 555, 148, 58, "Menu", 0);
+        JButton menuBtn = makeBtn("/assets/assets.GUIButtons/Menu.png", "/assets/assets.GUIButtons/MenuHover.png", 1103, 555, 148, 58, "Menu", 0);
         menuBtn.addActionListener(e -> openInventoryDialog());
 
-        JButton backBtn = makeBtn("/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png", 970, 613, 140, 50, "Back", 20);
-        JButton exitBtn = makeBtn("/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png", 1108, 613, 140, 50, "Exit", 19);
+        JButton backBtn = makeBtn("/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png", 970, 613, 140, 50, "Back", 20);
+        JButton exitBtn = makeBtn("/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png", 1108, 613, 140, 50, "Exit", 19);
         exitBtn.addActionListener(e -> System.exit(0));
 
         add(battleContinueBtn);
@@ -6041,7 +6041,7 @@ public class BattlePanel extends JPanel {
         // Condition label
         JLabel conditionLbl = new JLabel("Status: Normal");
         conditionLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
-        conditionLbl.setForeground(new Color(210, 210, 210));
+        conditionLbl.setForeground(new Color(139, 0, 0));
         conditionLbl.setBounds(8, 72, 320, 14);
         card.add(conditionLbl);
 

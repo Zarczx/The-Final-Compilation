@@ -2,325 +2,411 @@ package GameGUI.ui;
 
 import GameGUI.model.entity.Combatant;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.File;
+import java.io.InputStream;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.imageio.ImageIO;
 
 public class MagicShopPanel extends JPanel {
 
+    // ── Icon cache (no reprocessing on hover) ────────────────────────────────
+    private final java.util.Map<String, ImageIcon> iconCache = new java.util.HashMap<>();
+
+    // ── State ────────────────────────────────────────────────────────────────
     private Combatant player;
-    private Runnable onLeaveShop;
+    private Runnable  onLeaveShop;
 
+    // ── Widgets ──────────────────────────────────────────────────────────────
     private JLabel shardsLabel;
-    private JPanel itemsContainer;
+    private JPanel itemsGrid;
 
-    // Colors
-    private static final Color BG_DEEP       = new Color(8,  6,  20);
-    private static final Color BG_PANEL      = new Color(14, 11, 32);
-    private static final Color BG_CARD       = new Color(20, 16, 45);
-    private static final Color BORDER_GLOW   = new Color(100, 60, 200);
-    private static final Color TEXT_TITLE    = new Color(240, 230, 255);
-    private static final Color TEXT_DESC     = new Color(160, 150, 180);
-    private static final Color GOLD          = new Color(255, 215, 0);
+    // ── Paths ────────────────────────────────────────────────────────────────
+    private static final String ASSETS    = "assets/MagicShopGUIAssets/";
+    private static final String FONT_PATH = "assets/AssetFont/Pixelari.ttf";
 
+    // ── Button image table { itemName, normalPng, hoveredPng } ───────────────
+    private static final String[][] BTN_TABLE = {
+            { "Vitality Blessing", "VitalityCost.png",        "VitalityCostHovered.png"       },
+            { "Attack Infusion",   "AttackInfusionCost.png",  "AttackInfusionCostHovered.png" },
+            { "Vital Surge",       "VitalCost.png",           "VitalHovered.png"              },
+            { "Shock Bind",        "VenomCost.png",           "VenomCostHovered.png"          },
+            { "Frost Arrow",       "FrostCost.png",           "FrostCostHovered.png"          },
+            { "Arc Surge",         "ArcSurgeCost.png",        "ArcSurgeCostHovered.png"       },
+            { "Venom Infusion",    "VenomCost.png",           "VenomCostHovered.png"          },
+            { "Razor Edge",        "RazorEdgeCost.png",       "RazorEdgeCostHovered.png"      },
+            { "Fortified Plating", "FortifiedCost.png",       "FortifiedCostHovered.png"      },
+            { "Phoenix Soulstone", "PhoenixSoulStone.png",    "PhoenixSoulStoneHovered.png"   },
+    };
+
+    // ── Button display size ───────────────────────────────────────────────────
+    private static final int BTN_W   = 110;
+    private static final int BTN_H   = 52;
+    private static final int LEAVE_W = 180;
+    private static final int LEAVE_H = 60;
+
+    // ── Absolute X positions for left/right column button slots ──────────────
+    // Tweak these two values to slide ALL buttons left/right together
+    private static final int LEFT_X  = 695;   // left column button X
+    private static final int RIGHT_X = 1110;  // right column button X
+
+    // ── Absolute Y positions for each row ────────────────────────────────────
+    // Tweak these to shift individual rows up/down
+    private static final int ROW1_Y = 135;
+    private static final int ROW2_Y = 227;
+    private static final int ROW3_Y = 320;
+    private static final int ROW4_Y = 412;
+    private static final int ROW5_Y = 505;
+
+    // ── Font ──────────────────────────────────────────────────────────────────
+    private Font pixelariFont;
+
+    // ════════════════════════════════════════════════════════════════════════
     public MagicShopPanel() {
-        setLayout(new BorderLayout());
-        setBackground(BG_DEEP);
-        buildUI();
+        setOpaque(false);
+        loadFont();
+        buildLayout();
     }
 
-    public void setOnLeaveShop(Runnable onLeaveShop) {
-        this.onLeaveShop = onLeaveShop;
-    }
+    // ── Public API ────────────────────────────────────────────────────────────
+    public void setOnLeaveShop(Runnable r) { this.onLeaveShop = r; }
 
-    public void loadPlayer(Combatant currentCombatant) {
-        this.player = currentCombatant;
+    public void loadPlayer(Combatant c) {
+        this.player = c;
+        prewarmCache();
         updateShardsDisplay();
-
-        // Rebuild the shop to check which items the player already owns
-        buildItemsList();
+        populateGrid();
     }
 
-    private void buildUI() {
-        // --- HEADER ---
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(BG_PANEL);
-        headerPanel.setBorder(new EmptyBorder(20, 40, 20, 40));
-
-        JLabel titleLabel = new JLabel("🏺 THE MYSTIC MERCHANT", SwingConstants.LEFT);
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 28));
-        titleLabel.setForeground(TEXT_TITLE);
-
-        shardsLabel = new JLabel("💠 Soul Shards: 0", SwingConstants.RIGHT);
-        shardsLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
-        shardsLabel.setForeground(GOLD);
-
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(shardsLabel, BorderLayout.EAST);
-        add(headerPanel, BorderLayout.NORTH);
-
-        // --- ITEMS SCROLL PANE ---
-        itemsContainer = new JPanel();
-        // GridLayout(0, 2) means 2 columns, unlimited rows
-        itemsContainer.setLayout(new GridLayout(0, 2, 20, 20));
-        itemsContainer.setBackground(BG_DEEP);
-        itemsContainer.setBorder(new EmptyBorder(20, 40, 20, 40));
-
-        JScrollPane scrollPane = new JScrollPane(itemsContainer);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
-        add(scrollPane, BorderLayout.CENTER);
-
-        // --- FOOTER ---
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        footerPanel.setBackground(BG_DEEP);
-        footerPanel.setBorder(new EmptyBorder(10, 0, 30, 60));
-
-        JButton leaveBtn = new JButton("Leave Shop");
-        leaveBtn.setFont(new Font("Monospaced", Font.BOLD, 18));
-        leaveBtn.setForeground(Color.WHITE);
-        leaveBtn.setBackground(new Color(180, 40, 40));
-        leaveBtn.setFocusPainted(false);
-        leaveBtn.setPreferredSize(new Dimension(200, 50));
-        leaveBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        leaveBtn.addActionListener(e -> {
-            if (onLeaveShop != null) onLeaveShop.run();
-        });
-
-        footerPanel.add(leaveBtn);
-        add(footerPanel, BorderLayout.SOUTH);
+    // ── Pre-load all icons so hover is instant ────────────────────────────────
+    private void prewarmCache() {
+        for (String[] row : BTN_TABLE) {
+            scaledIcon(row[1], BTN_W, BTN_H);
+            scaledIcon(row[2], BTN_W, BTN_H);
+        }
+        scaledIcon("TakeItemOnly.png", BTN_W,   BTN_H);
+        scaledIcon("SwordmanOnly.png", BTN_W,   BTN_H);
+        scaledIcon("ArcherOnly.png",   BTN_W,   BTN_H);
+        scaledIcon("MageOnly.png",     BTN_W,   BTN_H);
+        scaledIcon("LeaveShop.png",    LEAVE_W, LEAVE_H);
+        scaledIcon("LeaveShopHovered.png", LEAVE_W, LEAVE_H);
     }
 
-    private void buildItemsList() {
-        itemsContainer.removeAll();
-        if (player == null) return;
+    // ── Background ────────────────────────────────────────────────────────────
+    @Override
+    protected void paintComponent(Graphics g) {
+        Image bg = loadImg("MagicShop.png");
+        if (bg != null) {
+            g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+        } else {
+            g.setColor(new Color(180, 140, 70));
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
+    }
 
-        var weapon = player.inventory.getEquippedWeapon();
+    // ════════════════════════════════════════════════════════════════════════
+    //  LAYOUT
+    // ════════════════════════════════════════════════════════════════════════
+
+    private void showStyledMessage(String message, String title, boolean isError) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), title, true);
+        dialog.setUndecorated(true);
+        dialog.setSize(320, 160);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10)) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(30, 15, 50));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(120, 60, 200));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+            }
+        };
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
+
+        JLabel msg = new JLabel(message, SwingConstants.CENTER);
+        msg.setFont(pixelariFont.deriveFont(Font.BOLD, 16f));
+        msg.setForeground(isError ? new Color(255, 80, 80) : new Color(200, 160, 255));
+
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(pixelariFont.deriveFont(Font.BOLD, 18f));
+        titleLabel.setForeground(new Color(255, 215, 30));
+
+        JButton ok = new JButton("OK");
+        ok.setFont(pixelariFont.deriveFont(Font.BOLD, 14f));
+        ok.setForeground(new Color(255, 215, 30));
+        ok.setBackground(new Color(70, 30, 120));
+        ok.setFocusPainted(false);
+        ok.setBorder(BorderFactory.createLineBorder(new Color(120, 60, 200), 2));
+        ok.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        ok.setPreferredSize(new Dimension(80, 32));
+        ok.addActionListener(e -> dialog.dispose());
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnPanel.setOpaque(false);
+        btnPanel.add(ok);
+
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(msg,        BorderLayout.CENTER);
+        panel.add(btnPanel,   BorderLayout.SOUTH);
+        dialog.setContentPane(panel);
+        dialog.setVisible(true);
+    }
+
+    private void buildLayout() {
+        setLayout(null);
+
+        // ── Soul Shards label ─────────────────────────────────────────────────
+        shardsLabel = new JLabel("Soul Shards: 0", SwingConstants.LEFT);
+        shardsLabel.setFont(pixelariFont.deriveFont(Font.BOLD, 13f));
+        shardsLabel.setForeground(new Color(90, 0, 140));  // dark violet
+        shardsLabel.setBounds(1074, 42, 220, 36);
+        add(shardsLabel);
+
+        // ── Items layer (absolute, full panel size) ───────────────────────────
+        itemsGrid = new JPanel(null);
+        itemsGrid.setOpaque(false);
+        itemsGrid.setBounds(0, 0, 1280, 720);
+        add(itemsGrid);
+
+        // ── Leave Shop ────────────────────────────────────────────────────────
+        JButton leave = imageBtn("LeaveShop.png", "LeaveShopHovered.png", LEAVE_W, LEAVE_H);
+        // Centered below the grid, over the parchment's leave button slot
+        leave.setBounds(1020, 615, LEAVE_W, LEAVE_H);
+        leave.addActionListener(e -> { if (onLeaveShop != null) onLeaveShop.run(); });
+        add(leave);
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  ITEM GRID  – each button placed at exact pixel coordinates
+    // ════════════════════════════════════════════════════════════════════════
+    private void populateGrid() {
+        itemsGrid.removeAll();
+        if (player == null) { itemsGrid.revalidate(); itemsGrid.repaint(); return; }
+
+        var wpn   = player.inventory.getEquippedWeapon();
         var armor = player.inventory.getEquippedArmor();
 
-        // =====================================================================
-        // 💎 PERMANENT STAT UPGRADES
-        // =====================================================================
-        itemsContainer.add(createItemCard(
-                "Vitality Blessing", "Permanent +100 Max HP.", "💖", 10,
-                () -> false, // Can buy multiple times
-                btn -> { player.maxHp += 100; player.heal(100); },
-                "All"
-        ));
-
-        itemsContainer.add(createItemCard(
-                "Attack Infusion", "Permanent +8 Base ATK.", "⚔️", 12,
+        // ── Row 1 ─────────────────────────────────────────────────────────────
+        slot("Vitality Blessing", 10, LEFT_X,  ROW1_Y,
                 () -> false,
-                btn -> { player.baseAttack += 8; player.recalculateBuffs(); },
-                "All"
-        ));
+                b -> { player.maxHp += 100; player.heal(100); },
+                "All");
 
-        // =====================================================================
-        // 🌟 WEAPON ENCHANTMENTS
-        // =====================================================================
-        itemsContainer.add(createItemCard(
-                "Vital Surge", "+5% Lifesteal on attacks.", "❤️", 28,
+        slot("Attack Infusion", 12, RIGHT_X, ROW1_Y,
+                () -> false,
+                b -> { player.baseAttack += 8; player.recalculateBuffs(); },
+                "All");
+
+        // ── Row 2 ─────────────────────────────────────────────────────────────
+        slot("Vital Surge", 28, LEFT_X, ROW2_Y,
                 () -> player.hasVitalSurge,
-                btn -> {
-                    player.hasVitalSurge = true;
-                    if (weapon != null) {
-                        weapon.addLifestealPercent += 5;
-                        weapon.enchantments.put("💖 Vital Surge", "(+5% Lifesteal)");
-                    }
-                },
-                "Swordsman", "Archer", "Mage"
-        ));
+                b -> { player.hasVitalSurge = true;
+                    if (wpn != null) { wpn.addLifestealPercent += 5;
+                        wpn.enchantments.put("💖 Vital Surge", "(+5% Lifesteal)"); }},
+                "Swordsman", "Archer", "Mage");
 
-        itemsContainer.add(createItemCard(
-                "Shock Bind", "20% chance to stun target.", "⚡", 30,
+        slot("Shock Bind", 30, RIGHT_X, ROW2_Y,
                 () -> player.hasShockBind,
-                btn -> {
-                    player.hasShockBind = true;
-                    if (weapon != null) {
-                        weapon.stunChance += 20;
-                        weapon.enchantments.put("⛓️ Shockbind", "(20% Stun chance)");
-                    }
-                },
-                "Swordsman" // Restricted!
-        ));
+                b -> { player.hasShockBind = true;
+                    if (wpn != null) { wpn.stunChance += 20;
+                        wpn.enchantments.put("⛓️ Shockbind", "(20% Stun chance)"); }},
+                "Swordsman");
 
-        itemsContainer.add(createItemCard(
-                "Frost Arrow", "20% chance to freeze target.", "❄️", 30,
+        // ── Row 3 ─────────────────────────────────────────────────────────────
+        slot("Frost Arrow", 30, LEFT_X, ROW3_Y,
                 () -> player.hasFrostArrow,
-                btn -> {
-                    player.hasFrostArrow = true;
-                    if (weapon != null) {
-                        weapon.freezeChance += 20;
-                        weapon.enchantments.put("❄️ Frost Arrow", "(20% Freeze chance)");
-                    }
-                },
-                "Archer" // Restricted!
-        ));
+                b -> { player.hasFrostArrow = true;
+                    if (wpn != null) { wpn.freezeChance += 20;
+                        wpn.enchantments.put("❄️ Frost Arrow", "(20% Freeze chance)"); }},
+                "Archer");
 
-        itemsContainer.add(createItemCard(
-                "Arc Surge", "+3 Energy restored per attack.", "✨", 26,
+        slot("Arc Surge", 26, RIGHT_X, ROW3_Y,
                 () -> player.hasArcSurge,
-                btn -> {
-                    player.hasArcSurge = true;
-                    if (weapon != null) {
-                        weapon.energyPerAttack += 3;
-                        weapon.enchantments.put("✨ Arc Surge", "(+3 Energy per hit)");
-                    }
-                },
-                "Mage" // Restricted!
-        ));
+                b -> { player.hasArcSurge = true;
+                    if (wpn != null) { wpn.energyPerAttack += 3;
+                        wpn.enchantments.put("✨ Arc Surge", "(+3 Energy per hit)"); }},
+                "Mage");
 
-        itemsContainer.add(createItemCard(
-                "Venom Infusion", "20% chance to poison target.", "☠️", 30,
+        // ── Row 4 ─────────────────────────────────────────────────────────────
+        slot("Venom Infusion", 30, LEFT_X, ROW4_Y,
                 () -> player.hasVenomInfusion,
-                btn -> {
-                    player.hasVenomInfusion = true;
-                    if (weapon != null) {
-                        weapon.poisonChance += 20;
-                        weapon.enchantments.put("☠️ Venom Infusion", "(+20% Poison chance)");
-                    }
-                },
-                "All"
-        ));
+                b -> { player.hasVenomInfusion = true;
+                    if (wpn != null) { wpn.poisonChance += 20;
+                        wpn.enchantments.put("☠️ Venom Infusion", "(+20% Poison chance)"); }},
+                "All");
 
-        itemsContainer.add(createItemCard(
-                "Razor Edge", "20% chance to inflict Bleed.", "🩸", 32,
+        slot("Razor Edge", 32, RIGHT_X, ROW4_Y,
                 () -> player.hasRazorEdge,
-                btn -> {
-                    player.hasRazorEdge = true;
-                    if (weapon != null) {
-                        weapon.bleedChance += 20;
-                        weapon.enchantments.put("🩸 Razor Edge", "(+20% Bleed chance)");
-                    }
-                },
-                "Swordsman", "Archer" // Allowed for two classes!
-        ));
+                b -> { player.hasRazorEdge = true;
+                    if (wpn != null) { wpn.bleedChance += 20;
+                        wpn.enchantments.put("🩸 Razor Edge", "(+20% Bleed chance)"); }},
+                "Swordsman", "Archer");
 
-        // =====================================================================
-        // 🛡️ ARMOR & SPECIAL
-        // =====================================================================
-        itemsContainer.add(createItemCard(
-                "Fortified Plating", "Armor gains +10 DEF.", "🛡️", 26,
+        // ── Row 5 ─────────────────────────────────────────────────────────────
+        slot("Fortified Plating", 26, LEFT_X, ROW5_Y,
                 () -> player.hasFortifiedPlating,
-                btn -> {
-                    player.hasFortifiedPlating = true;
-                    if (armor != null) {
-                        armor.addDefBuff += 10;
-                        armor.hasEnchantment = true;
-                        player.recalculateBuffs();
-                    }
-                },
-                "All"
-        ));
+                b -> { player.hasFortifiedPlating = true;
+                    if (armor != null) { armor.addDefBuff += 10;
+                        armor.hasEnchantment = true; player.recalculateBuffs(); }},
+                "All");
 
-        itemsContainer.add(createItemCard(
-                "Phoenix Soulstone", "Revive once upon death.", "🕊️", 40,
+        slot("Phoenix Soulstone", 40, RIGHT_X, ROW5_Y,
                 () -> player.hasPhoenixSoulstone,
-                btn -> { player.hasPhoenixSoulstone = true; }, // You can link this to inventory later
-                "All"
-        ));
+                b -> player.hasPhoenixSoulstone = true,
+                "All");
 
-        itemsContainer.revalidate();
-        itemsContainer.repaint();
+        itemsGrid.revalidate();
+        itemsGrid.repaint();
     }
 
-    // Notice the new "String... allowedRoles" parameter at the end!
-    private JPanel createItemCard(String name, String desc, String icon, int cost,
-                                  Supplier<Boolean> isOwned, Consumer<JButton> applyUpgrade,
-                                  String... allowedRoles) {
+    // ── Places one button at exact pixel coords ───────────────────────────────
+    private void slot(String name, int cost, int x, int y,
+                      Supplier<Boolean> owned, Consumer<JButton> apply,
+                      String... roles) {
+        JButton btn = makeButton(name, cost, owned, apply, roles);
+        btn.setBounds(x, y, BTN_W, BTN_H);
+        itemsGrid.add(btn);
+    }
 
-        JPanel card = new JPanel(new BorderLayout(15, 10));
-        card.setBackground(BG_CARD);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(BORDER_GLOW, 1),
-                new EmptyBorder(15, 15, 15, 15)
-        ));
+    // ════════════════════════════════════════════════════════════════════════
+    //  BUTTON LOGIC
+    // ════════════════════════════════════════════════════════════════════════
+    private JButton makeButton(String name, int cost,
+                               Supplier<Boolean> owned, Consumer<JButton> apply,
+                               String[] roles) {
 
-        JLabel iconLabel = new JLabel(icon, SwingConstants.CENTER);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 40));
-        iconLabel.setPreferredSize(new Dimension(60, 60));
+        // Class restricted
+        if (!classAllowed(roles)) {
+            return imageBtn(onlyImg(roles[0]), onlyImg(roles[0]), BTN_W, BTN_H);
+        }
 
-        JPanel textPanel = new JPanel(new GridLayout(2, 1));
-        textPanel.setOpaque(false);
+        // Already owned
+        if (owned.get()) {
+            JButton b = imageBtn("TakeItemOnly.png", "TakeItemOnly.png", BTN_W, BTN_H);
+            b.setEnabled(false);
+            return b;
+        }
 
-        JLabel nameLabel = new JLabel(name);
-        nameLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
-        nameLabel.setForeground(TEXT_TITLE);
+        // Purchasable
+        String[] imgs = btnImgs(name);
+        JButton  b    = imageBtn(imgs[0], imgs[1], BTN_W, BTN_H);
 
-        JLabel descLabel = new JLabel(desc);
-        descLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        descLabel.setForeground(TEXT_DESC);
-
-        textPanel.add(nameLabel);
-        textPanel.add(descLabel);
-
-        JButton buyBtn = new JButton();
-        buyBtn.setFont(new Font("Monospaced", Font.BOLD, 14));
-        buyBtn.setFocusPainted(false);
-        buyBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        buyBtn.setPreferredSize(new Dimension(140, 40));
-
-        // --- Verify Class Restrictions ---
-        boolean isClassAllowed = false;
-        if (allowedRoles.length == 0 || allowedRoles[0].equalsIgnoreCase("All")) {
-            isClassAllowed = true;
-        } else {
-            for (String role : allowedRoles) {
-                if (player.getClassType().equalsIgnoreCase(role)) {
-                    isClassAllowed = true;
-                    break;
-                }
+        b.addActionListener(e -> {
+            if (player.soulShards >= cost) {
+                player.soulShards -= cost;
+                apply.accept(b);
+                updateShardsDisplay();
+                ImageIcon oi = scaledIcon("TakeItemOnly.png", BTN_W, BTN_H);
+                if (oi != null) { b.setIcon(oi); b.setRolloverIcon(oi); b.setPressedIcon(oi); }
+                b.setEnabled(false);
+                showStyledMessage("Purchased " + name + "!", "Success", false);
+            } else {
+                showStyledMessage("Not enough Soul Shards!", "Insufficient Shards", true);
             }
-        }
-
-        // --- Setup Button State ---
-        if (!isClassAllowed) {
-            buyBtn.setText(allowedRoles[0] + " Only"); // e.g. "Swordsman Only"
-            buyBtn.setBackground(new Color(80, 30, 30)); // Deep red for locked
-            buyBtn.setForeground(new Color(150, 100, 100));
-            buyBtn.setEnabled(false);
-        } else if (isOwned.get()) {
-            buyBtn.setText("Owned");
-            buyBtn.setBackground(new Color(40, 40, 40));
-            buyBtn.setForeground(Color.GRAY);
-            buyBtn.setEnabled(false);
-        } else {
-            buyBtn.setText("Buy (" + cost + " 💠)");
-            buyBtn.setBackground(new Color(60, 40, 100));
-            buyBtn.setForeground(Color.WHITE);
-
-            buyBtn.addActionListener(e -> {
-                if (player.soulShards >= cost) {
-                    player.soulShards -= cost;
-                    applyUpgrade.accept(buyBtn);
-                    updateShardsDisplay();
-
-                    buyBtn.setText("Owned");
-                    buyBtn.setBackground(new Color(40, 40, 40));
-                    buyBtn.setForeground(Color.GRAY);
-                    buyBtn.setEnabled(false);
-
-                    JOptionPane.showMessageDialog(this, "Purchased " + name + "!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Not enough Soul Shards!", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            });
-        }
-
-        card.add(iconLabel, BorderLayout.WEST);
-        card.add(textPanel, BorderLayout.CENTER);
-        card.add(buyBtn, BorderLayout.EAST);
-
-        return card;
+        });
+        return b;
     }
 
-    private void updateShardsDisplay() {
-        if (player != null && shardsLabel != null) {
-            shardsLabel.setText("💠 Soul Shards: " + player.soulShards);
+    private boolean classAllowed(String[] roles) {
+        if (roles.length == 0 || roles[0].equalsIgnoreCase("All")) return true;
+        if (player == null) return false;
+        for (String r : roles) if (player.getClassType().equalsIgnoreCase(r)) return true;
+        return false;
+    }
+
+    private String onlyImg(String role) {
+        return switch (role.toLowerCase()) {
+            case "swordsman" -> "SwordmanOnly.png";
+            case "archer"    -> "ArcherOnly.png";
+            case "mage"      -> "MageOnly.png";
+            default          -> "SwordmanOnly.png";
+        };
+    }
+
+    private String[] btnImgs(String name) {
+        for (String[] row : BTN_TABLE)
+            if (row[0].equals(name)) return new String[]{ row[1], row[2] };
+        return new String[]{ "VitalityCost.png", "VitalityCostHovered.png" };
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  IMAGE BUTTON
+    // ════════════════════════════════════════════════════════════════════════
+    private JButton imageBtn(String normal, String hover, int w, int h) {
+        JButton btn = new JButton();
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setOpaque(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(w, h));
+
+        ImageIcon ni = scaledIcon(normal, w, h);
+        ImageIcon hi = scaledIcon(hover,  w, h);
+        if (ni != null) {
+            btn.setIcon(ni);
+            btn.setRolloverIcon(hi != null ? hi : ni);
+            btn.setPressedIcon(hi != null ? hi : ni);
+        } else {
+            btn.setText(normal.replace(".png", ""));
+            btn.setForeground(new Color(255, 220, 80));
         }
+        return btn;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  ASSET HELPERS
+    // ════════════════════════════════════════════════════════════════════════
+    private Image loadImg(String filename) {
+        try {
+            File f = new File(ASSETS + filename);
+            if (f.exists()) return ImageIO.read(f);
+            InputStream is = getClass().getResourceAsStream("/" + ASSETS + filename);
+            if (is != null) return ImageIO.read(is);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private ImageIcon scaledIcon(String filename, int w, int h) {
+        String key = filename + "_" + w + "_" + h;
+        if (iconCache.containsKey(key)) return iconCache.get(key);
+        Image img = loadImg(filename);
+        if (img == null) return null;
+        ImageIcon icon = new ImageIcon(img.getScaledInstance(w, h, Image.SCALE_SMOOTH));
+        iconCache.put(key, icon);
+        return icon;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  FONT
+    // ════════════════════════════════════════════════════════════════════════
+    private void loadFont() {
+        try {
+            File f = new File(FONT_PATH);
+            if (f.exists()) {
+                pixelariFont = Font.createFont(Font.TRUETYPE_FONT, f).deriveFont(Font.BOLD, 22f);
+            } else {
+                InputStream is = getClass().getResourceAsStream("/" + FONT_PATH);
+                if (is != null)
+                    pixelariFont = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(Font.BOLD, 22f);
+            }
+            if (pixelariFont != null)
+                GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(pixelariFont);
+        } catch (Exception e) {
+            System.err.println("[MagicShop] Font failed: " + e.getMessage());
+        }
+        if (pixelariFont == null) pixelariFont = new Font("Monospaced", Font.BOLD, 22);
+    }
+
+    // ── Shard display ─────────────────────────────────────────────────────────
+    private void updateShardsDisplay() {
+        if (player != null && shardsLabel != null)
+            shardsLabel.setText("Soul Shards: " + player.soulShards);
     }
 }
