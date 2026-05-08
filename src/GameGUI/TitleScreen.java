@@ -67,7 +67,7 @@ public class TitleScreen extends JPanel {
 
         // ── Logo ──────────────────────────────────────────────────────────
         JLabel title = new JLabel();
-        java.net.URL logoUrl = getClass().getResource("/assets/assets.GUIButtons/TheFinalCompilationLogo.png");
+        java.net.URL logoUrl = getClass().getResource("/assets/GUIButtons/TheFinalCompilationLogo.png");
         if (logoUrl != null) {
             ImageIcon raw = new ImageIcon(logoUrl);
             int origW  = raw.getIconWidth();
@@ -87,23 +87,23 @@ public class TitleScreen extends JPanel {
         final int BTN_H = 70;
 
         JButton continueBtn = makeImageButton(
-                "/assets/assets.GUIButtons/ContinueButton.png",
-                "/assets/assets.GUIButtons/ContinueButtonHover.png",
+                "/assets/GUIButtons/ContinueButton.png",
+                "/assets/GUIButtons/ContinueButtonHover.png",
                 "Continue", BTN_W, BTN_H);
 
         JButton startBtn = makeImageButton(
-                "/assets/assets.GUIButtons/StartButton.png",
-                "/assets/assets.GUIButtons/StartButtonHover.png",
+                "/assets/GUIButtons/StartButton.png",
+                "/assets/GUIButtons/StartButtonHover.png",
                 "Start", BTN_W, BTN_H);
 
         JButton creditsBtn = makeImageButton(
-                "/assets/assets.GUIButtons/CreditsButton.png",
-                "/assets/assets.GUIButtons/CreditsButtonHover.png",
+                "/assets/GUIButtons/CreditsButton.png",
+                "/assets/GUIButtons/CreditsButtonHover.png",
                 "Credits", BTN_W, BTN_H);
 
         JButton exitBtn = makeImageButton(
-                "/assets/assets.GUIButtons/ExitButton.png",
-                "/assets/assets.GUIButtons/ExitButtonHover.png",
+                "/assets/GUIButtons/ExitButton.png",
+                "/assets/GUIButtons/ExitButtonHover.png",
                 "Exit", BTN_W, BTN_H);
 
         // ── Actions ───────────────────────────────────────────────────────

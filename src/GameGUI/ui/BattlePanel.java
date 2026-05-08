@@ -787,7 +787,7 @@ public class BattlePanel extends JPanel {
 
         JLabel dialogueBg = new JLabel();
         dialogueBg.setBounds(-15, 468, 1053, 300);
-        java.net.URL dbUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
+        java.net.URL dbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
         if (dbUrl != null)
             dialogueBg.setIcon(new ImageIcon(new ImageIcon(dbUrl).getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH)));
         add(dialogueBg);
@@ -858,21 +858,18 @@ public class BattlePanel extends JPanel {
         logArea.setBorder(BorderFactory.createEmptyBorder(5, 70, 5, 10));
         add(logArea);
 
-        battleContinueBtn = makeBtn("/assets/assets.GUIButtons/Continue.png", "/assets/assets.GUIButtons/ContinueHover.png", 964, 554, 154, 64, "Continue", 10);
+        battleContinueBtn = makeBtn("/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png", 964, 554, 140, 50, "Continue", 0);
         battleContinueBtn.addActionListener(e -> onContinuePressed());
 
-        JButton menuBtn = makeBtn("/assets/assets.GUIButtons/Menu.png", "/assets/assets.GUIButtons/MenuHover.png", 1103, 555, 148, 58, "Menu", 0);
+        JButton menuBtn = makeBtn("/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png", 1103, 555, 148, 50, "Menu", 0);
         menuBtn.addActionListener(e -> openInventoryDialog());
 
-        JButton backBtn = makeBtn("/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png", 970, 613, 140, 50, "Back", 20);
-        JButton exitBtn = makeBtn("/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png", 1108, 613, 140, 50, "Exit", 19);
-        exitBtn.addActionListener(e -> System.exit(0));
-        JButton backBtn = makeBtn("/assets/GUIButtons/Back.png", "/assets/GUIButtons/BackHover.png", 970, 613, 140, 50, "Back", 20);
+        JButton backBtn = makeBtn("/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png", 962, 613, 145, 50, "Back", 0);
         // ★ FIRE THE BACK CALLBACK
         backBtn.addActionListener(e -> {
             if (onOpenSaveScreen != null) onOpenSaveScreen.run();
         });
-        JButton exitBtn = makeBtn("/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png", 1108, 613, 140, 50, "Exit", 19);
+        JButton exitBtn = makeBtn("/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png", 1104, 613, 145, 50, "Exit", 0);
         // ★ FIRE THE EXIT CALLBACK
         exitBtn.addActionListener(e -> {
             if (onPromptSaveAndExit != null) onPromptSaveAndExit.run();
