@@ -96,14 +96,16 @@ public class HeroData {
     public static class EnemyDefinition {
         public final String name, role, emoji;
         public final int maxHp, attack, defense, worldLevel, count, xpReward;
-
+        public final double minMultiplier, maxMultiplier;
 
         public EnemyDefinition(String name, String role, String emoji,
                                int maxHp, int attack, int defense,
-                               int worldLevel, int count, int xpReward) {
+                               int worldLevel, int count, int xpReward,
+                               double minMultiplier, double maxMultiplier) {
             this.name = name; this.role = role; this.emoji = emoji;
             this.maxHp = maxHp; this.attack = attack; this.defense = defense;
             this.worldLevel = worldLevel; this.count = count; this.xpReward = xpReward;
+            this.minMultiplier = minMultiplier; this.maxMultiplier = maxMultiplier;
         }
     }
 
@@ -121,7 +123,7 @@ public class HeroData {
                     "Kael Saint Laurent", "Swordsman", "⚔️",
                     "Born in the shadow of the Black Castle, Kael seeks to avenge his fallen brethren.",
                     "Blade Swift - Gains 5% Stamina on Critical Hit.",
-                    99999, 20, 5, 9999, // Note: Set to normal stats if not testing!
+                    100, 10, 5, 60, // Note: Set to normal stats if not testing!
                     new SkillDef[]{
                             new SkillDef("🗡️", "Blade Rush", "A quick, fluid slash that catches the opponent off guard.\n⚡ Effects: 30% chance to apply Strengthen (+20% ATK for 2 turns).", 1.15, 1.35, false, 0, 5),
                             new SkillDef("⚔️", "Piercing Slash", "A powerful, focused strike aimed to pierce enemy's armor.\n⚡ Effects: 30% chance to Stun (1 turn).", 1.35, 1.55, true, 0, 10),
@@ -133,7 +135,7 @@ public class HeroData {
                     "Karl Clover Dior IV", "Archer", "🏹",
                     "Born in the Forest of Silence, Karl's arrows never miss their mark.",
                     "Hunter's Instinct - +20% damage to enemies below 30% HP.",
-                    100000, 10000, 1000, 10000,
+                    80, 12, 3, 80,
                     new SkillDef[]{
                             new SkillDef("🏹", "Piercing Arrow", "Fires an arrow that slices through armor and flesh alike.\n⚡ Effects: 30% chance to inflict Bleed (2 turns).", 1.00, 1.25, true, 0, 1),
                             new SkillDef("🎯", "Bullseye", "Steadies breath for a deadly precise shot. Guaranteed Critical Hit.\n⚡ Effects: 30% chance to apply Weakness (-30% DEF for 2 turns).", 1.10, 1.30, false, 0, 3),
@@ -149,7 +151,7 @@ public class HeroData {
                     new SkillDef[]{
                             new SkillDef("🔥", "Fireball", "Conjures a blazing orb of fire and hurls it at an enemy.\n⚡ Effects: Applies Burn (1 turn). 30% chance to Weaken (-15% ATK for 2 turns).", 1.25, 1.55, false, 0, 15),
                             new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.00, 1.25, false, 0, 25),
-                            new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 0.60, 0.90, false, 3, 40)
+                            new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 2.0, 2.40, false, 3, 40)
                     },
                     Staff.WOODEN_STAFF, LEATHER_GUARD
             ),
@@ -169,34 +171,34 @@ public class HeroData {
 
     // ─── World 1 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD1_ENEMIES = List.of(
-            new EnemyDefinition("Rotfang Wolf",     "Undead Beast", "W", 40,  14,  3,  1, 3, 34),
-            new EnemyDefinition("Shade Sprite",     "Lost Soul",    "S", 80,  24,  4,  1, 2, 170),
-            new EnemyDefinition("Dreadbark Treant", "Ancient",      "T", 200, 46,  5,  1, 2, 164),
-            new EnemyDefinition("Carrion Bat",      "Predator",     "B", 260, 64,  6,  1, 4, 108),
-            new EnemyDefinition("The Hollow Stag",  "Guardian",     "H", 450, 100, 21, 1, 1, 926)
+            new EnemyDefinition("Rotfang Wolf",     "Undead Beast", "W", 40,  14,  8,  1, 3, 34,  0.80, 1.00),
+            new EnemyDefinition("Shade Sprite",     "Lost Soul",    "S", 80,  24,  12, 1, 2, 170, 0.85, 1.05),
+            new EnemyDefinition("Dreadbark Treant", "Ancient",      "T", 200, 46,  18, 1, 2, 164, 0.90, 1.10),
+            new EnemyDefinition("Carrion Bat",      "Predator",     "B", 260, 64,  25, 1, 4, 108, 0.95, 1.15),
+            new EnemyDefinition("The Hollow Stag",  "Guardian",     "H", 450, 100, 40, 1, 1, 926, 1.10, 1.40)
     );
 
     // ─── World 2 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD2_ENEMIES = List.of(
-            new EnemyDefinition("Plague Vermin",    "Infected Beast",  "🐀",      520,  13, 90,  2, 3, 540),
-            new EnemyDefinition("Forsaken Cultist", "Dark Mage",       "🔮",      580,  14, 105, 2, 2, 620),
-            new EnemyDefinition("Blight Hound",     "Undead Beast",    "🐕‍🦺",  620,  13, 112, 2, 2, 680),
-            new EnemyDefinition("Ghoul Footman",    "Undead Soldier",  "🧟‍♂️", 700,  18, 128, 2, 4, 820),
-            new EnemyDefinition("The Black Jailer", "Miniboss",        "⛓️",      1000, 24, 200, 2, 1, 1800),
-            new EnemyDefinition("Luther Von",       "Corrupted King",  "👑",      1250, 29, 250, 2, 1, 2500)
+            new EnemyDefinition("Plague Vermin",    "Infected Beast",  "🐀",     520,  196, 90,  2, 3, 540,  1.00, 1.10),
+            new EnemyDefinition("Forsaken Cultist", "Dark Mage",       "🔮",     580,  210, 105, 2, 2, 620,  1.00, 1.15),
+            new EnemyDefinition("Blight Hound",     "Undead Beast",    "🐕‍🦺",     620,  218, 112, 2, 3, 680,  1.00, 1.15),
+            new EnemyDefinition("Ghoul Footman",    "Undead Soldier",  "🧟‍♂️",     700,  230, 128, 2, 2, 820,  1.05, 1.20),
+            new EnemyDefinition("The Black Jailer", "Miniboss",        "⛓️",     1000, 290, 200, 2, 1, 1800, 1.20, 1.45),
+            new EnemyDefinition("Luther Von",       "Corrupted King",  "👑",     1250, 380, 250, 2, 1, 2500, 1.30, 1.60)
     );
 
     // ─── World 3 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD3_ENEMIES = List.of(
-            new EnemyDefinition("Flame Revenant",      "Fire Spirit",  "🔥", 1080, 28, 220, 3, 3, 950),
-            new EnemyDefinition("Bone Warlock",        "Undead Mage",  "💀", 1280, 41, 262, 3, 2, 1150),
-            new EnemyDefinition("Obsidian Crusher",    "Magma Golem",  "🗿", 1580, 48, 286, 3, 2, 1400),
-            new EnemyDefinition("Soulflayer Gargoyle", "Demon Beast",  "🦇", 1420, 48, 280, 3, 2, 1300),
-            new EnemyDefinition("Zyrryl",              "Tower Warden", "🛡️", 3880, 67, 320, 3, 1, 4000)
+            new EnemyDefinition("Flame Revenant",      "Fire Spirit",  "🔥", 1080, 280, 150, 3, 3, 950,  1.20, 1.35),
+            new EnemyDefinition("Bone Warlock",        "Undead Mage",  "💀", 1280, 300, 175, 3, 3, 1150, 1.20, 1.35),
+            new EnemyDefinition("Obsidian Crusher",    "Magma Golem",  "🗿", 1580, 345, 200, 3, 2, 1400, 1.25, 1.40),
+            new EnemyDefinition("Soulflayer Gargoyle", "Demon Beast",  "🦇", 1420, 360, 200, 3, 3, 1300, 1.25, 1.40),
+            new EnemyDefinition("Zyrryl",              "Tower Warden", "🛡️", 3880, 400, 320, 3, 1, 4000, 1.40, 1.70)
     );
 
     // ─── Final Boss Registry ─────────────────────────────────────────────────
     public static final List<EnemyDefinition> FINAL_BOSS_SEQUENCE = List.of(
-            new EnemyDefinition("Khai the Necromancer", "Final Boss", "👹", 5000, 50, 350, 3, 1, 10000)
+            new EnemyDefinition("Khai the Necromancer", "Final Boss", "👹", 5000, 500, 350, 3, 1, 10000, 1.45, 1.75)
     );
 }

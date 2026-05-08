@@ -72,7 +72,7 @@ public class InventoryDialog extends JDialog {
         content.add(Box.createVerticalStrut(16));
 
         // Flask label
-        JLabel flaskTitle = new JLabel("Flasks", SwingConstants.CENTER);
+        JLabel flaskTitle = new JLabel("Potions", SwingConstants.CENTER);
         flaskTitle.setFont(new Font("Georgia", Font.ITALIC, 13));
         flaskTitle.setForeground(TEXT_DIM);
         flaskTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -80,21 +80,21 @@ public class InventoryDialog extends JDialog {
         content.add(Box.createVerticalStrut(12));
 
         // Normal Flask row
-        normPotLbl = rowLabel("🧪 Normal Flask: 0");
+        normPotLbl = rowLabel("🧪 Normal Healing Potion: 0");
         JButton useNormBtn = flaskBtn("Consume");
         useNormBtn.addActionListener(e -> usePotion("normal"));
         content.add(flaskRow(normPotLbl, useNormBtn));
         content.add(Box.createVerticalStrut(10));
 
         // Crimson Flask row
-        fullPotLbl = rowLabel("🩸 Crimson Flask: 0");
+        fullPotLbl = rowLabel("🩸 Full Healing Potion: 0");
         JButton useFullBtn = flaskBtn("Consume");
         useFullBtn.addActionListener(e -> usePotion("full"));
         content.add(flaskRow(fullPotLbl, useFullBtn));
         content.add(Box.createVerticalStrut(10));
 
         // Cerulean Flask row
-        energyPotLbl = rowLabel("✨ Cerulean Flask: 0");
+        energyPotLbl = rowLabel("✨ Energy Potion: 0");
         JButton useEnergyBtn = flaskBtn("Consume");
         useEnergyBtn.addActionListener(e -> usePotion("energy"));
         content.add(flaskRow(energyPotLbl, useEnergyBtn));
@@ -172,8 +172,8 @@ public class InventoryDialog extends JDialog {
 
     private void refreshUI() {
         shardsLbl.setText("💎 Soul Shards: " + combatant.soulShards);
-        normPotLbl.setText("🧪 Normal Flask: "   + combatant.inventory.potions.getNormalHealingPotions());
-        fullPotLbl.setText("🩸 Crimson Flask: "  + combatant.inventory.potions.getFullHealingPotions());
-        energyPotLbl.setText("✨ Cerulean Flask: " + combatant.inventory.potions.getEnergyPotions());
+        normPotLbl.setText("🧪 Normal Healing Potion: "   + combatant.inventory.potions.getNormalHealingPotions());
+        fullPotLbl.setText("🩸 Full Healing Potion: "  + combatant.inventory.potions.getFullHealingPotions());
+        energyPotLbl.setText("✨ Energy Potion: " + combatant.inventory.potions.getEnergyPotions());
     }
 }
