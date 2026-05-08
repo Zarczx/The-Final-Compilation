@@ -866,7 +866,7 @@ public class GameScreen extends JPanel {
 
         JLabel dialogueBgLabel = new JLabel();
         dialogueBgLabel.setBounds(-15, 468, 1053, 300);
-        java.net.URL dialogueBgUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
+        java.net.URL dialogueBgUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
         if (dialogueBgUrl != null) {
             ImageIcon rawDb = new ImageIcon(dialogueBgUrl);
             Image scaledDb = rawDb.getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH);
@@ -895,16 +895,16 @@ public class GameScreen extends JPanel {
         dialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
         continueBtn = createImageButton(
-                "/assets/assets.GUIButtons/Continue.png","/assets/assets.GUIButtons/ContinueHover.png",
+                "/assets/GUIButtons/Continue.png","/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64,"Continue");
         menuBtn = createImageButton(
-                "/assets/assets.GUIButtons/Menu.png","/assets/assets.GUIButtons/MenuHover.png",
+                "/assets/GUIButtons/Menu.png","/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58,"Menu", 0);
         backBtn = createImageButton(
-                "/assets/assets.GUIButtons/Save.png","/assets/assets.GUIButtons/SaveHover.png",
+                "/assets/GUIButtons/Save.png","/assets/GUIButtons/SaveHover.png",
                 970, 613, 140, 50,"Back", 20);
         exitBtn = createImageButton(
-                "/assets/assets.GUIButtons/Exit.png","/assets/assets.GUIButtons/ExitHover.png",
+                "/assets/GUIButtons/Exit.png","/assets/GUIButtons/ExitHover.png",
                 1108, 613, 140, 50,"Exit", 19);
 
         exitBtn.addActionListener(e -> promptSaveAndExit());
@@ -1369,7 +1369,7 @@ public class GameScreen extends JPanel {
 
         JLabel postDialogueBgLabel = new JLabel();
         postDialogueBgLabel.setBounds(-15, 468, 1053, 300);
-        java.net.URL postDbUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
+        java.net.URL postDbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
         if (postDbUrl != null) {
             Image postDbScaled = new ImageIcon(postDbUrl).getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH);
             postDialogueBgLabel.setIcon(new ImageIcon(postDbScaled));
@@ -1397,18 +1397,18 @@ public class GameScreen extends JPanel {
         postDialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
         postContinueBtn = createImageButton(
-                "/assets/assets.GUIButtons/Continue.png", "/assets/assets.GUIButtons/ContinueHover.png",
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64, "Continue");
         postContinueBtn.addActionListener(e -> continuePostDialogue());
 
         JButton postMenuBtn = createImageButton(
-                "/assets/assets.GUIButtons/Menu.png", "/assets/assets.GUIButtons/MenuHover.png",
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58, "Menu", 0);
         JButton postBackBtn = createImageButton(
-                "/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png",
+                "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
                 970, 613, 140, 50, "Back", 20);
         JButton postExitBtn = createImageButton(
-                "/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png",
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
                 1108, 613, 140, 50, "Exit", 19);
         postExitBtn.addActionListener(e -> System.exit(0));
 
@@ -2629,7 +2629,7 @@ public class GameScreen extends JPanel {
 
         JLabel w1DialogueBgLabel = new JLabel();
         w1DialogueBgLabel.setBounds(-15, 468, 1053, 300);
-        java.net.URL w1DbUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
+        java.net.URL w1DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
         if (w1DbUrl != null) {
             Image w1DbScaled = new ImageIcon(w1DbUrl).getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH);
             w1DialogueBgLabel.setIcon(new ImageIcon(w1DbScaled));
@@ -2657,18 +2657,18 @@ public class GameScreen extends JPanel {
         w1DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
         w1ContinueBtn = createImageButton(
-                "/assets/assets.GUIButtons/Continue.png", "/assets/assets.GUIButtons/ContinueHover.png",
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64, "Continue");
         w1ContinueBtn.addActionListener(e -> continueW1Dialogue());
 
         JButton w1MenuBtn = createImageButton(
-                "/assets/assets.GUIButtons/Menu.png", "/assets/assets.GUIButtons/MenuHover.png",
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58, "Menu", 0);
         JButton w1BackBtn = createImageButton(
-                "/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png",
+                "/assets.GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
                 970, 613, 140, 50, "Back", 20);
         JButton w1ExitBtn = createImageButton(
-                "/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png",
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
                 1108, 613, 140, 50, "Exit", 19);
         w1ExitBtn.addActionListener(e -> System.exit(0));
 
@@ -3085,7 +3085,7 @@ public class GameScreen extends JPanel {
 
         JLabel w2DialogueBgLabel = new JLabel();
         w2DialogueBgLabel.setBounds(-15, 468, 1053, 300);
-        java.net.URL w2DbUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
+        java.net.URL w2DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
         if (w2DbUrl != null) {
             w2DialogueBgLabel.setIcon(new ImageIcon(
                     new ImageIcon(w2DbUrl).getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH)));
@@ -3113,18 +3113,18 @@ public class GameScreen extends JPanel {
         w2DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
         w2ContinueBtn = createImageButton(
-                "/assets/assets.GUIButtons/Continue.png", "/assets/assets.GUIButtons/ContinueHover.png",
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64, "Continue");
         w2ContinueBtn.addActionListener(e -> continueW2Dialogue());
 
         JButton w2MenuBtn = createImageButton(
-                "/assets/assets.GUIButtons/Menu.png", "/assets/assets.GUIButtons/MenuHover.png",
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58, "Menu", 0);
         JButton w2BackBtn = createImageButton(
-                "/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png",
+                "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
                 970, 613, 140, 50, "Back", 20);
         JButton w2ExitBtn = createImageButton(
-                "/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png",
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
                 1108, 613, 140, 50, "Exit", 19);
         w2ExitBtn.addActionListener(e -> System.exit(0));
 
@@ -3239,7 +3239,7 @@ public class GameScreen extends JPanel {
 
         JLabel w3DialogueBgLabel = new JLabel();
         w3DialogueBgLabel.setBounds(-15, 468, 1053, 300);
-        java.net.URL w3DbUrl = getClass().getResource("/assets/assets.GUIButtons/DialogueBox.png");
+        java.net.URL w3DbUrl = getClass().getResource("/assets/GUIButtons/DialogueBox.png");
         if (w3DbUrl != null) {
             w3DialogueBgLabel.setIcon(new ImageIcon(
                     new ImageIcon(w3DbUrl).getImage().getScaledInstance(990, 180, Image.SCALE_SMOOTH)));
@@ -3267,18 +3267,18 @@ public class GameScreen extends JPanel {
         w3DialogueBox.setBorder(BorderFactory.createEmptyBorder(30, 70, 30, 20));
 
         w3ContinueBtn = createImageButton(
-                "/assets/assets.GUIButtons/Continue.png", "/assets/assets.GUIButtons/ContinueHover.png",
+                "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
                 964, 554, 154, 64, "Continue");
         w3ContinueBtn.addActionListener(e -> continueW3Dialogue());
 
         JButton w3MenuBtn = createImageButton(
-                "/assets/assets.GUIButtons/Menu.png", "/assets/assets.GUIButtons/MenuHover.png",
+                "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58, "Menu", 0);
         JButton w3BackBtn = createImageButton(
-                "/assets/assets.GUIButtons/Save.png", "/assets/assets.GUIButtons/SaveHover.png",
+                "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
                 970, 613, 140, 50, "Back", 20);
         JButton w3ExitBtn = createImageButton(
-                "/assets/assets.GUIButtons/Exit.png", "/assets/assets.GUIButtons/ExitHover.png",
+                "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
                 1108, 613, 140, 50, "Exit", 19);
         w3ExitBtn.addActionListener(e -> System.exit(0));
 
