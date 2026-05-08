@@ -86,8 +86,8 @@ public class SaveSlotDialog extends JDialog {
                 // RUN SAVE LOGIC
                 boolean success = SaveManager.saveGame(heroToSave, slotNum, currentWorld, seqIndex, fightIndex);
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Game successfully saved to Slot " + slotNum + "!", "Saved", JOptionPane.INFORMATION_MESSAGE);
-                    dispose(); // Close window
+                    showStyledMessage("Game saved to Slot " + slotNum + "!", "Saved", false);
+                    dispose();
                 }
             } else {
                 // RUN LOAD LOGIC
@@ -137,5 +137,57 @@ public class SaveSlotDialog extends JDialog {
         panel.add(btnPanel, BorderLayout.EAST);
 
         return panel;
+
+
+    }
+
+    private void showStyledMessage(String message, String title, boolean isError) {
+        JDialog dialog = new JDialog(this, title, true);
+        dialog.setUndecorated(true);
+        dialog.setSize(320, 160);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(25, 25, 25));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(160, 140, 90));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+            }
+        };
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
+
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Georgia", Font.BOLD, 18));
+        titleLabel.setForeground(new Color(160, 140, 90));
+
+        JLabel msg = new JLabel(message, SwingConstants.CENTER);
+        msg.setFont(new Font("Georgia", Font.PLAIN, 14));
+        msg.setForeground(isError ? new Color(255, 80, 80) : new Color(210, 210, 200));
+
+        JButton ok = new JButton("OK");
+        ok.setFont(new Font("Georgia", Font.BOLD, 13));
+        ok.setForeground(new Color(160, 140, 90));
+        ok.setBackground(new Color(40, 40, 40));
+        ok.setFocusPainted(false);
+        ok.setBorder(BorderFactory.createLineBorder(new Color(160, 140, 90), 2));
+        ok.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        ok.setPreferredSize(new Dimension(80, 32));
+        ok.addActionListener(e -> dialog.dispose());
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnPanel.setOpaque(false);
+        btnPanel.add(ok);
+
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(msg, BorderLayout.CENTER);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+        dialog.setContentPane(panel);
+        dialog.setVisible(true);
     }
 }
