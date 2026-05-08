@@ -931,19 +931,9 @@ public class BattlePanel extends JPanel {
 
     private void openInventoryDialog() {
         if (currentHero == null || heroDef == null) return;
-
-        // 1. Get the window and safely cast it to a JFrame
         Window owner = SwingUtilities.getWindowAncestor(this);
-        JFrame parentFrame = (owner instanceof JFrame) ? (JFrame) owner : null;
-
-        // 2. Pass the Combatant (currentHero) and the Runnable callback
-        InventoryDialog dlg = new InventoryDialog(parentFrame, currentHero, () -> {
-            // This code runs when onUpdate.run() is called inside InventoryDialog
-            refreshBattleUI();
-            // updateUI(); // Uncomment or change this to your actual panel refresh method
-        });
-
-        dlg.setVisible(true);   // blocks (modal) until closed
+        MenuDialog menu = new MenuDialog(owner, currentHero, heroDef, currentEnemy, enemyDef, () -> refreshBattleUI());
+        menu.setVisible(true);
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -6438,11 +6428,13 @@ public class BattlePanel extends JPanel {
             currentHero.inventory.setEquippedArmor(a);
             currentHero.recalculateBuffs();
 
-            addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(200, 180, 50));
-            delay(2000, onDone);
+            addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(80, 80, 80));
+            showItemDropImage("/assets/ItemAssets/World1ItemDrop.png", onDone);
         }
-        else if (eDef.name.equals("The Black Jailer") || eDef.name.equals("Luther Von")) {
-            // World 2 Mini-boss gives a choice!
+        else if (eDef.name.equals("The Black Jailer")) {
+            showBlackJailerLoot(onDone);
+        }
+        else if (eDef.name.equals("Luther Von")) {
             showWorld2LootChoice(role, onDone);
         }
         else if (eDef.name.equals("Zyrryl")) {
@@ -6463,6 +6455,76 @@ public class BattlePanel extends JPanel {
             // Not a mini-boss, just proceed
             onDone.run();
         }
+    }
+
+    private void showItemDropImage(String resourcePath, Runnable onDone) {
+        java.net.URL url = getClass().getResource(resourcePath);
+        if (url == null) { delay(2000, onDone); return; }
+
+        JLabel itemImg = new JLabel();
+        itemImg.setHorizontalAlignment(SwingConstants.CENTER);
+        itemImg.setVerticalAlignment(SwingConstants.CENTER);
+
+        ImageIcon icon = new ImageIcon(new ImageIcon(url).getImage()
+                .getScaledInstance(300, 400, Image.SCALE_SMOOTH));
+        itemImg.setIcon(icon);
+
+        int imgW = 400, imgH = 500;
+        int x = (1280 - imgW) / 2;
+        int y = (720 - imgH) / 2 - 110;
+        itemImg.setBounds(x, y, imgW, imgH);
+
+        add(itemImg);
+        setComponentZOrder(itemImg, 0);
+        revalidate();
+        repaint();
+
+        // Wait for the next Continue press to remove it
+        battleContinueBtn.setEnabled(true);
+        ActionListener[] existing = battleContinueBtn.getActionListeners();
+        for (ActionListener al : existing) battleContinueBtn.removeActionListener(al);
+
+        battleContinueBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                remove(itemImg);
+                revalidate();
+                repaint();
+                // Restore original continue button behavior
+                battleContinueBtn.removeActionListener(this);
+                battleContinueBtn.addActionListener(ev -> onContinuePressed());
+                onDone.run();
+            }
+        });
+    }
+
+    private void showBlackJailerLoot(Runnable onDone) {
+        lootChoiceOverlay.setVisible(true);
+        setComponentZOrder(lootChoiceOverlay, 0);
+
+        lootItem1Icon.setText("🛡️");
+        lootItem1Name.setText("Aegis Mail");
+        lootItem1Desc.setText("+25 DEF\nImmune to ATK↓ and DEF↓ debuffs.");
+        for (ActionListener al : lootItem1Btn.getActionListeners()) lootItem1Btn.removeActionListener(al);
+        lootItem1Btn.addActionListener(e -> {
+            lootChoiceOverlay.setVisible(false);
+            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.AEGIS_MAIL));
+            currentHero.recalculateBuffs();
+            addLog("🎁 Obtained: Aegis Mail!", new Color(80, 80, 80));
+            delay(1500, onDone);
+        });
+
+        lootItem2Icon.setText("🧥");
+        lootItem2Name.setText("Vanguard Robe");
+        lootItem2Desc.setText("+25 DEF\nImmune to Poison, Burn, and Bleed.");
+        for (ActionListener al : lootItem2Btn.getActionListeners()) lootItem2Btn.removeActionListener(al);
+        lootItem2Btn.addActionListener(e -> {
+            lootChoiceOverlay.setVisible(false);
+            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.VANGUARD_ROBE));
+            currentHero.recalculateBuffs();
+            addLog("🎁 Obtained: Vanguard Robe!", new Color(80, 80, 80));
+            delay(1500, onDone);
+        });
     }
 
     private void showWorld2LootChoice(String role, Runnable onDone) {

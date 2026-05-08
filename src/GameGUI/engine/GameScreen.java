@@ -896,16 +896,16 @@ public class GameScreen extends JPanel {
 
         continueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png","/assets/GUIButtons/ContinueHover.png",
-                964, 554, 154, 64,"Continue");
+                964, 554, 140, 64,"Continue");
         menuBtn = createImageButton(
                 "/assets/GUIButtons/Menu.png","/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58,"Menu", 0);
         backBtn = createImageButton(
                 "/assets/GUIButtons/Save.png","/assets/GUIButtons/SaveHover.png",
-                970, 613, 140, 50,"Back", 20);
+                962, 613, 145, 50,"Back", 0);
         exitBtn = createImageButton(
                 "/assets/GUIButtons/Exit.png","/assets/GUIButtons/ExitHover.png",
-                1108, 613, 140, 50,"Exit", 19);
+                1104, 613, 145, 50,"Exit", 0);
 
         exitBtn.addActionListener(e -> promptSaveAndExit());
         backBtn.addActionListener(e -> openSaveScreen());
@@ -980,7 +980,7 @@ public class GameScreen extends JPanel {
         loginStartBtn.setFocusPainted(false);
         loginStartBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        java.net.URL signInUrl = getClass().getResource("/assets/assets.GUIButtons/NGESignUPButton.png");
+        java.net.URL signInUrl = getClass().getResource("/assets/GUIButtons/NGESignUPButton.png");
         if (signInUrl != null) {
             ImageIcon raw = new ImageIcon(signInUrl);
             Image scaled = raw.getImage().getScaledInstance(235, 23, Image.SCALE_SMOOTH);
@@ -1037,7 +1037,7 @@ public class GameScreen extends JPanel {
         examStartBtn.setFocusPainted(false);
         examStartBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        java.net.URL startUrl = getClass().getResource("/assets/assets.GUIButtons/NGEStartButton.png");
+        java.net.URL startUrl = getClass().getResource("/assets/GUIButtons/NGEStartButton.png");
         if (startUrl != null) {
             ImageIcon raw = new ImageIcon(startUrl);
             Image scaled = raw.getImage().getScaledInstance(182, 59, Image.SCALE_SMOOTH);
@@ -1398,7 +1398,7 @@ public class GameScreen extends JPanel {
 
         postContinueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
-                964, 554, 154, 64, "Continue");
+                964, 554, 140, 64, "Continue");
         postContinueBtn.addActionListener(e -> continuePostDialogue());
 
         JButton postMenuBtn = createImageButton(
@@ -1406,10 +1406,10 @@ public class GameScreen extends JPanel {
                 1103, 555, 148, 58, "Menu", 0);
         JButton postBackBtn = createImageButton(
                 "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
-                970, 613, 140, 50, "Back", 20);
+                962, 613, 145, 50, "Back", 0);
         JButton postExitBtn = createImageButton(
                 "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
-                1108, 613, 140, 50, "Exit", 19);
+                1104, 613, 145, 50, "Exit", 0);
         postExitBtn.addActionListener(e -> System.exit(0));
 
         layeredPane.setBounds(0, 0, 1280, 720);
@@ -2452,7 +2452,7 @@ public class GameScreen extends JPanel {
             "But his eyes are weary, holding the weight of centuries.",
             "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n"+
                     "\"We suffer because an evil Necromancer has corrupted these lands.\n"+
-                    "He has drained the nature itself. We must find the Three Stones of Life that hold this reality together.\n"+
+                    "He has drained the nature itself." + "We must find the Three Stones of Life that hold this reality together.\n"+
                     "Only then will your path home reveal itself.\"",
             "Khai fades back into the mist.",
             "Three Rodtfang Wolves emerge from the tree line.",
@@ -2658,18 +2658,18 @@ public class GameScreen extends JPanel {
 
         w1ContinueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
-                964, 554, 154, 64, "Continue");
+                964, 554, 140, 64, "Continue");
         w1ContinueBtn.addActionListener(e -> continueW1Dialogue());
 
         JButton w1MenuBtn = createImageButton(
                 "/assets/GUIButtons/Menu.png", "/assets/GUIButtons/MenuHover.png",
                 1103, 555, 148, 58, "Menu", 0);
         JButton w1BackBtn = createImageButton(
-                "/assets.GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
-                970, 613, 140, 50, "Back", 20);
+                "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
+                962, 613, 145, 50, "Back", 0);
         JButton w1ExitBtn = createImageButton(
                 "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
-                1108, 613, 140, 50, "Exit", 19);
+                1104, 613, 145, 50, "Exit", 0);
         w1ExitBtn.addActionListener(e -> System.exit(0));
 
         JLabel w1KhaiPanel = new JLabel() {
@@ -3114,7 +3114,7 @@ public class GameScreen extends JPanel {
 
         w2ContinueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
-                964, 554, 154, 64, "Continue");
+                964, 554, 140, 64, "Continue");
         w2ContinueBtn.addActionListener(e -> continueW2Dialogue());
 
         JButton w2MenuBtn = createImageButton(
@@ -3122,10 +3122,10 @@ public class GameScreen extends JPanel {
                 1103, 555, 148, 58, "Menu", 0);
         JButton w2BackBtn = createImageButton(
                 "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
-                970, 613, 140, 50, "Back", 20);
+                962, 613, 145, 50, "Back", 0);
         JButton w2ExitBtn = createImageButton(
                 "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
-                1108, 613, 140, 50, "Exit", 19);
+                1104, 613, 145, 50, "Exit", 0);
         w2ExitBtn.addActionListener(e -> System.exit(0));
 
         layeredPane.setBounds(0, 0, 1280, 720);
@@ -3268,7 +3268,7 @@ public class GameScreen extends JPanel {
 
         w3ContinueBtn = createImageButton(
                 "/assets/GUIButtons/Continue.png", "/assets/GUIButtons/ContinueHover.png",
-                964, 554, 154, 64, "Continue");
+                964, 554, 140, 64, "Continue");
         w3ContinueBtn.addActionListener(e -> continueW3Dialogue());
 
         JButton w3MenuBtn = createImageButton(
@@ -3276,10 +3276,10 @@ public class GameScreen extends JPanel {
                 1103, 555, 148, 58, "Menu", 0);
         JButton w3BackBtn = createImageButton(
                 "/assets/GUIButtons/Save.png", "/assets/GUIButtons/SaveHover.png",
-                970, 613, 140, 50, "Back", 20);
+                962, 613, 145, 50, "Back", 0);
         JButton w3ExitBtn = createImageButton(
                 "/assets/GUIButtons/Exit.png", "/assets/GUIButtons/ExitHover.png",
-                1108, 613, 140, 50, "Exit", 19);
+                1104, 613, 145, 50, "Exit", 0);
         w3ExitBtn.addActionListener(e -> System.exit(0));
 
         layeredPane.setBounds(0, 0, 1280, 720);
