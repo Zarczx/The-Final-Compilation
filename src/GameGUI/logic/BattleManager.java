@@ -272,11 +272,15 @@ public class BattleManager {
             case "Forsaken Cultist"    -> "Shadow Bolt";
             case "Blight Hound"        -> "Corpse Explosion";
             case "Ghoul Footman"       -> "Rotten Cleave";
+            case "Flame Revenant" -> "Ember Burst";
+            case "Bone Warlock" -> "Marrow Bolt";
+            case "Obsidian Crusher" -> "Magma Slam";
+            case "Soulflayer Gargoyle" -> "Soul Scream";
             case "The Hollow Stag"     -> rng.nextBoolean() ? "Deathly Charge"  : "Blackened Howl";
             case "The Black Jailer"    -> rng.nextBoolean() ? "Tormenting Lash" : "Shackling Chains";
             case "Luther Von"          -> switch (rng.nextInt(3)) {
                 case 0  -> "Crown of Despair";
-                case 1  -> "Dark Ascension";
+                case 1  -> "Dark Judgement";
                 default -> "Kings Wrath";
             };
             case "Zyrryl"              -> rng.nextBoolean() ? "Great Cleaver" : "Bone Shield";

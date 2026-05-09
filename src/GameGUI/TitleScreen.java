@@ -200,9 +200,10 @@ public class TitleScreen extends JPanel {
 
             btn.setIcon(normalIcon);
             btn.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon); }
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon); utils.SoundUtil.play("HoverSound.wav"); }
                 @Override public void mouseExited (java.awt.event.MouseEvent e) { btn.setIcon(normalIcon); }
             });
+            btn.addActionListener(e -> utils.SoundUtil.play("SelectSound.wav"));
         } else {
             btn.setText(fallback);
             btn.setFont(new Font("Arial", Font.BOLD, 18));

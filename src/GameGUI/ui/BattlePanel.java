@@ -615,7 +615,7 @@ public class BattlePanel extends JPanel {
     public void setOnPromptSaveAndExit(Runnable r) { this.onPromptSaveAndExit = r; }
 
     public void startEnemySequence(HeroDefinition hero, List<EnemyDefinition> sequence, Runnable onComplete) {
-        System.out.println(">>> BattlePanel heroDef set to: " + (hero != null ? hero.name : "null")); // debug
+        //System.out.println(">>> BattlePanel heroDef set to: " + (hero != null ? hero.name : "null")); // debug
         this.heroDef = hero;
         this.enemySequence = new ArrayList<>(sequence);
         this.enemySequenceIndex = 0;
@@ -889,10 +889,10 @@ public class BattlePanel extends JPanel {
         ultimateBtn = makeSkillBtn("Ultimate", new Color(90, 30, 30), new Color(192, 57, 43), startX + 2 * (btnW + btnGap), btnY, btnW, btnH);
         skipTurnBtn = makeSkillBtn("Skip Turn", new Color(30, 60, 40), new Color(39, 174, 96), startX + 3 * (btnW + btnGap), btnY, btnW, btnH);
 
-        skill1Btn.addActionListener(e -> onPlayerAction(BattleManager.BattleAction.SKILL1));
-        skill2Btn.addActionListener(e -> onPlayerAction(BattleManager.BattleAction.SKILL2));
-        ultimateBtn.addActionListener(e -> onPlayerAction(BattleManager.BattleAction.ULTIMATE));
-        skipTurnBtn.addActionListener(e -> onPlayerAction(BattleManager.BattleAction.SKIP_TURN));
+        skill1Btn.addActionListener(e -> { playHeroSkillSound(1); onPlayerAction(BattleManager.BattleAction.SKILL1); });
+        skill2Btn.addActionListener(e -> { playHeroSkillSound(2); onPlayerAction(BattleManager.BattleAction.SKILL2); });
+        ultimateBtn.addActionListener(e -> { playHeroSkillSound(3); onPlayerAction(BattleManager.BattleAction.ULTIMATE); });
+        skipTurnBtn.addActionListener(e -> { playHeroSkillSound(0); onPlayerAction(BattleManager.BattleAction.SKIP_TURN); });
 
         add(skill1Btn);
         add(skill2Btn);
@@ -927,6 +927,25 @@ public class BattlePanel extends JPanel {
         setComponentZOrder(enemySpriteLabel, 15);
         setComponentZOrder(battleBg, 16);
         setComponentZOrder(theBg, 17);
+    }
+
+    private void playHeroSkillSound(int skillSlot) {
+        if (heroDef == null) return;
+        String hero = switch (heroDef.name) {
+            case "Kael Saint Laurent"  -> "kael";
+            case "Karl Clover Dior IV" -> "karl";
+            case "Simon Versace"       -> "simon";
+            default                    -> "null";
+        };
+        String file = switch (skillSlot) {
+            case 1  -> hero + "_skill1.wav";
+            case 2  -> hero + "_skill2.wav";
+            case 3  -> hero + "_skill3.wav";
+            default -> null; // skip turn = no sound
+        };
+        if (file != null) {
+            utils.SoundUtil.play(file);
+        }
     }
 
     private void openInventoryDialog() {
@@ -998,6 +1017,10 @@ public class BattlePanel extends JPanel {
                 java.net.URL hUrl = (hoverPath != null) ? getClass().getResource(hoverPath) : null;
                 if (hUrl != null)
                     btn.setRolloverIcon(new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(78, 78, Image.SCALE_SMOOTH)));
+                btn.addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) { if (btn.isEnabled()) utils.SoundUtil.play("HoverSound.wav"); }
+                });
+                btn.addActionListener(e -> utils.SoundUtil.play("SelectSound2.wav"));
 
                 // ★ WHITE MASK FOR DISABLED/COOLDOWN STATE
                 try {
@@ -3243,6 +3266,7 @@ public class BattlePanel extends JPanel {
     }
 
     private void playEnemyAttack(Runnable onDone) {
+        playEnemySkillSound();
         if (isStag()) {
             String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
             if ("Blackened Howl".equals(lastSkill)) playStagBlackenedHowlAnimation(onDone);
@@ -3265,7 +3289,7 @@ public class BattlePanel extends JPanel {
         }else if (isLutherVon()) {
             String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
             if ("Crown of Despair".equals(lastSkill))   playLutherVonCrownAnimation(onDone);
-            else if ("Dark Ascension".equals(lastSkill)) playLutherVonAscensionAnimation(onDone);
+            else if ("Dark Judgement".equals(lastSkill)) playLutherVonAscensionAnimation(onDone);
             else                                          playLutherVonWrathAnimation(onDone);
         } else if (isZyrryl()) {
             String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
@@ -4932,8 +4956,14 @@ public class BattlePanel extends JPanel {
         BufferedImage[] idleRef = karl ? karlIdleFrames : idleFrames;
         double idleScale = karl ? KARL_SPRITE_SCALE : SPRITE_SCALE;
         int idleW = idleRef != null ? (int)(idleRef[0].getWidth() * idleScale) : SPRITE_W;
-        int baseX = (currentBattleBgPath.contains("World3BG15.5") || currentBattleBgPath.contains("World3BG21.5"))
-                ? ACTION_X_BASE + 100 : ACTION_X_BASE;
+        int baseX;
+        if (currentBattleBgPath.contains("World3BG21.5")) {
+            baseX = ACTION_X_BASE - 30;
+        } else if (currentBattleBgPath.contains("World3BG15.5")) {
+            baseX = ACTION_X_BASE + 100;
+        } else {
+            baseX = ACTION_X_BASE;
+        }
         return baseX - (labelW - idleW) / 2;
 
     }
@@ -5487,7 +5517,7 @@ public class BattlePanel extends JPanel {
         int totalShards = (isBoss ? 10 : 1) * eDef.count;
 
         addLog("⚔️ HORDE CLEARED!", GOLD);
-        addLog("Total Rewards Secured:", new Color(200, 200, 200));
+        addLog("Total Rewards Secured:", new Color(90, 90, 90));
         addLog("  +" + totalShards + " Soul Shard(s)", new Color(20, 80, 160));
         addLog("  +" + totalXp + " XP", new Color(140, 90, 0));
 
@@ -5885,16 +5915,14 @@ public class BattlePanel extends JPanel {
             ImageIcon hi = hUrl != null ? new ImageIcon(new ImageIcon(hUrl).getImage().getScaledInstance(w + hoverOffset, h + hoverOffset, Image.SCALE_SMOOTH)) : ni;
             btn.setIcon(ni);
             btn.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    btn.setIcon(hi);
-                }
+                @Override public void mouseEntered(MouseEvent e) { btn.setIcon(hi); utils.SoundUtil.play("HoverSound.wav"); }
 
                 @Override
                 public void mouseExited(MouseEvent e) {
                     btn.setIcon(ni);
                 }
             });
+            btn.addActionListener(e -> utils.SoundUtil.play("SelectSound.wav"));
         } else {
             btn.setText(fallback);
             btn.setForeground(Color.WHITE);
@@ -6004,7 +6032,7 @@ public class BattlePanel extends JPanel {
         // Status label — below role
         JLabel statusLbl = new JLabel(" ");
         statusLbl.setFont(new Font("Monospaced", Font.BOLD, 9));
-        statusLbl.setForeground(new Color(200, 200, 200));
+        statusLbl.setForeground(new Color(90, 90, 90));
         statusLbl.setBounds(8, 72, 320, 14);
         card.add(statusLbl);
 
@@ -6449,8 +6477,8 @@ public class BattlePanel extends JPanel {
             currentHero.inventory.setEquippedArmor(a);
             currentHero.recalculateBuffs();
 
-            addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(200, 180, 50));
-            delay(2000, onDone);
+            addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(160, 120, 20));
+            showItemDropImage("/assets/ItemAssets/World3ItemDrop.png", onDone);
         } else {
             // Not a mini-boss, just proceed
             onDone.run();
@@ -6459,7 +6487,11 @@ public class BattlePanel extends JPanel {
 
     private void showItemDropImage(String resourcePath, Runnable onDone) {
         java.net.URL url = getClass().getResource(resourcePath);
-        if (url == null) { delay(2000, onDone); return; }
+        if (url == null) {
+            battleContinueBtn.setEnabled(true);
+            delay(5000, onDone);
+            return;
+        }
 
         JLabel itemImg = new JLabel();
         itemImg.setHorizontalAlignment(SwingConstants.CENTER);
@@ -6479,23 +6511,28 @@ public class BattlePanel extends JPanel {
         revalidate();
         repaint();
 
-        // Wait for the next Continue press to remove it
-        battleContinueBtn.setEnabled(true);
-        ActionListener[] existing = battleContinueBtn.getActionListeners();
-        for (ActionListener al : existing) battleContinueBtn.removeActionListener(al);
+        // Use a special post-victory step to intercept the continue button
+        postVictoryStep = PostVictoryStep.NONE; // prevent onContinuePressed from doing anything
 
-        battleContinueBtn.addActionListener(new ActionListener() {
+        // Temporarily override the continue button with a one-shot listener
+        battleContinueBtn.setEnabled(true);
+
+        ActionListener lootListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                battleContinueBtn.removeActionListener(this);
                 remove(itemImg);
                 revalidate();
                 repaint();
-                // Restore original continue button behavior
-                battleContinueBtn.removeActionListener(this);
-                battleContinueBtn.addActionListener(ev -> onContinuePressed());
                 onDone.run();
             }
-        });
+        };
+
+        // Remove only the default continue listener, add our one-shot
+        for (ActionListener al : battleContinueBtn.getActionListeners()) {
+            battleContinueBtn.removeActionListener(al);
+        }
+        battleContinueBtn.addActionListener(lootListener);
     }
 
     private void showBlackJailerLoot(Runnable onDone) {
@@ -6614,6 +6651,42 @@ public class BattlePanel extends JPanel {
         }
 
         startNextFight();
+    }
+
+    private void playEnemySkillSound() {
+        if (enemyDef == null) return;
+        String lastSkill = (engine != null) ? engine.getLastEnemySkillName() : null;
+        if (lastSkill == null) return;
+
+        String file = switch (lastSkill) {
+            case "Savage Howl"       -> "SavageHowl.WAV";
+            case "Trickster Strike"  -> "TricksterStrike.WAV";
+            case "Root Snare"        -> "RootSnare.WAV";
+            case "Screech"           -> "BatScreech.WAV";
+            case "Plague Bite"       -> "PlagueBite.WAV";
+            case "Shadow Bolt"       -> "ShadowBolt.WAV";
+            case "Corpse Explosion"  -> "CorpseExplosion.WAV";
+            case "Rotten Cleave"     -> "RottenCleave.WAV";
+            case "Ember Burst"       -> "EmberBurst.WAV";
+            case "Marrow Bolt"       -> "MarrowBolt.WAV";
+            case "Magma Slam"        -> "MagmaSlam.WAV";
+            case "Soul Scream"       -> "SoulScream.WAV";
+            case "Deathly Charge"    -> "DeathlyCharge.WAV";
+            case "Blackened Howl"    -> "BlackenedHowl.WAV";
+            case "Tormenting Lash"   -> "TormentingLash.WAV";
+            case "Shackling Chains"  -> "ShacklingChains.WAV";
+            case "Crown of Despair"  -> "CrownOfDespair.WAV";
+            case "Dark Judgement"    -> "DarkJudgement.WAV";
+            case "Kings Wrath"       -> "KingsWrath.WAV";
+            case "Great Cleaver"     -> "GreatCleaver.WAV";
+            case "Bone Shield"       -> "BoneShield.WAV";
+            case "Soul Drain"        -> "SoulDrain.WAV";
+            case "Encapsulation"     -> "Encapsulation.WAV";
+            case "Dark Ascension"    -> "DarkAscension.WAV";
+            default -> null;
+        };
+
+        if (file != null) utils.SoundUtil.play(file);
     }
 
     public void setBackgroundImage(String resourcePath) {
