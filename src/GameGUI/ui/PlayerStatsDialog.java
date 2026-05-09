@@ -6,6 +6,7 @@ import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Weapon;
 
 import javax.swing.*;
+import javax.swing.ToolTipManager;
 import java.awt.*;
 
 public class PlayerStatsDialog extends JDialog {
@@ -48,6 +49,11 @@ public class PlayerStatsDialog extends JDialog {
         root.setBorder(BorderFactory.createEmptyBorder(24, 32, 20, 32));
         setContentPane(root);
 
+        // ── Tooltip styling consistent with battle screen ─────────────────
+        ToolTipManager.sharedInstance().setInitialDelay(400);
+        ToolTipManager.sharedInstance().setDismissDelay(6000);
+        ToolTipManager.sharedInstance().setReshowDelay(400);
+
         // ── Title ─────────────────────────────────────────────────────────
         JLabel title = new JLabel(heroDef.emoji + "  " + heroDef.name, SwingConstants.CENTER);
         title.setFont(new Font("Georgia", Font.BOLD, 22));
@@ -73,9 +79,36 @@ public class PlayerStatsDialog extends JDialog {
         content.add(Box.createVerticalStrut(4));
         content.add(statLabel("⚡ Energy",  hero.energy    + " / " + hero.maxEnergy, new Color(90,  150, 220)));
         content.add(Box.createVerticalStrut(4));
-        content.add(statLabel("⚔  Attack",  String.valueOf(hero.attack),              new Color(220, 160, 60)));
+
+        // ── Attack with breakdown tooltip ─────────────────────────────────
+        int baseAtk   = hero.baseAttack;
+        int weaponAtk = (hero.inventory.getEquippedWeapon() != null) ? hero.inventory.getEquippedWeapon().atkBuff : 0;
+        int totalAtk  = hero.attack;
+        JPanel atkRow = statLabel("⚔  Attack", String.valueOf(totalAtk), new Color(220, 160, 60));
+        String atkTip = "<html><div style='font-family:Arial; padding:5px 8px; background:#1a1a2e; width:200px;'>"
+                + "<span style='color:#6699ff;'>Base: <b>" + baseAtk + "</b></span><br>"
+                + "<span style='color:#ff6666;'>+ Weapon: <b>+" + weaponAtk + "</b></span><br>"
+                + "<hr style='border-color:#444; margin:3px 0;'>"
+                + "<span style='color:#66ff99;'>Total: <b>" + totalAtk + "</b></span>"
+                + "</div></html>";
+        atkRow.setToolTipText(atkTip);
+        content.add(atkRow);
         content.add(Box.createVerticalStrut(4));
-        content.add(statLabel("🛡  Defense", String.valueOf(hero.defense),             new Color(100, 180, 120)));
+
+// ── Defense with breakdown tooltip ────────────────────────────────
+        int baseDef  = hero.baseDefense;
+        int armorDef = (hero.inventory.getEquippedArmor() != null) ? hero.inventory.getEquippedArmor().defBuff : 0;
+        int totalDef = hero.defense;
+        JPanel defRow = statLabel("🛡  Defense", String.valueOf(totalDef), new Color(100, 180, 120));
+        String defTip = "<html><div style='font-family:Arial; padding:5px 8px; background:#1a1a2e; width:200px;'>"
+                + "<span style='color:#6699ff;'>Base: <b>" + baseDef + "</b></span><br>"
+                + "<span style='color:#ff6666;'>+ Armor: <b>+" + armorDef + "</b></span><br>"
+                + "<hr style='border-color:#444; margin:3px 0;'>"
+                + "<span style='color:#66ff99;'>Total: <b>" + totalDef + "</b></span>"
+                + "</div></html>";
+        defRow.setToolTipText(defTip);
+        content.add(defRow);
+        content.add(defRow);
         content.add(Box.createVerticalStrut(4));
         content.add(statLabel("⭐ Level",   String.valueOf(hero.level),               GOLD));
         content.add(Box.createVerticalStrut(14));
@@ -86,9 +119,41 @@ public class PlayerStatsDialog extends JDialog {
         content.add(Box.createVerticalStrut(6));
         Weapon w = hero.inventory.getEquippedWeapon();
         Armor  a = hero.inventory.getEquippedArmor();
-        content.add(statLabel("⚔  Weapon", w != null ? w.name : "None", TEXT_LIGHT));
+
+        // ── Weapon row with tooltip ───────────────────────────────────────
+        JPanel weaponRow = statLabel("⚔  Weapon", w != null ? w.name : "None", TEXT_LIGHT);
+        if (w != null) {
+            StringBuilder wTip = new StringBuilder("<html><div style='font-family:Arial; padding:5px 8px; background:#1a1a2e; width:200px;'>");
+            wTip.append("<b style='color:#ffdd55;'>").append(w.name).append("</b><br>");
+            wTip.append("<hr style='border-color:#444; margin:3px 0;'>");
+            wTip.append("<span style='color:#ff9966;'>⚔ ATK: <b>+").append(w.atkBuff).append("</b></span><br>");
+            if (w.lifestealPercent > 0)  wTip.append("<span style='color:#ff6666;'>💉 Lifesteal: <b>").append(w.lifestealPercent).append("%</b></span><br>");
+            if (w.poisonChance > 0)      wTip.append("<span style='color:#99ff66;'>☠ Poison Chance: <b>").append(w.poisonChance).append("%</b></span><br>");
+            if (w.bleedChance > 0)       wTip.append("<span style='color:#ff4444;'>🩸 Bleed Chance: <b>").append(w.bleedChance).append("%</b></span><br>");
+            if (w.stunChance > 0)        wTip.append("<span style='color:#ffff66;'>⚡ Stun Chance: <b>").append(w.stunChance).append("%</b></span><br>");
+            if (w.freezeChance > 0)      wTip.append("<span style='color:#66ccff;'>❄ Freeze Chance: <b>").append(w.freezeChance).append("%</b></span><br>");
+            if (w.energyPerAttack > 0)   wTip.append("<span style='color:#7ec8f7;'>⚡ Energy/Attack: <b>+").append(w.energyPerAttack).append("</b></span><br>");
+            if (w.extraHitChance > 0)    wTip.append("<span style='color:#ffaa44;'>🎯 Extra Hit: <b>").append(w.extraHitChance).append("%</b></span><br>");
+            wTip.append("</div></html>");
+            weaponRow.setToolTipText(wTip.toString());
+        }
+        content.add(weaponRow);
         content.add(Box.createVerticalStrut(4));
-        content.add(statLabel("🛡  Armor",  a != null ? a.name : "None", TEXT_LIGHT));
+
+        // ── Armor row with tooltip ────────────────────────────────────────
+        JPanel armorRow = statLabel("🛡  Armor", a != null ? a.name : "None", TEXT_LIGHT);
+        if (a != null) {
+            StringBuilder aTip = new StringBuilder("<html><div style='font-family:Arial; padding:5px 8px; background:#1a1a2e; width:200px;'>");
+            aTip.append("<b style='color:#ffdd55;'>").append(a.name).append("</b><br>");
+            aTip.append("<hr style='border-color:#444; margin:3px 0;'>");
+            aTip.append("<span style='color:#66ff99;'>🛡 DEF: <b>+").append(a.defBuff).append("</b></span><br>");
+            if (a.immuneDebuff)              aTip.append("<span style='color:#aaffaa;'>✅ Immune to ATK↓ DEF↓ debuffs</span><br>");
+            if (a.immuneEffects)             aTip.append("<span style='color:#aaffaa;'>✅ Immune to Poison, Burn, Bleed</span><br>");
+            if (a.reflectChance > 0)         aTip.append("<span style='color:#ffaa44;'>🔄 Reflect: <b>").append(a.reflectChance).append("% chance (").append(a.reflectPercent).append("% dmg)</b></span><br>");
+            aTip.append("</div></html>");
+            armorRow.setToolTipText(aTip.toString());
+        }
+        content.add(armorRow);
         content.add(Box.createVerticalStrut(14));
         content.add(divider());
         content.add(Box.createVerticalStrut(10));

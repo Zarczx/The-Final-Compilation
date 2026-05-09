@@ -121,6 +121,7 @@ public class TitleScreen extends JPanel {
                     SwingUtilities.getWindowAncestor(this),
                     false,
                     null,
+                    null,
                     1,
                     0,  // ★ ADDED: Dummy seqIndex for Load Mode
                     0,  // ★ ADDED: Dummy fightIndex for Load Mode

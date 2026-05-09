@@ -585,10 +585,18 @@ public class BattlePanel extends JPanel {
         setPreferredSize(new Dimension(1280, 720));
         setBackground(BG_DARK);
         buildUI();
+        ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+        UIManager.put("ToolTip.background", new Color(20, 20, 40));
+        UIManager.put("ToolTip.foreground", Color.WHITE);
+        UIManager.put("ToolTip.border", BorderFactory.createLineBorder(new Color(100, 80, 180), 1));
     }
 
     public Combatant getCurrentHero() {
         return currentHero;
+    }
+
+    public Combatant getCurrentEnemy() {
+        return currentEnemy;
     }
 
     public void setCurrentHero(Combatant hero) {
@@ -1046,6 +1054,42 @@ public class BattlePanel extends JPanel {
         } catch (Exception ex) {
             btn.setDisabledIcon(null);
         }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ SKILL TOOLTIP HELPER — shows live damage range + energy cost on hover
+    // ════════════════════════════════════════════════════════════════════════
+    private void setSkillTooltip(JButton btn, GameGUI.model.entity.HeroData.SkillDef skill) {
+        if (skill == null || currentHero == null) return;
+
+        int atk = currentHero.attack;
+        int minDmg = (int)(atk * skill.minMultiplier);
+        int maxDmg = (int)(atk * skill.maxMultiplier);
+
+        String pierce = skill.pierceArmor ? "<br><span style='color:#ff9966;'>🛡 Pierces Armor</span>" : "";
+
+        // Split description at \n to separate flavour text from effects line
+        String[] parts = skill.description.split("\n", 2);
+        String flavour = parts[0];
+        String effects = parts.length > 1 ? parts[1] : "";
+
+        String html = "<html>"
+                + "<div style='font-family:Arial; font-size:12px; padding:6px 8px;"
+                + "background:#1a1a2e; color:#ffffff; width:200px;'>"
+                + "<b style='font-size:13px; color:#ffffff;'>" + skill.icon + " " + skill.name + "</b><br>"
+                + "<hr style='border-color:#444; margin:3px 0;'>"
+                + "<span style='color:#aaaaaa; font-size:11px;'>" + flavour + "</span><br><br>"
+                + "<span style='color:#ffdd55;'>⚔ Damage: <b>" + minDmg + " – " + maxDmg + "</b></span><br>"
+                + "<span style='color:#7ec8f7;'>⚡ Energy: <b>" + skill.energyCost + "</b></span>"
+                + pierce
+                + (effects.isEmpty() ? "" : "<br><span style='color:#aaffaa; font-size:11px;'>" + effects + "</span>")
+                + "</div></html>";
+
+        btn.setToolTipText(html);
+
+        ToolTipManager.sharedInstance().setInitialDelay(600);
+        ToolTipManager.sharedInstance().setDismissDelay(5000);
+        ToolTipManager.sharedInstance().setReshowDelay(300);
     }
 
     // Raw frames (no black removal) for World 3
@@ -3091,15 +3135,15 @@ public class BattlePanel extends JPanel {
             });
             enemyIdleTimer.start();
         } else if (eDef.name.equals("Blight Hound") && blightHoundIdleFrames != null) {
-        int w = (int)(blightHoundIdleFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
-        int h = (int)(blightHoundIdleFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
-        enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h);
-        enemySpriteLabel.setVisible(true);
-        enemyIdleTimer = new javax.swing.Timer(BLIGHT_HOUND_SPEED, e -> {
-            enemySpriteFrame = (enemySpriteFrame + 1) % BLIGHT_HOUND_IDLE_FRAME_COUNT;
-            if (enemySpriteLabel != null) enemySpriteLabel.repaint();
-        });
-        enemyIdleTimer.start();
+            int w = (int)(blightHoundIdleFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
+            int h = (int)(blightHoundIdleFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
+            enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h);
+            enemySpriteLabel.setVisible(true);
+            enemyIdleTimer = new javax.swing.Timer(BLIGHT_HOUND_SPEED, e -> {
+                enemySpriteFrame = (enemySpriteFrame + 1) % BLIGHT_HOUND_IDLE_FRAME_COUNT;
+                if (enemySpriteLabel != null) enemySpriteLabel.repaint();
+            });
+            enemyIdleTimer.start();
         } else if (eDef.name.equals("Ghoul Footman") && ghoulFootmanIdleFrames != null) {
             int w = (int) (ghoulFootmanIdleFrames[0].getWidth() * GHOUL_FOOTMAN_SCALE);
             int h = (int) (ghoulFootmanIdleFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
@@ -5875,6 +5919,9 @@ public class BattlePanel extends JPanel {
             configureSkillButton(skill1Btn, heroDef.skills[0].name, heroDef.skills[0].icon, new Color(60, 30, 90), new Color(130, 60, 200));
             configureSkillButton(skill2Btn, heroDef.skills[1].name, heroDef.skills[1].icon, new Color(30, 60, 90), new Color(52, 120, 219));
             configureSkillButton(ultimateBtn, heroDef.skills[2].name, heroDef.skills[2].icon, new Color(90, 30, 30), new Color(192, 57, 43));
+            setSkillTooltip(skill1Btn, heroDef.skills[0]);
+            setSkillTooltip(skill2Btn, heroDef.skills[1]);
+            setSkillTooltip(ultimateBtn, heroDef.skills[2]);
         }
         configureSkillButton(skipTurnBtn, "Skip Turn", "", new Color(30, 60, 40), new Color(39, 174, 96));
     }
@@ -5904,6 +5951,13 @@ public class BattlePanel extends JPanel {
         skill1Btn.setEnabled(engine == null || engine.canUseSkill1());
         skill2Btn.setEnabled(engine == null || engine.canUseSkill2());
         ultimateBtn.setEnabled(cd == 0 && (engine == null || engine.canUseUltimate()));
+
+        // ★ Refresh skill tooltips so damage reflects current ATK (level-ups, buffs, etc.)
+        if (heroDef != null && heroDef.skills != null && heroDef.skills.length >= 3) {
+            setSkillTooltip(skill1Btn, heroDef.skills[0]);
+            setSkillTooltip(skill2Btn, heroDef.skills[1]);
+            setSkillTooltip(ultimateBtn, heroDef.skills[2]);
+        }
 
         // ★ REMOVED the heroStatusLbl and enemyStatusLbl "Defending" checks here!
 

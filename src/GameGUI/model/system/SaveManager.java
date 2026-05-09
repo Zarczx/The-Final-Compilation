@@ -35,7 +35,7 @@ public class SaveManager {
      * The ATOMIC SAVE method.
      * Extracts data from Kael, writes to a temp file, then safely overwrites the real save.
      */
-    public static boolean saveGame(Combatant hero, int slotNumber, int currentWorld, int seqIndex, int fightIndex) {
+    public static boolean saveGame(Combatant hero, Combatant enemy, int slotNumber, int currentWorld, int seqIndex, int fightIndex) {
         ensureDirectoryExists();
 
         // 1. Create our "Dumb" DTO
@@ -81,6 +81,8 @@ public class SaveManager {
         data.currentWorld = currentWorld;
         data.savedEnemySequenceIndex = seqIndex;
         data.savedEnemyFightIndex = fightIndex;
+        data.savedEnemyCurrentHp = (enemy != null) ? enemy.currentHp : -1;
+        data.savedEnemyMaxHp     = (enemy != null) ? enemy.maxHp     : -1;
 
         // ════════════════════════════════════════════════════
         // 7. ★ ATOMIC SAVE LOGIC ★

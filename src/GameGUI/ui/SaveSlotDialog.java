@@ -23,7 +23,7 @@ public class SaveSlotDialog extends JDialog {
      * @param currentWorld The current world number (pass 1 if loading).
      * @param onLoadAction A callback function that runs when a game is successfully loaded!
      */
-    public SaveSlotDialog(Window parent, boolean isSaveMode, Combatant heroToSave, int currentWorld, int seqIndex, int fightIndex, BiConsumer<Combatant, SaveData> onLoadAction) {
+    public SaveSlotDialog(Window parent, boolean isSaveMode, Combatant heroToSave, Combatant enemyToSave, int currentWorld, int seqIndex, int fightIndex, BiConsumer<Combatant, SaveData> onLoadAction) {
         super(parent, isSaveMode ? "Save Game" : "Load Game", ModalityType.APPLICATION_MODAL);
         setSize(500, 450);
         setLocationRelativeTo(parent);
@@ -41,13 +41,13 @@ public class SaveSlotDialog extends JDialog {
         slotsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
 
         for (int i = 1; i <= 3; i++) {
-            slotsPanel.add(createSlot(i, isSaveMode, heroToSave, currentWorld, seqIndex, fightIndex, onLoadAction));
+            slotsPanel.add(createSlot(i, isSaveMode, heroToSave, enemyToSave, currentWorld, seqIndex, fightIndex, onLoadAction));
         }
 
         add(slotsPanel, BorderLayout.CENTER);
     }
 
-    private JPanel createSlot(int slotNum, boolean isSaveMode, Combatant heroToSave, int currentWorld, int seqIndex, int fightIndex, BiConsumer<Combatant, SaveData> onLoadAction) {
+    private JPanel createSlot(int slotNum, boolean isSaveMode, Combatant heroToSave, Combatant enemyToSave, int currentWorld, int seqIndex, int fightIndex, BiConsumer<Combatant, SaveData> onLoadAction) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(PANEL_DARK);
         panel.setBorder(BorderFactory.createLineBorder(GOLD_MUTED, 1));
@@ -84,7 +84,7 @@ public class SaveSlotDialog extends JDialog {
         actionBtn.addActionListener(e -> {
             if (isSaveMode) {
                 // RUN SAVE LOGIC
-                boolean success = SaveManager.saveGame(heroToSave, slotNum, currentWorld, seqIndex, fightIndex);
+                boolean success = SaveManager.saveGame(heroToSave, enemyToSave, slotNum, currentWorld, seqIndex, fightIndex);
                 if (success) {
                     showStyledMessage("Game saved to Slot " + slotNum + "!", "Saved", false);
                     dispose();
