@@ -75,6 +75,10 @@ public class SaveSlotDialog extends JDialog {
         actionBtn.setForeground(GOLD_MUTED);
         actionBtn.setFocusPainted(false);
         actionBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        actionBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) { utils.SoundUtil.play("HoverSound.wav"); }
+        });
+        actionBtn.addActionListener(e -> utils.SoundUtil.play("SelectSound.wav"));
 
         // Disable the load button if the slot is empty
         if (!isSaveMode && data == null) {
@@ -113,6 +117,10 @@ public class SaveSlotDialog extends JDialog {
             deleteBtn.setBackground(new Color(140, 40, 40)); // Dark Red
             deleteBtn.setForeground(Color.WHITE);
             deleteBtn.setFocusPainted(false);
+            deleteBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { utils.SoundUtil.play("HoverSound.wav"); }
+            });
+            deleteBtn.addActionListener(e -> utils.SoundUtil.play("SelectSound.wav"));
 
             deleteBtn.addActionListener(e -> {
                 int choice = JOptionPane.showConfirmDialog(
@@ -178,7 +186,10 @@ public class SaveSlotDialog extends JDialog {
         ok.setBorder(BorderFactory.createLineBorder(new Color(160, 140, 90), 2));
         ok.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         ok.setPreferredSize(new Dimension(80, 32));
-        ok.addActionListener(e -> dialog.dispose());
+        ok.addActionListener(e -> { utils.SoundUtil.play("SelectSound.wav"); dialog.dispose(); });
+        ok.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) { utils.SoundUtil.play("HoverSound.wav"); }
+        });
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         btnPanel.setOpaque(false);

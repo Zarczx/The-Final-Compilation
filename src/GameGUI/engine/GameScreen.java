@@ -117,7 +117,9 @@ public class GameScreen extends JPanel {
 
 
     private void playBattleMusic() {
-        switchMusic("BattleBackgroundMusic.wav", 0.7f);
+        if (currentWorld == 2) switchMusic("BattleBackgroundMusic2.WAV", 0.7f);
+        else if (currentWorld == 3) switchMusic("BattleBackgroundMusic3.WAV", 0.7f);
+        else switchMusic("BattleBackgroundMusic.wav", 0.7f);
     }
 
     private void playWorldMusic() {
@@ -126,7 +128,7 @@ public class GameScreen extends JPanel {
         } else if (currentWorld == 2) {
             switchMusic("World2BackgroundMusic.wav", 0.5f);
         } else {
-            switchMusic("TheForestOfSilence.wav", 0.5f);
+            switchMusic("World3BackgroundMusic.WAV", 0.5f);
         }
     }
 
@@ -321,7 +323,7 @@ public class GameScreen extends JPanel {
 
     // This handles the actual transition and logic
     private void startPrefiEncounter(Combatant player) {
-        utils.SoundUtil.stopLoop(); // Stop battle music for the trial
+        switchMusic("PrefinalMusic.WAV", 0.6f);
 
         GameGUI.ui.PrefiEncounterGUI prefiPanel = new GameGUI.ui.PrefiEncounterGUI(player, () -> {
             // This runs when the player passes or fails the encounter!
@@ -567,6 +569,7 @@ public class GameScreen extends JPanel {
         w2InterChunkIndex = 0;
         w2ResumeAfterDialogue = () -> {
             magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
+            switchMusic("MagicShopMusic.WAV", 0.5f);
             cardLayout.show(cardPanel, SCREEN_SHOP);
         };
 
@@ -591,6 +594,7 @@ public class GameScreen extends JPanel {
         if (interIndex < 0 || interIndex >= WORLD1_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
+        playWorldMusic();
         w1ResumeAfterDialogue = resumeFight;
         w1InterDialogueIndex = interIndex;
         w1InInterDialogue = true;
@@ -1272,9 +1276,10 @@ public class GameScreen extends JPanel {
                     : normalIcon;
             btn.setIcon(normalIcon);
             btn.addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon); }
+                @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setIcon(hoverIcon); utils.SoundUtil.play("HoverSound.wav"); }
                 @Override public void mouseExited (java.awt.event.MouseEvent e) { btn.setIcon(normalIcon); }
             });
+            btn.addActionListener(e -> utils.SoundUtil.play("SelectSound2.wav"));
         } else {
             btn.setText(fallbackText);
             btn.setForeground(Color.WHITE);
@@ -1836,6 +1841,7 @@ public class GameScreen extends JPanel {
         if (interIndex < 0 || interIndex >= WORLD2_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
+        playWorldMusic();
         w2ResumeAfterDialogue = resumeFight;
         w2InInterDialogue = true;
         w2InterChunks = WORLD2_INTER_DIALOGUES[interIndex];
@@ -2450,9 +2456,10 @@ public class GameScreen extends JPanel {
             "A heavy bell tolls in the distance...\n\"Dong... Dong...\"",
             "From the mist steps a figure cloaked in tattered robes.\nHe leans heavily on a staff. As he lifts his hood, you jolt back,\nthe face is familiar. It looks exactly like your professor, Khai.",
             "But his eyes are weary, holding the weight of centuries.",
-            "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n"+
-                    "\"We suffer because an evil Necromancer has corrupted these lands.\n"+
-                    "He has drained the nature itself." + "We must find the Three Stones of Life that hold this reality together.\n"+
+            "\"Be calm, Traveler. In this realm, I am known as Khai the Gray.\"\n" +
+                    "\"We suffer because an evil Necromancer has corrupted these lands.\n" +
+                    "He has drained the nature itself.\"",
+            "\"We must find the Three Stones of Life that hold this reality together.\n" +
                     "Only then will your path home reveal itself.\"",
             "Khai fades back into the mist.",
             "Three Rodtfang Wolves emerge from the tree line.",
@@ -2545,7 +2552,7 @@ public class GameScreen extends JPanel {
             "With a heavy crash, Zyrryl, the Tower Warden, falls to the ground.\n" +
                     "You catch your breath. You hold the final Stone of Life.",
             // index 1 — BG31 (2s) → BG32
-            "Sir Khai steps forward. His staff is no longer wood—it is blazing with chaotic energy.\n" +
+            "Sir Khai steps forward. His staff is no longer wood—it is blazing with chaotic energy." +
                     "\"Finally.\"",
             // index 2 — BG33
             "\"You've served well, my student.\n" +
@@ -2814,7 +2821,7 @@ public class GameScreen extends JPanel {
             } catch (Exception ex) {}
         }
 
-        if (w1DialogueIndex == 6) {
+        if (w1DialogueIndex == 7) {
             w1ContinueBtn.setEnabled(false);
             crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai2.jpg", () -> {
                 crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {
@@ -2826,7 +2833,7 @@ public class GameScreen extends JPanel {
                         world1KhaiLabel.repaint();
                         world1WorldAlpha[0] = 1.0f;
                         world1SceneBg.repaint();
-                        w1DialogueIndex = 7;
+                        w1DialogueIndex = 8;
                         w1ContinueBtn.setEnabled(true);
                         startW1Typing();
                     });
@@ -3466,6 +3473,7 @@ public class GameScreen extends JPanel {
         if (interIndex < 0 || interIndex >= WORLD3_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
+        playWorldMusic();
         w3ResumeAfterDialogue = resumeFight;
         w3InInterDialogue = true;
         w3InterChunks = WORLD3_INTER_DIALOGUES[interIndex];
@@ -3653,6 +3661,7 @@ public class GameScreen extends JPanel {
     }
 
     private void startFinalBossTransition() {
+        switchMusic("KhaiBetrayal.WAV", 0.7f);
         cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
 
         if (w3SceneBg != null) {
@@ -3670,6 +3679,7 @@ public class GameScreen extends JPanel {
         typeNext[0] = () -> {
             if (idx[0] >= KHAI_BETRAYAL_DIALOGUE.length) {
                 w3ContinueBtn.setEnabled(false);
+                switchMusic("FinalBossBattleMusic.WAV", 0.8f);
                 cardLayout.show(cardPanel, SCREEN_BATTLE);
                 battlePanel.startEnemySequence(
                         confirmedHero,
@@ -3705,6 +3715,7 @@ public class GameScreen extends JPanel {
     }
 
     private void showKhaiVictoryDialogue() {
+        switchMusic("BeforeBGMusic.wav", 0.5f);
         cardLayout.show(cardPanel, SCREEN_WORLD3_INTRO);
         if (w3SceneBg != null) {
             w3SceneBg.setBackground(Color.BLACK);
@@ -3944,7 +3955,7 @@ public class GameScreen extends JPanel {
     private void openSaveScreen() {
         // Prevent saving if the game hasn't fully started
         if (battlePanel == null || battlePanel.getCurrentHero() == null) {
-            JOptionPane.showMessageDialog(this, "You haven't started your journey yet!", "Cannot Save", JOptionPane.WARNING_MESSAGE);
+            showStyledCannotSaveDialog();
             return;
         }
 
@@ -3962,27 +3973,119 @@ public class GameScreen extends JPanel {
         saveDialog.setVisible(true);
     }
 
+    private void showStyledCannotSaveDialog() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Cannot Save", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setUndecorated(true);
+        dialog.setSize(360, 180);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(15, 13, 25));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(120, 80, 10));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+            }
+        };
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 24, 16, 24));
+
+        JLabel titleLabel = new JLabel("Cannot Save", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Georgia", Font.BOLD, 18));
+        titleLabel.setForeground(new Color(200, 160, 40));
+
+        JLabel msg = new JLabel("You haven't started your journey yet!", SwingConstants.CENTER);
+        msg.setFont(new Font("Georgia", Font.PLAIN, 13));
+        msg.setForeground(new Color(210, 200, 180));
+
+        JButton ok = new JButton("OK");
+        ok.setFont(new Font("Georgia", Font.BOLD, 13));
+        ok.setForeground(new Color(200, 160, 40));
+        ok.setBackground(new Color(30, 28, 45));
+        ok.setFocusPainted(false);
+        ok.setBorderPainted(true);
+        ok.setBorder(BorderFactory.createLineBorder(new Color(120, 80, 10), 2));
+        ok.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        ok.setPreferredSize(new Dimension(80, 32));
+        ok.addActionListener(e -> dialog.dispose());
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnPanel.setOpaque(false);
+        btnPanel.add(ok);
+
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(msg, BorderLayout.CENTER);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+        dialog.setContentPane(panel);
+        dialog.setVisible(true);
+    }
+
     private void promptSaveAndExit() {
-        // If no hero exists yet, just exit immediately
         if (battlePanel == null || battlePanel.getCurrentHero() == null) {
             System.exit(0);
         }
 
-        int choice = JOptionPane.showConfirmDialog(
-                this,
-                "Do you want to save your progress before exiting?",
-                "Exit Game",
-                JOptionPane.YES_NO_CANCEL_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Exit Game", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setUndecorated(true);
+        dialog.setSize(400, 200);
+        dialog.setLocationRelativeTo(this);
 
-        if (choice == JOptionPane.YES_OPTION) {
-            openSaveScreen();
-            // Note: After the save dialog closes, the game remains open just in case they cancelled the save.
-            // They can click Exit -> 'No' to fully close the game afterward.
-        } else if (choice == JOptionPane.NO_OPTION) {
-            System.exit(0);
+        JPanel panel = new JPanel(new BorderLayout(10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(15, 13, 25));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.setColor(new Color(120, 80, 10));
+                g2.setStroke(new BasicStroke(2));
+                g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+            }
+        };
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 24, 16, 24));
+
+        JLabel titleLabel = new JLabel("Exit Game", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Georgia", Font.BOLD, 18));
+        titleLabel.setForeground(new Color(200, 160, 40));
+
+        JLabel msg = new JLabel("Do you want to save your progress before exiting?", SwingConstants.CENTER);
+        msg.setFont(new Font("Georgia", Font.PLAIN, 13));
+        msg.setForeground(new Color(210, 200, 180));
+
+        JButton yesBtn = new JButton("Save & Exit");
+        JButton noBtn  = new JButton("Exit");
+        JButton cancelBtn = new JButton("Cancel");
+
+        for (JButton btn : new JButton[]{yesBtn, noBtn, cancelBtn}) {
+            btn.setFont(new Font("Georgia", Font.BOLD, 13));
+            btn.setForeground(new Color(200, 160, 40));
+            btn.setBackground(new Color(30, 28, 45));
+            btn.setFocusPainted(false);
+            btn.setBorder(BorderFactory.createLineBorder(new Color(120, 80, 10), 2));
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            btn.setPreferredSize(new Dimension(110, 32));
         }
+
+        yesBtn.addActionListener(e -> { dialog.dispose(); openSaveScreen(); });
+        noBtn.addActionListener(e ->  { dialog.dispose(); System.exit(0); });
+        cancelBtn.addActionListener(e -> dialog.dispose());
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        btnPanel.setOpaque(false);
+        btnPanel.add(yesBtn);
+        btnPanel.add(noBtn);
+        btnPanel.add(cancelBtn);
+
+        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(msg, BorderLayout.CENTER);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+        dialog.setContentPane(panel);
+        dialog.setVisible(true);
     }
 
 

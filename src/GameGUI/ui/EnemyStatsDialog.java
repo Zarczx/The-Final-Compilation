@@ -38,7 +38,7 @@ public class EnemyStatsDialog extends JDialog {
         setContentPane(root);
 
         // ── Title ─────────────────────────────────────────────────────────
-        JLabel title = new JLabel(enemyDef.emoji + "  " + enemyDef.name, SwingConstants.CENTER);
+        JLabel title = new JLabel(enemyDef.name, SwingConstants.CENTER);
         title.setFont(new Font("Georgia", Font.BOLD, 20));
         title.setForeground(RED);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
