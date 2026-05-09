@@ -673,7 +673,7 @@ public class BattlePanel extends JPanel {
 
         currentEnemy = HeroFactory.createEnemy(eDef);
 
-        this.engine = new BattleManager(currentHero, currentEnemy, heroDef, false);
+        this.engine = new BattleManager(currentHero, currentEnemy, heroDef, enemyDef,false);
 
         populateCombatantUI();
         refreshBattleUI();
@@ -5392,109 +5392,204 @@ public class BattlePanel extends JPanel {
     }
 
     private void handleVictory() {
+
         if (enemySequence != null) {
+
             EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
             enemyFightIndex++;
 
             // 1. Calculate Per-Kill Rewards
             int individualXp = eDef.xpReward;
+
             boolean isBoss = eDef.name.equals("The Hollow Stag") ||
                     eDef.name.equals("The Black Jailer") ||
                     eDef.name.equals("Luther Von") ||
                     eDef.name.equals("The Tower Warden");
+
             int individualShards = isBoss ? 10 : 1;
 
-            // 2. Apply Rewards Immediately (Math only, no summary yet)
-            boolean leveledUp = ProgressionService.gainExp(currentHero, individualXp, 1);
+            // 2. Apply Rewards Immediately
+            boolean leveledUp =
+                    ProgressionService.gainExp(currentHero, individualXp, 1);
+
             currentHero.soulShards += individualShards;
 
+            // POTION DROPS
+            boolean isMiniBoss = eDef.name.equals("The Hollow Stag") ||
+                    eDef.name.equals("The Black Jailer") ||
+                    eDef.name.equals("Luther Von") ||
+                    eDef.name.equals("Zyrryl") ||
+                    eDef.name.equals("Khai the Necromancer");
+
+            String potionDrops = currentHero.inventory.lootPotions(isMiniBoss);
+
             refreshBattleUI();
-
-            // 3. Clear the log FIRST, then print the kill info so it stays on screen
             clearLog();
-            addLog(getPerKillMessage(eDef, enemyFightIndex), GREEN);
-            addLog("✨ Gained " + individualXp + " XP and " + individualShards + " Shard(s)!", GOLD);
 
-            if (leveledUp) {
-                addLog("🌟 LEVEL UP! Stats increased!", new Color(130, 85, 0));
-                // Note: The actual stat breakdown UI will happen at the end of the horde
+            addLog(getPerKillMessage(eDef, enemyFightIndex), GREEN);
+
+            // =========================
+            // REWARD + POTION DISPLAY
+            // =========================
+
+            if (potionDrops != null && !potionDrops.trim().isEmpty()) {
+
+                String[] potionLines = potionDrops.split("\\n");
+
+                String firstPotion = potionLines.length > 0 ? potionLines[0] : "";
+
+                addLog(
+                        "✨ Gained " + individualXp + " XP and "
+                                + individualShards + " Shard(s)!      "
+                                + firstPotion,
+                        GOLD
+                );
+
+                for (int i = 1; i < potionLines.length; i++) {
+                    if (!potionLines[i].trim().isEmpty()) {
+                        addLog(
+                                "                                         "
+                                        + potionLines[i],
+                                new Color(180, 150, 220)
+                        );
+                    }
+                }
+
+            } else {
+
+                addLog(
+                        "✨ Gained " + individualXp + " XP and "
+                                + individualShards + " Shard(s)!",
+                        GOLD
+                );
             }
 
-            // 4. Branch based on whether the horde is finished
+            // LEVEL UP
+            if (leveledUp) {
+                addLog(
+                        "🌟 LEVEL UP! Stats increased!",
+                        new Color(130, 85, 0)
+                );
+            }
+
             if (enemyFightIndex < eDef.count) {
-                // --- MID-HORDE ---
+
                 savedHeroCombatant = engine.getHero();
 
-                // Wait 2 seconds so the player can read the XP, then spawn next enemy
                 delay(2000, () -> {
                     clearLog();
-                    addLog(getNextApproachMessage(eDef, enemyFightIndex), GOLD);
+                    addLog(
+                            getNextApproachMessage(eDef, enemyFightIndex),
+                            GOLD
+                    );
                     delay(1000, () -> {
                         startNextFight();
                     });
                 });
+
             } else {
-                // --- END OF HORDE ---
+
                 savedHeroCombatant = engine.getHero();
+
                 enemySequenceIndex++;
                 enemyFightIndex = 0;
+
                 setActionsEnabled(false);
 
                 Runnable afterSequence = () -> {
+
                     if (enemySequenceIndex < enemySequence.size()) {
+
                         if (onEnemyGroupDefeated != null)
-                            onEnemyGroupDefeated.accept(enemySequenceIndex, this::startNextFight);
-                        else delay(500, this::startNextFight);
+                            onEnemyGroupDefeated.accept(
+                                    enemySequenceIndex,
+                                    this::startNextFight
+                            );
+                        else
+                            delay(500, this::startNextFight);
+
                     } else {
-                        if (onSequenceComplete != null) onSequenceComplete.run();
+
+                        if (onSequenceComplete != null)
+                            onSequenceComplete.run();
                     }
                 };
 
-                // Wait 2 seconds so they can read the final kill's XP, then show summary
+                final String hordeEndPotionDrops = potionDrops;
+
                 delay(2000, () -> {
-                    startPostVictorySequence(eDef, afterSequence);
+                    startPostVictorySequence(eDef, afterSequence, hordeEndPotionDrops);
                 });
             }
+
         } else {
+
             showResult(true);
         }
     }
 
-    private void startPostVictorySequence(EnemyDefinition eDef, Runnable onDone) {
+    private void startPostVictorySequence(EnemyDefinition eDef, Runnable onDone, String potionDrops) {
         postVictoryEnemy = eDef;
         postVictoryNext = onDone;
         postVictoryStep = PostVictoryStep.LOOT;
         lvlUp_level = 0;
 
-        // NO XP OR SHARDS ARE ADDED TO THE HERO HERE!
-        // They were already paid out per-kill.
+        // NO XP, SHARDS, OR POTIONS ARE ADDED TO THE HERO HERE!
+        // They were already paid out per-kill in handleVictory.
 
-        // If the player leveled up at ANY point during the horde, the data is waiting here:
         if (currentHero.lastLevelUpData != null) {
             parseLevelUpMsg(currentHero.lastLevelUpData);
-            currentHero.lastLevelUpData = null; // Clear it after reading
+            currentHero.lastLevelUpData = null;
         }
 
         setLogFontSmall();
         clearLog();
 
-        // Calculate the summary totals strictly for the UI text
         int totalXp = eDef.xpReward * eDef.count;
+
         boolean isBoss = eDef.name.equals("The Hollow Stag") ||
                 eDef.name.equals("The Black Jailer") ||
                 eDef.name.equals("Luther Von") ||
                 eDef.name.equals("The Tower Warden");
+
         int totalShards = (isBoss ? 10 : 1) * eDef.count;
 
         addLog("⚔️ HORDE CLEARED!", GOLD);
         addLog("Total Rewards Secured:", new Color(200, 200, 200));
-        addLog("  +" + totalShards + " Soul Shard(s)", new Color(20, 80, 160));
-        addLog("  +" + totalXp + " XP", new Color(140, 90, 0));
+
+        // Use the potionDrops passed in — DO NOT call lootPotions() again
+        String[] potionLines = (potionDrops == null || potionDrops.isEmpty())
+                ? new String[0]
+                : potionDrops.split("\\n");
+
+        String firstPotion  = potionLines.length > 0 ? potionLines[0] : "";
+        String secondPotion = potionLines.length > 1 ? potionLines[1] : "";
+
+        addLog(
+                "    +" + totalShards + " Soul Shard(s)        " + firstPotion,
+                new Color(20, 80, 160)
+        );
+
+        addLog(
+                "    +" + totalXp + " XP                      " + secondPotion,
+                new Color(140, 90, 0)
+        );
+
+        for (int i = 2; i < potionLines.length; i++) {
+            if (!potionLines[i].trim().isEmpty()) {
+                addLog(
+                        "                                         " + potionLines[i],
+                        new Color(180, 150, 220)
+                );
+            }
+        }
 
         battleContinueBtn.setEnabled(true);
+
         turnLabel.setText("");
         roundLabel.setText("");
         specialCdLabel.setText("");
+
         stopEnemyAnimation();
     }
 
