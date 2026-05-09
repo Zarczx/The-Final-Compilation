@@ -1,6 +1,7 @@
 package GameGUI.logic;
 
 import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.HeroData;
 import GameGUI.model.entity.HeroData.HeroDefinition;
 import GameGUI.model.logic.StatusManager;
 
@@ -38,6 +39,7 @@ public class BattleManager {
     private final Combatant      hero, enemy;
     private final HeroDefinition heroDef;
     private final Random         rng = new Random();
+    private final HeroData.EnemyDefinition enemyDef;
 
     private TurnOwner currentTurn      = TurnOwner.PLAYER;
     private int       round            = 1;
@@ -46,7 +48,8 @@ public class BattleManager {
 
     private final int s1Cost, s2Cost, ultCost;
 
-    public BattleManager(Combatant hero, Combatant enemy, HeroDefinition heroDef, boolean hasPhoenix) {
+    public BattleManager(Combatant hero, Combatant enemy, HeroDefinition heroDef, HeroData.EnemyDefinition enemyDef, boolean hasPhoenix) {
+        this.enemyDef         = enemyDef;
         this.hero             = hero;
         this.enemy            = enemy;
         this.heroDef          = heroDef;
@@ -250,7 +253,9 @@ public class BattleManager {
         }
 
         lastEnemySkillName = resolveEnemySkillName();
-        int damage = DamageCalculator.calculateDamage(enemy, hero, 1.0, false);
+        double mult = enemyDef.minMultiplier +
+                (enemyDef.maxMultiplier - enemyDef.minMultiplier) + rng.nextDouble();
+        int damage = DamageCalculator.calculateDamage(enemy, hero, mult, false);
         hero.takeDamage(damage);
 
         enemy.getStatusManager().updateDoTEffects(logs);
@@ -305,7 +310,16 @@ public class BattleManager {
     public void advanceToEnemyTurn() { currentTurn = TurnOwner.ENEMY; }
 
     public BattleOutcome checkOutcome() {
-        if (!enemy.isAlive()) return BattleOutcome.VICTORY;
+        if (!enemy.isAlive()) {
+            boolean isMiniBoss = enemy.name.equals("The Hollow Stag") ||
+                                 enemy.name.equals("The Black Jailer") ||
+                                 enemy.name.equals("Luther Von") ||
+                                 enemy.name.equals("Zyrryl") ||
+                                 enemy.name.equals("Khai the Necromancer");
+
+            hero.inventory.lootPotions(isMiniBoss);
+            return BattleOutcome.VICTORY;
+        }
         if (!hero.isAlive())  return BattleOutcome.DEFEAT;
         return BattleOutcome.ONGOING;
     }

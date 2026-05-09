@@ -21,9 +21,9 @@ public class PotionManager {
     private final Combatant owner;
 
     // Flask counts — starting values match Inventory's original defaults
-    private int normalHealingPotions = 3;   // Normal Flask  — restores 15% of max HP
-    private int fullHealingPotions   = 1;   // Crimson Flask — restores full HP
-    private int energyPotions        = 2;   // Cerulean Flask — restores class-specific energy
+    private int normalHealingPotions = 0;   // Normal Healing Potion  — restores 15% of max HP
+    private int fullHealingPotions   = 0;   // Full Healing Potion — restores full HP
+    private int energyPotions        = 0;   // Energy Potion — restores class-specific energy
 
     // =========================================================================
     // CONSTRUCTOR
@@ -46,12 +46,12 @@ public class PotionManager {
     // =========================================================================
 
     /**
-     * Consumes one Normal Flask.
+     * Consumes one Normal Potion.
      * Effect: heals the hero for 15% of their max HP.
      * Original text-game behaviour preserved exactly.
      */
     public String useNormalHealingPotion() {
-        if (normalHealingPotions <= 0) return "❌ No Normal Flasks remaining.";
+        if (normalHealingPotions <= 0) return "❌ No Healing Potions remaining.";
         normalHealingPotions--;
 
         int oldHp      = owner.currentHp;
@@ -60,17 +60,17 @@ public class PotionManager {
         int restored   = owner.currentHp - oldHp;
 
         return String.format(
-                "🧪 Flask consumed. Restored %d HP  (%d → %d)",
+                "🧪 Healing Potion consumed. Restored %d HP  (%d → %d)",
                 restored, oldHp, owner.currentHp);
     }
 
     /**
-     * Consumes one Crimson Flask.
+     * Consumes one Full Healin Potion
      * Effect: restores the hero to full HP.
      * Original text-game behaviour preserved exactly.
      */
     public String useFullHealingPotion() {
-        if (fullHealingPotions <= 0) return "❌ No Crimson Flasks remaining.";
+        if (fullHealingPotions <= 0) return "❌ No Full Healing Potion remaining.";
         fullHealingPotions--;
 
         int oldHp = owner.currentHp;
@@ -78,11 +78,11 @@ public class PotionManager {
         int restored = owner.currentHp - oldHp;
 
         return String.format(
-                "🩸 Crimson Flask consumed. Vitality fully restored  (+%d HP)", restored);
+                "🩸 Full Healing Potion consumed. Health fully restored  (+%d HP)", restored);
     }
 
     /**
-     * Consumes one Cerulean Flask.
+     * Consumes one Energy Potion
      * Effect: restores energy by the class-specific amount.
      *   Swordsman → +30 Stamina
      *   Archer    → +6  Arrows
@@ -91,7 +91,7 @@ public class PotionManager {
      * Original text-game switch preserved exactly.
      */
     public String useEnergyPotion() {
-        if (energyPotions <= 0) return "❌ No Cerulean Flasks remaining.";
+        if (energyPotions <= 0) return "❌ No Energy Potions remaining.";
         energyPotions--;
 
         int restoreAmount = switch (owner.getClassType()) {
@@ -106,7 +106,7 @@ public class PotionManager {
         int restored = owner.energy - oldEnergy;
 
         return String.format(
-                "✨ Cerulean Flask consumed. Restored %d %s  (%d → %d)",
+                "✨ Energy Potion consumed. Restored %d %s  (%d → %d)",
                 restored, owner.getEnergyName(), oldEnergy, owner.energy);
     }
 
@@ -120,9 +120,12 @@ public class PotionManager {
      * Mini-boss drops are guaranteed and more generous, matching the original table.
      */
     public String lootPotions(boolean isMiniBoss) {
-        int totalDrops = isMiniBoss
-                ? RandomUtil.range(4, 8)
-                : (RandomUtil.chance(70) ? RandomUtil.range(1, 3) : 0);
+        int totalDrops;
+        if (isMiniBoss) {
+            totalDrops = RandomUtil.range(4, 8);
+        } else {
+            totalDrops = RandomUtil.chance(50) ? 1 : 0;
+        }
 
         int normCount   = 0;
         int energyCount = 0;
@@ -134,14 +137,17 @@ public class PotionManager {
 
         int fullCount = 0;
         if (isMiniBoss) {
-            fullCount = RandomUtil.range(1, 2);
-            fullHealingPotions += fullCount;
+            // Was: range(1,2) — now a 40% chance for exactly 1
+            if (RandomUtil.chance(40)) {
+                fullHealingPotions++;
+                fullCount = 1;
+            }
         }
 
         StringBuilder sb = new StringBuilder();
-        if (normCount   > 0) sb.append("🧪 ").append(normCount).append("x Normal Flask\n");
-        if (fullCount   > 0) sb.append("🩸 ").append(fullCount).append("x Crimson Flask\n");
-        if (energyCount > 0) sb.append("✨ ").append(energyCount).append("x Cerulean Flask\n");
+        if (normCount   > 0) sb.append("🧪 ").append(normCount).append("x Healing Potion\n");
+        if (fullCount   > 0) sb.append("🩸 ").append(fullCount).append("x Full Healing Potion\n");
+        if (energyCount > 0) sb.append("✨ ").append(energyCount).append("x Energy Potion\n");
         return sb.toString().trim();
     }
 

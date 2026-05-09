@@ -3906,11 +3906,11 @@ public class GameScreen extends JPanel {
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
-                        currentWorld = 2;
-                        magicShopPanel.loadPlayer(battlePanel.getCurrentHero());
-                        cardLayout.show(cardPanel, SCREEN_SHOP);
+                        playWorldMusic();
+                        startWorld2Transition();
                     }
             );
+            restoreEnemyHp(data);
 
         } else if (currentWorld == 2) {
             utils.SoundUtil.playLoop("World2BGMusic.wav", 0.5f);
@@ -3924,6 +3924,7 @@ public class GameScreen extends JPanel {
                         showKingVictoryDialogue();
                     }
             );
+            restoreEnemyHp(data);
 
         } else if (currentWorld == 3) {
             utils.SoundUtil.playLoop("World3BGMusic.wav", 0.5f);
@@ -3936,6 +3937,18 @@ public class GameScreen extends JPanel {
                         startPrefiEncounter(battlePanel.getCurrentHero());
                     }
             );
+            restoreEnemyHp(data);
+        }
+    }
+
+    private void restoreEnemyHp(GameGUI.model.system.SaveData data) {
+        if (data.savedEnemyCurrentHp <= 0 || data.savedEnemyMaxHp <= 0) return;
+        GameGUI.model.entity.Combatant enemy = battlePanel.getCurrentEnemy();
+        if (enemy == null) return;
+        // Only restore if the saved enemy matches the one that spawned (same max HP)
+        if (enemy.maxHp == data.savedEnemyMaxHp) {
+            enemy.currentHp = data.savedEnemyCurrentHp;
+            System.out.println("★ Enemy HP restored: " + enemy.currentHp + "/" + enemy.maxHp);
         }
     }
 
@@ -3951,10 +3964,11 @@ public class GameScreen extends JPanel {
                 SwingUtilities.getWindowAncestor(this),
                 true,
                 battlePanel.getCurrentHero(),
+                battlePanel.getCurrentEnemy(),
                 currentWorld,
-                battlePanel.getEnemySequenceIndex(), // ★ GRAB THE ENEMY SEQUENCE
+                battlePanel.getEnemySequenceIndex(),
                 battlePanel.getEnemyFightIndex(),
-                null // Not needed for saving
+                null
         );
         saveDialog.setVisible(true);
     }
