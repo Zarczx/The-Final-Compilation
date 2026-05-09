@@ -21,9 +21,9 @@ public class PotionManager {
     private final Combatant owner;
 
     // Flask counts — starting values match Inventory's original defaults
-    private int normalHealingPotions = 3;   // Normal Flask  — restores 15% of max HP
-    private int fullHealingPotions   = 1;   // Crimson Flask — restores full HP
-    private int energyPotions        = 2;   // Cerulean Flask — restores class-specific energy
+    private int normalHealingPotions = 0;   // Normal Healing Potion  — restores 15% of max HP
+    private int fullHealingPotions   = 0;   // Full Healing Potion — restores full HP
+    private int energyPotions        = 0;   // Energy Potion — restores class-specific energy
 
     // =========================================================================
     // CONSTRUCTOR
@@ -46,7 +46,7 @@ public class PotionManager {
     // =========================================================================
 
     /**
-     * Consumes one Normal Flask.
+     * Consumes one Normal Potion.
      * Effect: heals the hero for 15% of their max HP.
      * Original text-game behaviour preserved exactly.
      */
@@ -65,7 +65,7 @@ public class PotionManager {
     }
 
     /**
-     * Consumes one Crimson Flask.
+     * Consumes one Full Healin Potion
      * Effect: restores the hero to full HP.
      * Original text-game behaviour preserved exactly.
      */
@@ -82,7 +82,7 @@ public class PotionManager {
     }
 
     /**
-     * Consumes one Cerulean Flask.
+     * Consumes one Energy Potion
      * Effect: restores energy by the class-specific amount.
      *   Swordsman → +30 Stamina
      *   Archer    → +6  Arrows
