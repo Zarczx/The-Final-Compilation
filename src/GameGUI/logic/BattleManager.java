@@ -130,43 +130,60 @@ public class BattleManager {
         var skill = heroDef.skills[skillIndex];
         hero.spendEnergy(cost);
 
-        double mult;
-        if (skill.name.equals("Bullseye")) {
-            mult = skill.maxMultiplier * 1.5;
-            logs.add("🎯 Bullseye! Guaranteed Critical Hit!");
-        } else {
-            mult = skill.minMultiplier + (skill.maxMultiplier - skill.minMultiplier) * rng.nextDouble();
+        int totalDamage = 0;
+        boolean loggedBladeSwift = false;
+
+        // Loop for multi-hit skills
+        for (int i = 0; i < skill.hitCount; i++) {
+            double mult;
+            if (skill.name.equals("Bullseye")) {
+                mult = skill.maxMultiplier * 1.5;
+                if (i == 0) logs.add("🎯 Bullseye! Guaranteed Critical Hit!");
+            } else {
+                mult = skill.minMultiplier + (skill.maxMultiplier - skill.minMultiplier) * rng.nextDouble();
+            }
+
+            int hitDamage = DamageCalculator.calculateDamage(hero, enemy, mult, skill.pierceArmor);
+
+            // Apply Swordsman Passive per hit
+            if ("Swordsman".equals(heroDef.role) && rng.nextDouble() < 0.15) {
+                hitDamage = (int) (hitDamage * 1.5);
+                hero.restoreEnergy((int) (hero.maxEnergy * 0.05));
+                if (!loggedBladeSwift) {
+                    logs.add("⚡ Blade Swift! Critical Hit + Stamina Restored.");
+                    loggedBladeSwift = true; // Prevent log spam on multi-hits
+                }
+            }
+
+            // Apply Archer Passive per hit
+            if ("Archer".equals(heroDef.role) && (double) enemy.currentHp / enemy.maxHp < 0.3) {
+                hitDamage = (int) (hitDamage * 1.2);
+            }
+
+            totalDamage += hitDamage;
         }
 
-        int damage = DamageCalculator.calculateDamage(hero, enemy, mult, skill.pierceArmor);
-
-        if ("Swordsman".equals(heroDef.role) && rng.nextDouble() < 0.15) {
-            damage = (int) (damage * 1.5);
-            hero.restoreEnergy((int) (hero.maxEnergy * 0.05));
-            logs.add("⚡ Blade Swift! Critical Hit + Stamina Restored.");
-        }
-        if ("Archer".equals(heroDef.role) && (double) enemy.currentHp / enemy.maxHp < 0.3) {
-            damage = (int) (damage * 1.2);
-        }
-
+        // Process total accumulated damage
         if (finalBossManager != null) {
-            finalBossManager.processIncomingDamage(damage, logs);
+            finalBossManager.processIncomingDamage(totalDamage, logs);
         } else {
-            enemy.takeDamage(damage);
+            enemy.takeDamage(totalDamage);
         }
 
         if (isUlt) hero.specialCooldown = heroDef.skills[2].cooldown;
         else hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
 
         if (hero.inventory != null && hero.inventory.getEquippedWeapon() != null) {
-            List<String> effectLogs = hero.inventory.getEquippedWeapon().applyEffects(hero, enemy, damage);
+            List<String> effectLogs = hero.inventory.getEquippedWeapon().applyEffects(hero, enemy, totalDamage);
             logs.addAll(effectLogs);
         }
 
         applySkillStatusEffects(skill.name, logs);
 
-        String msg = hero.name + " uses " + skill.name + " for " + damage + " damage!";
-        return new ActionResult(msg, damage, 0, isUlt, false, null);
+        String msg = hero.name + " uses " + skill.name + " for " + totalDamage + " damage"
+                + (skill.hitCount > 1 ? " (" + skill.hitCount + " hits)!" : "!");
+
+        return new ActionResult(msg, totalDamage, 0, isUlt, false, null);
     }
 
     private void applySkillStatusEffects(String skillName, List<String> logs) {
