@@ -171,34 +171,34 @@ public class HeroData {
 
     // ─── World 1 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD1_ENEMIES = List.of(
-            new EnemyDefinition("Rotfang Wolf",     "Undead Beast", "W", 40,  14,  8,  1, 3, 34,  0.80, 1.00),
-            new EnemyDefinition("Shade Sprite",     "Lost Soul",    "S", 80,  24,  12, 1, 2, 170, 0.85, 1.05),
-            new EnemyDefinition("Dreadbark Treant", "Ancient",      "T", 200, 46,  18, 1, 2, 164, 0.90, 1.10),
-            new EnemyDefinition("Carrion Bat",      "Predator",     "B", 260, 64,  25, 1, 4, 108, 0.95, 1.15),
-            new EnemyDefinition("The Hollow Stag",  "Guardian",     "H", 450, 100, 40, 1, 1, 926, 1.10, 1.40)
+            new EnemyDefinition("Rotfang Wolf",     "Undead Beast", "W", 40,  14,  8,  1,  3, 34,  0.80, 1.00),
+            new EnemyDefinition("Shade Sprite",     "Lost Soul",    "S", 80,  24,  12, 2,  2, 170, 0.85, 1.05),
+            new EnemyDefinition("Dreadbark Treant", "Ancient",      "T", 200, 46,  18, 3,  2, 164, 0.90, 1.10),
+            new EnemyDefinition("Carrion Bat",      "Predator",     "B", 260, 64,  25, 4,  4, 108, 0.95, 1.15),
+            new EnemyDefinition("The Hollow Stag",  "Guardian",     "H", 450, 100, 40, 10, 1, 926, 1.10, 1.40)
     );
 
     // ─── World 2 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD2_ENEMIES = List.of(
-            new EnemyDefinition("Plague Vermin",    "Infected Beast",  "🐀",     520,  196, 90,  2, 3, 540,  1.00, 1.10),
-            new EnemyDefinition("Forsaken Cultist", "Dark Mage",       "🔮",     580,  210, 105, 2, 2, 620,  1.00, 1.15),
-            new EnemyDefinition("Blight Hound",     "Undead Beast",    "🐕‍🦺",     620,  218, 112, 2, 3, 680,  1.00, 1.15),
-            new EnemyDefinition("Ghoul Footman",    "Undead Soldier",  "🧟‍♂️",     700,  230, 128, 2, 2, 820,  1.05, 1.20),
-            new EnemyDefinition("The Black Jailer", "Miniboss",        "⛓️",     1000, 290, 200, 2, 1, 1800, 1.20, 1.45),
-            new EnemyDefinition("Luther Von",       "Corrupted King",  "👑",     1250, 380, 250, 2, 1, 2500, 1.30, 1.60)
+            new EnemyDefinition("Plague Vermin",    "Infected Beast",  "🐀", 520,  196, 90,  11, 3, 540,  1.00, 1.10),
+            new EnemyDefinition("Forsaken Cultist", "Dark Mage",       "🔮", 580,  210, 105, 12, 2, 620,  1.00, 1.15),
+            new EnemyDefinition("Blight Hound",     "Undead Beast",    "🐕‍🦺", 620,  218, 112, 13, 3, 680,  1.00, 1.15),
+            new EnemyDefinition("Ghoul Footman",    "Undead Soldier",  "🧟‍♂️", 700,  230, 128, 14, 2, 820,  1.05, 1.20),
+            new EnemyDefinition("The Black Jailer", "Miniboss",        "⛓️", 1000, 290, 200, 18, 1, 1800, 1.20, 1.45),
+            new EnemyDefinition("Luther Von",       "Corrupted King",  "👑", 1250, 380, 250, 20, 1, 2500, 1.30, 1.60)
     );
 
     // ─── World 3 Enemy Registry ──────────────────────────────────────────────
     public static final List<EnemyDefinition> WORLD3_ENEMIES = List.of(
-            new EnemyDefinition("Flame Revenant",      "Fire Spirit",  "🔥", 1080, 280, 150, 3, 3, 950,  1.20, 1.35),
-            new EnemyDefinition("Bone Warlock",        "Undead Mage",  "💀", 1280, 300, 175, 3, 3, 1150, 1.20, 1.35),
-            new EnemyDefinition("Obsidian Crusher",    "Magma Golem",  "🗿", 1580, 345, 200, 3, 2, 1400, 1.25, 1.40),
-            new EnemyDefinition("Soulflayer Gargoyle", "Demon Beast",  "🦇", 1420, 360, 200, 3, 3, 1300, 1.25, 1.40),
-            new EnemyDefinition("Zyrryl",              "Tower Warden", "🛡️", 3880, 400, 320, 3, 1, 4000, 1.40, 1.70)
+            new EnemyDefinition("Flame Revenant",      "Fire Spirit",  "🔥", 1080, 280, 150, 21, 3, 950,  1.20, 1.35),
+            new EnemyDefinition("Bone Warlock",        "Undead Mage",  "💀", 1280, 300, 175, 22, 3, 1150, 1.20, 1.35),
+            new EnemyDefinition("Obsidian Crusher",    "Magma Golem",  "🗿", 1580, 345, 200, 23, 2, 1400, 1.25, 1.40),
+            new EnemyDefinition("Soulflayer Gargoyle", "Demon Beast",  "🦇", 1420, 360, 200, 24, 3, 1300, 1.25, 1.40),
+            new EnemyDefinition("Zyrryl",              "Tower Warden", "🛡️", 3880, 400, 320, 30, 1, 4000, 1.40, 1.70)
     );
 
     // ─── Final Boss Registry ─────────────────────────────────────────────────
     public static final List<EnemyDefinition> FINAL_BOSS_SEQUENCE = List.of(
-            new EnemyDefinition("Khai the Necromancer", "Final Boss", "👹", 5000, 500, 350, 3, 1, 10000, 1.45, 1.75)
+            new EnemyDefinition("Khai the Necromancer", "Final Boss", "👹", 5000, 500, 350, 30, 1, 10000, 1.45, 1.75)
     );
 }
