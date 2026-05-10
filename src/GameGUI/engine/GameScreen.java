@@ -2827,7 +2827,10 @@ public class GameScreen extends JPanel {
     private void startW1Typing() {
         if (w1DialogueIndex >= WORLD1_DIALOGUES.length) return;
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
-        if (w1DialogueIndex == 3) utils.SoundUtil.play("BellSound.WAV");
+        if (w1DialogueIndex == 3)  utils.SoundUtil.play("BellSound.WAV");
+        if (w1DialogueIndex == 9)  utils.SoundUtil.play("WolfEncounter.wav");
+        if (w1DialogueIndex == 10) utils.SoundUtil.play("WolfGlaring.WAV");
+        if (w1DialogueIndex == 11) utils.SoundUtil.play("WolfAttack.wav");  // ← move this here too
 
         w1Chunks = splitIntoChunks3(WORLD1_DIALOGUES[w1DialogueIndex]);
         w1ChunkIndex = 0;
