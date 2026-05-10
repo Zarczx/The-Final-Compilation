@@ -36,6 +36,7 @@ public class BattlePanel extends JPanel {
     private int        turnTimeLeft = 30;
     private JLabel     timerLabel;
     private boolean    timerPaused = false;
+    private boolean hasUsedQuizRevive = false;
     private static final int TURN_SECONDS = 30;
     private Runnable onPromptSaveAndExit;
 
@@ -681,7 +682,6 @@ public class BattlePanel extends JPanel {
             // Case 3: Entering a New World or Boss fight with our veteran hero!
             // Clean up old poisons/stuns, but KEEP ALL ITEMS AND HP!
             this.currentHero.getStatusManager().resetAllEffects();
-            this.currentHero.defending = false;
             this.currentHero.specialCooldown = 0;
         }
 
@@ -5861,6 +5861,7 @@ public class BattlePanel extends JPanel {
     private void handleDefeat() {
         addLog("You have fallen...", RED);
 
+        // 1. First chance: Phoenix Soulstone
         try {
             if ((boolean) currentHero.getClass().getField("hasPhoenixSoulstone").get(currentHero)) {
                 currentHero.getClass().getField("hasPhoenixSoulstone").set(currentHero, false);
@@ -5871,22 +5872,30 @@ public class BattlePanel extends JPanel {
                 setTurnLabel(true);
                 setActionsEnabled(true); startTurnTimer();
                 animating = false;
-                return;
+                return; // Revived, exit method
             }
         } catch (Exception ignored) {
         }
 
-        String ans = JOptionPane.showInputDialog(this, "Q: What keyword is used to inherit a class in Java?");
-        if (ans != null && ans.trim().equalsIgnoreCase("extends")) {
-            currentHero.currentHp = currentHero.maxHp / 2;
-            currentHero.energy = currentHero.maxEnergy / 2;
-            clearLog();
-            addLog("Correct! Revived at 50% HP!", GREEN);
-            refreshBattleUI();
-            setTurnLabel(true);
-            setActionsEnabled(true); startTurnTimer();
-            animating = false;
+        // 2. Second chance: Quiz Revive (Only if not used yet)
+        if (!hasUsedQuizRevive) {
+            String ans = JOptionPane.showInputDialog(this, "Q: What keyword is used to inherit a class in Java?");
+            if (ans != null && ans.trim().equalsIgnoreCase("extends")) {
+                hasUsedQuizRevive = true; // Mark as used so it cannot be triggered again
+                currentHero.currentHp = currentHero.maxHp / 2;
+                currentHero.energy = currentHero.maxEnergy / 2;
+                clearLog();
+                addLog("Correct! Revived at 50% HP!", GREEN);
+                refreshBattleUI();
+                setTurnLabel(true);
+                setActionsEnabled(true); startTurnTimer();
+                animating = false;
+            } else {
+                // Failed quiz or cancelled -> True Death
+                showResult(false);
+            }
         } else {
+            // 3. Out of chances (No soulstone, quiz already used) -> True Death
             showResult(false);
         }
     }
@@ -5981,7 +5990,6 @@ public class BattlePanel extends JPanel {
         }
 
         Color baseColor = isPlayer ? GREEN : RED;
-        if (r.wasDefend) baseColor = BLUE;
         if (r.isSpecial) baseColor = PURPLE;
 
         // Split the large block of text back into individual lines

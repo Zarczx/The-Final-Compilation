@@ -17,12 +17,7 @@ public class Combatant {
     public int maxEnergy,   energy;
 
     // ── Battle State ──────────────────────────────────────────────────────────
-    public boolean defending;
     public int specialCooldown;
-
-    // REMOVED: dotDamage, dotTurnsLeft, attackModifier, defenseModifier
-    // REMOVED: stunned, frozen, confused, nimble
-    // (These are now entirely handled by StatusManager!)
 
     // ── Progression & Currency ────────────────────────────────────────────────
     public int level        = 1;
@@ -123,8 +118,6 @@ public class Combatant {
 
     public boolean isAlive()      { return currentHp > 0; }
 
-    // Because StatusManager directly modifies this.attack and this.defense,
-    // we no longer need to add "modifiers" here. Just return the stat!
     public int effectiveAttack()  { return Math.max(1, attack); }
     public int effectiveDefense() { return Math.max(0, defense); }
 
@@ -134,7 +127,6 @@ public class Combatant {
     public void resetForNewBattle() {
         currentHp       = maxHp;
         energy          = maxEnergy;
-        defending       = false;
         specialCooldown = 0;
 
         // Tell the StatusManager to wipe all DoTs, CC, and Buffs!
