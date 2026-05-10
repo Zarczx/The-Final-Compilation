@@ -493,6 +493,7 @@ public class GameScreen extends JPanel {
 
     private void goToBattle() {
         if (confirmedHero == null) return;
+        utils.SoundUtil.stopSFX(); // ← ADD THIS LINE
         utils.SoundUtil.stopLoop();
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         playBattleMusic();
@@ -767,6 +768,7 @@ public class GameScreen extends JPanel {
         Runnable resume = w1ResumeAfterDialogue;
         w1ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        utils.SoundUtil.stopSFX(); // ★ ADD THIS
         playBattleMusic();
         if (resume != null) resume.run();
     }
@@ -1826,6 +1828,7 @@ public class GameScreen extends JPanel {
             );
             return;
         } else if (w2DialogueIndex == 11) {
+            utils.SoundUtil.play("RatHissing.WAV");
             showW2SceneImage("/assets/Backgrounds/World1Transition20.png");
         } else if (w2DialogueIndex == 12) {
             showW2SceneImage("/assets/Backgrounds/World2Battle1Background.png");
@@ -1903,7 +1906,6 @@ public class GameScreen extends JPanel {
                     // Show World2Chapel2.png, let player read, then on continue:
                     // ForsakenCultist.png 2s → ForsakenCultist2.png, then type
                     w2ContinueBtn.setEnabled(false);
-                    utils.SoundUtil.play("RatHissing.WAV");
                     showW2InterBg("/assets/Backgrounds/World2Chapel2.png");
                     w2ContinueBtn.setEnabled(true);
                     for (ActionListener l : w2ContinueBtn.getActionListeners()) w2ContinueBtn.removeActionListener(l);
@@ -2294,11 +2296,12 @@ public class GameScreen extends JPanel {
         w2ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
 
+        utils.SoundUtil.stopSFX(); // ★ ADD THIS — stops any one-shot sound before battle music starts
+
         int interIdx = resolveW2InterIndex();
         if (interIdx == 3) switchMusic("World2BlackJailer.WAV", 0.7f);
         else if (interIdx == 4) switchMusic("World2LutherSound.WAV", 0.7f);
         else playBattleMusic();
-        // ★ REMOVE the second playBattleMusic() call that was here
 
         if (resume != null) resume.run();
     }
@@ -3405,7 +3408,6 @@ public class GameScreen extends JPanel {
 
         if (w3DialogueIndex == 5) {
             utils.SoundUtil.play("BurningSound.WAV");
-            delay(1500, () -> utils.SoundUtil.play("ExplosionSound.WAV"));
         }
 
         w3Chunks = splitIntoChunks3(WORLD3_DIALOGUES[w3DialogueIndex]);
@@ -3564,7 +3566,6 @@ public class GameScreen extends JPanel {
                 case 0 -> {
                     // BG15 → BG16 → BG17 → BG18 → BG19 timed sequence then type
                     w3ContinueBtn.setEnabled(false);
-                    utils.SoundUtil.play("CrackingSound.WAV");
                     showW3InterBg("/assets/Backgrounds/World3BG15.png");
                     delay(2000, () -> {
                         showW3InterBg("/assets/Backgrounds/World3BG16.png");
@@ -3573,6 +3574,7 @@ public class GameScreen extends JPanel {
                             delay(2000, () -> {
                                 showW3InterBg("/assets/Backgrounds/World3BG18.png");
                                 delay(2000, () -> {
+                                    delay(1500, () -> utils.SoundUtil.play("ExplosionSound.WAV"));
                                     showW3InterBg("/assets/Backgrounds/World3BG19.png");
                                     w3ContinueBtn.setEnabled(true);
                                     typeW3InterChunkNow();
@@ -3626,7 +3628,6 @@ public class GameScreen extends JPanel {
         w3DialogueBox.setText("");
         Runnable resume = w3ResumeAfterDialogue;
         w3ResumeAfterDialogue = null;
-
         int interIdx = resolveW3InterIndex();
         String battleBg = switch (interIdx) {
             case 0 -> "/assets/Backgrounds/World3BG15.5.png";
@@ -3636,11 +3637,9 @@ public class GameScreen extends JPanel {
             default -> "/assets/Backgrounds/World3BG9.png";
         };
         battlePanel.setBattleBackground(battleBg);
-
+        utils.SoundUtil.stopSFX(); // ★ ADD THIS
         if (interIdx == 3) switchMusic("ZyrrylSound.WAV", 0.7f);
         else playBattleMusic();
-        // ★ REMOVE the duplicate playBattleMusic() that was after this block
-
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         if (resume != null) resume.run();
     }

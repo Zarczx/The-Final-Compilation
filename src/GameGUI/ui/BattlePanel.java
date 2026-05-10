@@ -756,10 +756,8 @@ public class BattlePanel extends JPanel {
 
     public void setBattleBackground(String resourcePath) {
         if (battleBg == null) return;
-        System.out.println("★ setBattleBackground called: " + resourcePath);
         currentBattleBgPath = resourcePath; // ADD THIS LINE
         java.net.URL url = getClass().getResource(resourcePath);
-        System.out.println("★ URL resolved: " + url);
         if (url != null) {
             battleBg.setIcon(new ImageIcon(
                     new ImageIcon(url).getImage().getScaledInstance(1280, 520, Image.SCALE_SMOOTH)));
