@@ -6794,6 +6794,7 @@ public class BattlePanel extends JPanel {
                 remove(itemImg);
                 revalidate();
                 repaint();
+                battleContinueBtn.addActionListener(ev -> onContinuePressed());
                 onDone.run();
             }
         };
