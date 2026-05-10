@@ -22,6 +22,11 @@ public class TitleScreen extends JPanel {
         this.gameScreen = gameScreen;
     }
 
+    // Call this to restart the background animation (e.g. when returning from CreditsScreen)
+    public void startAnimation() {
+        timer.start();
+    }
+
     public TitleScreen(){
 
         backgrounds = new BufferedImage[26];
@@ -145,6 +150,16 @@ public class TitleScreen extends JPanel {
             loadDialog.setVisible(true);
         });
 
+        // ── Credits button: stop animation, show CreditsScreen, pass `this` for Back button ──
+        creditsBtn.addActionListener(e -> {
+            timer.stop();
+            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            topFrame.getContentPane().removeAll();
+            topFrame.getContentPane().add(new CreditsScreen(this));
+            topFrame.revalidate();
+            topFrame.repaint();
+        });
+
         exitBtn.addActionListener(e -> System.exit(0));
 
         // ── Layout ────────────────────────────────────────────────────────
@@ -222,6 +237,4 @@ public class TitleScreen extends JPanel {
             g.drawImage(backgrounds[frame], 0, 0, getWidth(), getHeight(), null);
         }
     }
-
-
 }

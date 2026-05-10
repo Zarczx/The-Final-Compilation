@@ -66,9 +66,14 @@ public class PlayerStatsDialog extends JDialog {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
 
-        content.add(sectionLabel("Role: " + heroDef.role));
+        JLabel roleLabel = sectionLabel("Role: " + heroDef.role);
+        roleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        roleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        content.add(roleLabel);
         content.add(Box.createVerticalStrut(4));
-        content.add(dimLabel("Passive: " + heroDef.passive));
+        JLabel passiveLabel = dimLabel("Passive: " + heroDef.passive);
+        passiveLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        content.add(passiveLabel);
         content.add(Box.createVerticalStrut(14));
         content.add(divider());
         content.add(Box.createVerticalStrut(10));
@@ -170,15 +175,20 @@ public class PlayerStatsDialog extends JDialog {
         root.add(content, BorderLayout.CENTER);
 
         // ── Close ─────────────────────────────────────────────────────────
-        JButton closeBtn = new JButton("✕  Back");
+        JButton closeBtn = new JButton("  Back");
         closeBtn.setFont(new Font("Georgia", Font.BOLD, 13));
         closeBtn.setForeground(TEXT_DIM);
         closeBtn.setBackground(BG_DARK);
         closeBtn.setFocusPainted(false);
         closeBtn.setBorderPainted(false);
         closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { closeBtn.setForeground(GOLD); }
+            public void mouseExited (java.awt.event.MouseEvent e) { closeBtn.setForeground(TEXT_DIM); }
+        });
         closeBtn.addActionListener(e -> dispose());
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        closeBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         bottom.setOpaque(false);
         bottom.add(closeBtn);
         root.add(bottom, BorderLayout.SOUTH);
@@ -200,6 +210,7 @@ public class PlayerStatsDialog extends JDialog {
         card.setOpaque(false);
         card.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        card.setAlignmentX(Component.CENTER_ALIGNMENT);  // ADD after setMaximumSize
 
         JPanel iconBox = new JPanel() {
             @Override
@@ -244,9 +255,11 @@ public class PlayerStatsDialog extends JDialog {
     }
 
     private JLabel sectionHeader(String text) {
-        JLabel lbl = new JLabel(text);
+        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setFont(new Font("Georgia", Font.BOLD, 15));
         lbl.setForeground(GOLD);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
         return lbl;
     }
 
@@ -267,10 +280,11 @@ public class PlayerStatsDialog extends JDialog {
     private JPanel statLabel(String key, String value, Color valueColor) {
         JPanel row = new JPanel(new BorderLayout());
         row.setOpaque(false);
+        row.setAlignmentX(Component.CENTER_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
 
         JLabel keyLbl = new JLabel(key);
-        keyLbl.setFont(new Font("Georgia", Font.PLAIN, 14));
+        keyLbl.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
         keyLbl.setForeground(TEXT_DIM);
 
         JLabel valLbl = new JLabel(value);
@@ -286,6 +300,7 @@ public class PlayerStatsDialog extends JDialog {
         JSeparator sep = new JSeparator();
         sep.setForeground(new Color(80, 70, 50));
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        sep.setAlignmentX(Component.CENTER_ALIGNMENT);  // ADD THIS
         return sep;
     }
 }
