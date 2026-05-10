@@ -26,14 +26,16 @@ public class HeroData {
         public final boolean pierceArmor;
         public final int cooldown;
         public final int energyCost;
+        public final int hitCount;
 
         public SkillDef(String icon, String name, String description,
                         double minMultiplier, double maxMultiplier,
-                        boolean pierceArmor, int cooldown, int energyCost) {
+                        boolean pierceArmor, int cooldown, int energyCost, int hitCount) {
             this.icon = icon; this.name = name; this.description = description;
             this.minMultiplier = minMultiplier; this.maxMultiplier = maxMultiplier;
             this.pierceArmor = pierceArmor;
             this.cooldown = cooldown; this.energyCost = energyCost;
+            this.hitCount = hitCount;
         }
     }
 
@@ -125,9 +127,9 @@ public class HeroData {
                     "Blade Swift - Gains 5% Stamina on Critical Hit.",
                     100, 10, 5, 60, // Note: Set to normal stats if not testing!
                     new SkillDef[]{
-                            new SkillDef("🗡️", "Blade Rush", "A quick, fluid slash that catches the opponent off guard.\n⚡ Effects: 30% chance to apply Strengthen (+20% ATK for 2 turns).", 1.15, 1.35, false, 0, 5),
-                            new SkillDef("⚔️", "Piercing Slash", "A powerful, focused strike aimed to pierce enemy's armor.\n⚡ Effects: 30% chance to Stun (1 turn).", 1.35, 1.55, true, 0, 10),
-                            new SkillDef("✝️", "Eternal Cross Slash", "Unleashes a flurry of crossing strikes. Hits 3 times.\n⚡ Effects: Applies Bleed for 2 turns. Grants Fortified (+20% DEF for 2 turns).", 1.00, 1.80, false, 3, 20)
+                            new SkillDef("🗡️", "Blade Rush", "A quick, fluid slash that catches the opponent off guard.\n⚡ Effects: 30% chance to apply Strengthen (+20% ATK for 2 turns).", 1.15, 1.35, false, 0, 5, 1),
+                            new SkillDef("⚔️", "Piercing Slash", "A powerful, focused strike aimed to pierce enemy's armor.\n⚡ Effects: 30% chance to Stun (1 turn).", 1.35, 1.55, true, 0, 10, 1),
+                            new SkillDef("✝️", "Eternal Cross Slash", "Unleashes a flurry of crossing strikes. Hits 3 times.\n⚡ Effects: Applies Bleed for 2 turns. Grants Fortified (+20% DEF for 2 turns).", 1.00, 1.80, false, 3, 20, 3)
                     },
                     Sword.OLD_BROADSWORD, LEATHER_GUARD
             ),
@@ -137,9 +139,9 @@ public class HeroData {
                     "Hunter's Instinct - +20% damage to enemies below 30% HP.",
                     80, 12, 3, 80,
                     new SkillDef[]{
-                            new SkillDef("🏹", "Piercing Arrow", "Fires an arrow that slices through armor and flesh alike.\n⚡ Effects: 30% chance to inflict Bleed (2 turns).", 1.00, 1.25, true, 0, 1),
-                            new SkillDef("🎯", "Bullseye", "Steadies breath for a deadly precise shot. Guaranteed Critical Hit.\n⚡ Effects: 30% chance to apply Weakness (-30% DEF for 2 turns).", 1.10, 1.30, false, 0, 3),
-                            new SkillDef("🌩️", "Rain of a Thousand Arrows", "Releases a rapid flurry of arrows. Hits 5 times.\n⚡ Effects: Grants Nimble. Grants Strengthen (+20% ATK for 2 turns).", 0.70, 0.80, false, 3, 5)
+                            new SkillDef("🏹", "Piercing Arrow", "Fires an arrow that slices through armor and flesh alike.\n⚡ Effects: 30% chance to inflict Bleed (2 turns).", 1.00, 1.25, true, 0, 1, 1),
+                            new SkillDef("🎯", "Bullseye", "Steadies breath for a deadly precise shot. Guaranteed Critical Hit.\n⚡ Effects: 30% chance to apply Weakness (-30% DEF for 2 turns).", 1.10, 1.30, false, 0, 3, 1),
+                            new SkillDef("🌩️", "Rain of a Thousand Arrows", "Releases a rapid flurry of arrows. Hits 5 times.\n⚡ Effects: Grants Nimble. Grants Strengthen (+20% ATK for 2 turns).", 0.70, 0.80, false, 3, 5, 5)
                     },
                     Bow.WOODEN_BOW, LEATHER_GUARD
             ),
@@ -149,9 +151,9 @@ public class HeroData {
                     "Arcane Flow - Restores +5% of total Mana each turn.",
                     60, 18, 2, 120,
                     new SkillDef[]{
-                            new SkillDef("🔥", "Fireball", "Conjures a blazing orb of fire and hurls it at an enemy.\n⚡ Effects: Applies Burn (1 turn). 30% chance to Weaken (-15% ATK for 2 turns).", 1.25, 1.55, false, 0, 15),
-                            new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.00, 1.25, false, 0, 25),
-                            new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 2.0, 2.40, false, 3, 40)
+                            new SkillDef("🔥", "Fireball", "Conjures a blazing orb of fire and hurls it at an enemy.\n⚡ Effects: Applies Burn (1 turn). 30% chance to Weaken (-15% ATK for 2 turns).", 1.25, 1.55, false, 0, 15, 1),
+                            new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.00, 1.25, false, 0, 25, 1),
+                            new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 2.0, 2.40, false, 3, 40, 5)
                     },
                     Staff.WOODEN_STAFF, LEATHER_GUARD
             ),
@@ -161,9 +163,9 @@ public class HeroData {
                     "System Override",
                     99999, 9999, 9999, 9999,
                     new SkillDef[]{
-                            new SkillDef("💥", "Direct Hit", "A simple but devastating strike.", 2.0, 2.0, true, 0, 1),
-                            new SkillDef("🔥", "Obliterate", "Erases the target's existence.", 4.0, 4.0, true, 0, 1),
-                            new SkillDef("🌌", "World End", "Brings forth the end of reality.", 10.0, 10.0, true, 3, 1)
+                            new SkillDef("💥", "Direct Hit", "A simple but devastating strike.", 2.0, 2.0, true, 0, 1, 1),
+                            new SkillDef("🔥", "Obliterate", "Erases the target's existence.", 4.0, 4.0, true, 0, 1, 1),
+                            new SkillDef("🌌", "World End", "Brings forth the end of reality.", 10.0, 10.0, true, 3, 1, 1)
                     },
                     null, null
             )
