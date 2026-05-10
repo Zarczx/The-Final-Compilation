@@ -30,6 +30,13 @@ public class BattlePanel extends JPanel {
     private BiConsumer<Integer, Runnable> onEnemyGroupDefeated;
 
     private Runnable onOpenSaveScreen;
+
+    // ── Turn Timer ────────────────────────────────────────────────────────────
+    private Timer      turnTimer;
+    private int        turnTimeLeft = 30;
+    private JLabel     timerLabel;
+    private boolean    timerPaused = false;
+    private static final int TURN_SECONDS = 30;
     private Runnable onPromptSaveAndExit;
 
     private BattleManager engine;
@@ -851,6 +858,17 @@ public class BattlePanel extends JPanel {
 
         add(hudBar);
 
+        // ── Turn Timer Label (below HUD bar) ──────────────────────────────
+        timerLabel = new JLabel("⏱ 30s", SwingConstants.CENTER);
+        timerLabel.setBounds(hudX, 42, hudW, 22);
+        timerLabel.setFont(new Font("Monospaced", Font.BOLD, 13));
+        timerLabel.setForeground(new Color(220, 60, 60));
+        timerLabel.setOpaque(true);
+        timerLabel.setBackground(new Color(0, 0, 0));
+        timerLabel.setBorder(BorderFactory.createLineBorder(new Color(0, 180, 0), 1));
+        timerLabel.setVisible(false);
+        add(timerLabel);
+
         logArea = new javax.swing.JTextPane();
         logArea.setBounds(2, 575, 780, 100);
         logArea.setEditable(false);
@@ -919,22 +937,23 @@ public class BattlePanel extends JPanel {
 
         setComponentZOrder(resultOverlay, 0);
         setComponentZOrder(hudBar, 1);
-        setComponentZOrder(logArea, 2);
-        setComponentZOrder(battleContinueBtn, 3);
-        setComponentZOrder(menuBtn, 4);
-        setComponentZOrder(backBtn, 5);
-        setComponentZOrder(exitBtn, 6);
-        setComponentZOrder(skill1Btn, 7);
-        setComponentZOrder(skill2Btn, 8);
-        setComponentZOrder(skipTurnBtn, 9);
-        setComponentZOrder(ultimateBtn, 10);
-        setComponentZOrder(dialogueBg, 11);
-        setComponentZOrder(heroCard, 12);
-        setComponentZOrder(enemyCard, 13);
-        setComponentZOrder(heroSpriteLabel, 14);
-        setComponentZOrder(enemySpriteLabel, 15);
-        setComponentZOrder(battleBg, 16);
-        setComponentZOrder(theBg, 17);
+        setComponentZOrder(timerLabel, 2);
+        setComponentZOrder(logArea, 3);
+        setComponentZOrder(battleContinueBtn, 4);
+        setComponentZOrder(menuBtn, 5);
+        setComponentZOrder(backBtn, 6);
+        setComponentZOrder(exitBtn, 7);
+        setComponentZOrder(skill1Btn, 8);
+        setComponentZOrder(skill2Btn, 9);
+        setComponentZOrder(skipTurnBtn, 10);
+        setComponentZOrder(ultimateBtn, 11);
+        setComponentZOrder(dialogueBg, 12);
+        setComponentZOrder(heroCard, 13);
+        setComponentZOrder(enemyCard, 14);
+        setComponentZOrder(heroSpriteLabel, 15);
+        setComponentZOrder(enemySpriteLabel, 16);
+        setComponentZOrder(battleBg, 17);
+        setComponentZOrder(theBg, 18);
     }
 
     private void playHeroSkillSound(int skillSlot) {
@@ -956,10 +975,111 @@ public class BattlePanel extends JPanel {
         }
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // ★ TURN TIMER
+    // ════════════════════════════════════════════════════════════════════════
+
+    private boolean isBossOrMiniboss() {
+        if (enemyDef == null) return false;
+        return switch (enemyDef.name) {
+            case "The Hollow Stag", "The Black Jailer", "Luther Von",
+                 "Zyrryl", "Khai the Necromancer" -> true;
+            default -> false;
+        };
+    }
+
+    private String getBossPauseBlockMessage() {
+        if (enemyDef == null) return "You have no power here.";
+        return switch (enemyDef.name) {
+            case "The Hollow Stag"      -> "\"The forest does not pause for the weak.\"";
+            case "The Black Jailer"     -> "\"No rest. No mercy. The chains never stop.\"";
+            case "Luther Von"           -> "\"A king does not wait. Neither shall your death.\"";
+            case "Zyrryl"               -> "\"The Warden permits no delays in his domain.\"";
+            case "Khai the Necromancer" -> "\"Time itself bends to my will. Not yours.\"";
+            default                     -> "\"You have no power here.\"";
+        };
+    }
+
+    public void startTurnTimer() {
+        stopTurnTimer();
+        turnTimeLeft = TURN_SECONDS;
+        timerLabel.setVisible(true);
+        updateTimerLabel();
+
+        turnTimer = new Timer(1000, e -> {
+            if (timerPaused) return;
+            turnTimeLeft--;
+            updateTimerLabel();
+            if (turnTimeLeft <= 0) {
+                stopTurnTimer();
+                triggerTimerExpired();
+            }
+        });
+        turnTimer.start();
+    }
+
+    public void stopTurnTimer() {
+        if (turnTimer != null) { turnTimer.stop(); turnTimer = null; }
+        timerLabel.setVisible(false);
+        timerPaused = false;
+    }
+
+    public void pauseTurnTimer() {
+        timerPaused = true;
+    }
+
+    public void resumeTurnTimer() {
+        timerPaused = false;
+    }
+
+    private void updateTimerLabel() {
+        timerLabel.setText("⏱ " + turnTimeLeft + "s");
+        if (turnTimeLeft <= 10)      timerLabel.setForeground(new Color(220, 60, 60));
+        else if (turnTimeLeft <= 20) timerLabel.setForeground(new Color(220, 160, 40));
+        else                         timerLabel.setForeground(new Color(100, 220, 100));
+    }
+
+    private void triggerTimerExpired() {
+        if (animating || engine == null) return;
+        if (engine.getCurrentTurn() != BattleManager.TurnOwner.PLAYER) return;
+
+        addLog("⏱ Time's up! The enemy strikes!", new Color(220, 80, 80));
+        setActionsEnabled(false);
+        animating = true;
+
+        engine.advanceToEnemyTurn();
+        BattleManager.ActionResult er = engine.enemyTurn();
+        refreshBattleUI();
+
+        playEnemyAttack(() -> {
+            playHeroHurtAnimation(() -> {
+                clearLog();
+                if (er != null) addEnemyAttackLog(er);
+                if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+                    handleDefeat();
+                } else {
+                    Timer t = new Timer(800, ev -> {
+                        clearLog();
+                        setTurnLabel(true);
+                        setActionsEnabled(true); startTurnTimer();
+                        animating = false;
+                        startTurnTimer();
+                    });
+                    t.setRepeats(false);
+                    t.start();
+                }
+            });
+        });
+    }
+
     private void openInventoryDialog() {
         if (currentHero == null || heroDef == null) return;
+        boolean isBoss = isBossOrMiniboss();
+        if (!isBoss) pauseTurnTimer();
         Window owner = SwingUtilities.getWindowAncestor(this);
-        MenuDialog menu = new MenuDialog(owner, currentHero, heroDef, currentEnemy, enemyDef, () -> refreshBattleUI());
+        Runnable onFullyClose = !isBoss ? this::resumeTurnTimer : null;
+        MenuDialog menu = new MenuDialog(owner, currentHero, heroDef, currentEnemy, enemyDef,
+                () -> refreshBattleUI(), this::getBossPauseBlockMessage, this::isBossOrMiniboss, onFullyClose);
         menu.setVisible(true);
     }
 
@@ -5232,6 +5352,7 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     private void onPlayerAction(BattleManager.BattleAction action) {
         if (animating || engine.getCurrentTurn() != BattleManager.TurnOwner.PLAYER) return;
+        stopTurnTimer();
         animating = true;
         setActionsEnabled(false);
         clearLog();
@@ -5294,7 +5415,7 @@ public class BattlePanel extends JPanel {
                                 Timer t3 = new Timer(800, ev2 -> {
                                     clearLog();
                                     setTurnLabel(true);
-                                    setActionsEnabled(true);
+                                    setActionsEnabled(true); startTurnTimer();
                                     animating = false;
                                 });
                                 t3.setRepeats(false);
@@ -5331,7 +5452,7 @@ public class BattlePanel extends JPanel {
                                 Timer t3 = new Timer(800, ev2 -> {
                                     clearLog();
                                     setTurnLabel(true);
-                                    setActionsEnabled(true);
+                                    setActionsEnabled(true); startTurnTimer();
                                     animating = false;
                                 });
                                 t3.setRepeats(false);
@@ -5368,7 +5489,7 @@ public class BattlePanel extends JPanel {
                                 Timer t3 = new Timer(800, ev2 -> {
                                     clearLog();
                                     setTurnLabel(true);
-                                    setActionsEnabled(true);
+                                    setActionsEnabled(true); startTurnTimer();
                                     animating = false;
                                 });
                                 t3.setRepeats(false);
@@ -5417,7 +5538,7 @@ public class BattlePanel extends JPanel {
             skipTimer.start();
         } else {
             // Player is free to move. Enable the buttons!
-            setActionsEnabled(true);
+            setActionsEnabled(true); startTurnTimer();
             animating = false;
         }
     }
@@ -5748,7 +5869,7 @@ public class BattlePanel extends JPanel {
                 addLog("Phoenix Soulstone activated! Revived!", GREEN);
                 refreshBattleUI();
                 setTurnLabel(true);
-                setActionsEnabled(true);
+                setActionsEnabled(true); startTurnTimer();
                 animating = false;
                 return;
             }
@@ -5763,7 +5884,7 @@ public class BattlePanel extends JPanel {
             addLog("Correct! Revived at 50% HP!", GREEN);
             refreshBattleUI();
             setTurnLabel(true);
-            setActionsEnabled(true);
+            setActionsEnabled(true); startTurnTimer();
             animating = false;
         } else {
             showResult(false);
