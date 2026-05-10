@@ -36,6 +36,7 @@ public class BattlePanel extends JPanel {
     private int        turnTimeLeft = 30;
     private JLabel     timerLabel;
     private boolean    timerPaused = false;
+    private boolean hasUsedQuizRevive = false;
     private static final int TURN_SECONDS = 30;
     private Runnable onPromptSaveAndExit;
 
@@ -681,7 +682,6 @@ public class BattlePanel extends JPanel {
             // Case 3: Entering a New World or Boss fight with our veteran hero!
             // Clean up old poisons/stuns, but KEEP ALL ITEMS AND HP!
             this.currentHero.getStatusManager().resetAllEffects();
-            this.currentHero.defending = false;
             this.currentHero.specialCooldown = 0;
         }
 
@@ -5859,6 +5859,7 @@ public class BattlePanel extends JPanel {
     private void handleDefeat() {
         addLog("You have fallen...", RED);
 
+        // 1. First chance: Phoenix Soulstone
         try {
             if ((boolean) currentHero.getClass().getField("hasPhoenixSoulstone").get(currentHero)) {
                 currentHero.getClass().getField("hasPhoenixSoulstone").set(currentHero, false);
@@ -5869,88 +5870,30 @@ public class BattlePanel extends JPanel {
                 setTurnLabel(true);
                 setActionsEnabled(true); startTurnTimer();
                 animating = false;
-                return;
+                return; // Revived, exit method
             }
         } catch (Exception ignored) {
         }
 
-        JDialog qDialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Java Question", Dialog.ModalityType.APPLICATION_MODAL);
-        qDialog.setUndecorated(true);
-        qDialog.setSize(460, 210);
-        qDialog.setLocationRelativeTo(this);
-
-        JPanel qPanel = new JPanel(new BorderLayout(10, 10)) {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(15, 13, 25));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-                g2.setColor(new Color(120, 80, 10));
-                g2.setStroke(new BasicStroke(2));
-                g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 20, 20);
+        // 2. Second chance: Quiz Revive (Only if not used yet)
+        if (!hasUsedQuizRevive) {
+            String ans = JOptionPane.showInputDialog(this, "Q: What keyword is used to inherit a class in Java?");
+            if (ans != null && ans.trim().equalsIgnoreCase("extends")) {
+                hasUsedQuizRevive = true; // Mark as used so it cannot be triggered again
+                currentHero.currentHp = currentHero.maxHp / 2;
+                currentHero.energy = currentHero.maxEnergy / 2;
+                clearLog();
+                addLog("Correct! Revived at 50% HP!", GREEN);
+                refreshBattleUI();
+                setTurnLabel(true);
+                setActionsEnabled(true); startTurnTimer();
+                animating = false;
+            } else {
+                // Failed quiz or cancelled -> True Death
+                showResult(false);
             }
-        };
-        qPanel.setOpaque(false);
-        qPanel.setBorder(BorderFactory.createEmptyBorder(20, 24, 16, 24));
-
-        JLabel qTitle = new JLabel("Java Question — Answer Correctly to Revive!", SwingConstants.CENTER);
-        qTitle.setFont(new Font("Georgia", Font.BOLD, 14));
-        qTitle.setForeground(new Color(200, 160, 40));
-
-        JLabel qPrompt = new JLabel("Q: What keyword is used to inherit a class in Java?", SwingConstants.CENTER);
-        qPrompt.setFont(new Font("Georgia", Font.PLAIN, 13));
-        qPrompt.setForeground(new Color(210, 200, 180));
-
-        JTextField qInput = new JTextField();
-        qInput.setFont(new Font("Georgia", Font.PLAIN, 13));
-        qInput.setForeground(new Color(210, 200, 180));
-        qInput.setBackground(new Color(30, 28, 45));
-        qInput.setCaretColor(new Color(200, 160, 40));
-        qInput.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(120, 80, 10), 1),
-                BorderFactory.createEmptyBorder(4, 8, 4, 8)
-        ));
-
-        JButton qSubmit = new JButton("Submit");
-        qSubmit.setFont(new Font("Georgia", Font.BOLD, 13));
-        qSubmit.setForeground(new Color(200, 160, 40));
-        qSubmit.setBackground(new Color(30, 28, 45));
-        qSubmit.setFocusPainted(false);
-        qSubmit.setOpaque(true);
-        qSubmit.setContentAreaFilled(true);
-        qSubmit.setBorder(BorderFactory.createLineBorder(new Color(120, 80, 10), 2));
-        qSubmit.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        qSubmit.setPreferredSize(new Dimension(100, 32));
-
-        String[] ans = {null};
-        qSubmit.addActionListener(ev -> { ans[0] = qInput.getText().trim(); qDialog.dispose(); });
-        qInput.addActionListener(ev -> { ans[0] = qInput.getText().trim(); qDialog.dispose(); });
-
-        JPanel qCenter = new JPanel(new BorderLayout(6, 8));
-        qCenter.setOpaque(false);
-        qCenter.add(qPrompt, BorderLayout.NORTH);
-        qCenter.add(qInput, BorderLayout.CENTER);
-
-        JPanel qBtnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        qBtnPanel.setOpaque(false);
-        qBtnPanel.add(qSubmit);
-
-        qPanel.add(qTitle, BorderLayout.NORTH);
-        qPanel.add(qCenter, BorderLayout.CENTER);
-        qPanel.add(qBtnPanel, BorderLayout.SOUTH);
-        qDialog.setContentPane(qPanel);
-        qDialog.setVisible(true);
-
-        if (ans[0] != null && ans[0].equalsIgnoreCase("extends")) {
-            currentHero.currentHp = currentHero.maxHp / 2;
-            currentHero.energy = currentHero.maxEnergy / 2;
-            clearLog();
-            addLog("Correct! Revived at 50% HP!", GREEN);
-            refreshBattleUI();
-            setTurnLabel(true);
-            setActionsEnabled(true); startTurnTimer();
-            animating = false;
         } else {
+            // 3. Out of chances (No soulstone, quiz already used) -> True Death
             showResult(false);
         }
     }
@@ -6045,7 +5988,6 @@ public class BattlePanel extends JPanel {
         }
 
         Color baseColor = isPlayer ? GREEN : RED;
-        if (r.wasDefend) baseColor = BLUE;
         if (r.isSpecial) baseColor = PURPLE;
 
         // Split the large block of text back into individual lines

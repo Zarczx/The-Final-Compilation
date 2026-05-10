@@ -11,7 +11,6 @@ import java.util.Random;
 
 /**
  * BattleManager — Controls turn order, action resolution, and battle outcome.
- * Refactored to isolate math from GUI timing to prevent visual desyncs.
  */
 public class BattleManager {
 
@@ -40,6 +39,7 @@ public class BattleManager {
     private final HeroDefinition heroDef;
     private final Random         rng = new Random();
     private final HeroData.EnemyDefinition enemyDef;
+    private final FinalBossManager finalBossManager;
 
     private TurnOwner currentTurn      = TurnOwner.PLAYER;
     private int       round            = 1;
@@ -54,6 +54,12 @@ public class BattleManager {
         this.enemy            = enemy;
         this.heroDef          = heroDef;
         this.phoenixAvailable = hasPhoenix;
+
+        if (enemy.name.equals("Khai the Necromancer")) {
+            this.finalBossManager = new FinalBossManager(enemy, hero);
+        } else {
+            this.finalBossManager = null;
+        }
 
         if (heroDef != null && heroDef.skills != null && heroDef.skills.length >= 3) {
             s1Cost  = heroDef.skills[0].energyCost;
@@ -78,41 +84,30 @@ public class BattleManager {
     // PLAYER TURN
     // =========================================================================
 
-    /**
-     * Checks for status effects and pre-turn updates at the start of the player sequence.
-     */
     public ActionResult startPlayerTurnCheck() {
         List<String> logs = new ArrayList<>();
 
-        // 1. Pre-Turn Checks (Buffs and Passives)
         hero.getStatusManager().updateStatModifiers(logs);
         applyMagePassive();
 
-        // 2. Check Hard CC (Stun/Freeze)
         if (hero.getStatusManager().checkHardCC(logs)) {
             hero.getStatusManager().updateDoTEffects(logs);
-            advanceToEnemyTurn(); // Instantly skips player turn in the engine
+            advanceToEnemyTurn();
             return new ActionResult(String.join("\n", logs), 0, 0, false, false, "STUNNED");
         }
 
         return new ActionResult(String.join("\n", logs), 0, 0, false, false, null);
     }
 
-    /**
-     * Resolves the player's chosen action and applies post-turn DoTs.
-     */
     public ActionResult playerAction(BattleAction action) {
         if (currentTurn != TurnOwner.PLAYER) return null;
         List<String> logs = new ArrayList<>();
 
-        // 1. Check Soft CC (Confusion check)
         if (hero.getStatusManager().checkConfuse(logs)) {
             hero.getStatusManager().updateDoTEffects(logs);
-            // Turn is still considered "used" even if confused
             return new ActionResult(String.join("\n", logs), 0, 0, false, false, "CONFUSED");
         }
 
-        // 2. Resolve Action
         ActionResult result = switch (action) {
             case SKILL1    -> resolveAttack(0, s1Cost,  false, logs);
             case SKILL2    -> resolveAttack(1, s2Cost,  false, logs);
@@ -120,10 +115,8 @@ public class BattleManager {
             case SKIP_TURN -> resolveSkipTurn(logs);
         };
 
-        // 3. Post-Turn DoT
         hero.getStatusManager().updateDoTEffects(logs);
 
-        // Bundle everything into a single string for the GUI
         String combinedLogs = result.logMessage;
         if (!logs.isEmpty()) {
             combinedLogs += "\n" + String.join("\n", logs);
@@ -139,7 +132,7 @@ public class BattleManager {
 
         double mult;
         if (skill.name.equals("Bullseye")) {
-            mult = skill.maxMultiplier * 1.5; // Guaranteed crit for Karl
+            mult = skill.maxMultiplier * 1.5;
             logs.add("🎯 Bullseye! Guaranteed Critical Hit!");
         } else {
             mult = skill.minMultiplier + (skill.maxMultiplier - skill.minMultiplier) * rng.nextDouble();
@@ -147,7 +140,6 @@ public class BattleManager {
 
         int damage = DamageCalculator.calculateDamage(hero, enemy, mult, skill.pierceArmor);
 
-        // Class Passives
         if ("Swordsman".equals(heroDef.role) && rng.nextDouble() < 0.15) {
             damage = (int) (damage * 1.5);
             hero.restoreEnergy((int) (hero.maxEnergy * 0.05));
@@ -157,18 +149,20 @@ public class BattleManager {
             damage = (int) (damage * 1.2);
         }
 
-        enemy.takeDamage(damage);
+        if (finalBossManager != null) {
+            finalBossManager.processIncomingDamage(damage, logs);
+        } else {
+            enemy.takeDamage(damage);
+        }
 
         if (isUlt) hero.specialCooldown = heroDef.skills[2].cooldown;
         else hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
 
-        // Apply Weapon Effects
         if (hero.inventory != null && hero.inventory.getEquippedWeapon() != null) {
             List<String> effectLogs = hero.inventory.getEquippedWeapon().applyEffects(hero, enemy, damage);
             logs.addAll(effectLogs);
         }
 
-        // Skill-Specific Status Effects
         applySkillStatusEffects(skill.name, logs);
 
         String msg = hero.name + " uses " + skill.name + " for " + damage + " damage!";
@@ -219,7 +213,6 @@ public class BattleManager {
     private ActionResult resolveSkipTurn(List<String> logs) {
         hero.heal((int) (hero.maxHp * 0.10));
         hero.restoreEnergy(15);
-        hero.defending = true;
         hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
         return new ActionResult(hero.name + " rests, recovering HP and Energy.", 0, 0, false, true, null);
     }
@@ -228,24 +221,22 @@ public class BattleManager {
     // ENEMY TURN
     // =========================================================================
 
-    /**
-     * Executes the enemy action. Turn advancing is handled by the GUI to maintain sync.
-     */
     public ActionResult enemyTurn() {
         if (currentTurn != TurnOwner.ENEMY) return null;
         List<String> logs = new ArrayList<>();
 
-        enemy.getStatusManager().updateStatModifiers(logs);
-        hero.defending = false;
+        if (finalBossManager != null) {
+            finalBossManager.checkUnbrokenShield(logs);
+        }
 
-        // Check Hard CC (Stun/Freeze)
+        enemy.getStatusManager().updateStatModifiers(logs);
+
         if (enemy.getStatusManager().checkHardCC(logs)) {
             enemy.getStatusManager().updateDoTEffects(logs);
-            advanceRound(); // Engine moves to next round state
+            advanceRound();
             return new ActionResult(String.join("\n", logs), 0, 0, false, false, "STUNNED");
         }
 
-        // Check Soft CC (Confusion)
         if (enemy.getStatusManager().checkConfuse(logs)) {
             enemy.getStatusManager().updateDoTEffects(logs);
             advanceRound();
@@ -253,21 +244,49 @@ public class BattleManager {
         }
 
         lastEnemySkillName = resolveEnemySkillName();
-        double mult = enemyDef.minMultiplier +
-                (enemyDef.maxMultiplier - enemyDef.minMultiplier) + rng.nextDouble();
-        int damage = DamageCalculator.calculateDamage(enemy, hero, mult, false);
-        hero.takeDamage(damage);
+
+        double mult = 0.0;
+        boolean pierce = false;
+
+        if (lastEnemySkillName.equals("Crown of Despair") ||
+                lastEnemySkillName.equals("Bone Shield") ||
+                lastEnemySkillName.equals("Encapsulation")) {
+            mult = 0.0;
+        } else {
+            mult = enemyDef.minMultiplier +
+                    ((enemyDef.maxMultiplier - enemyDef.minMultiplier) * rng.nextDouble());
+        }
+
+        if (lastEnemySkillName.equals("Grave Cleaver")) {
+            pierce = true;
+        }
+
+        int damage = DamageCalculator.calculateDamage(enemy, hero, mult, pierce);
+        if (damage > 0) {
+            hero.takeDamage(damage);
+        }
+
+        applyEnemySkillEffects(lastEnemySkillName, damage, logs);
 
         enemy.getStatusManager().updateDoTEffects(logs);
         advanceRound();
 
-        String msg = enemy.name + " uses " + lastEnemySkillName + " for " + damage + " damage!";
+        String msg;
+        if (damage > 0) {
+            msg = enemy.name + " uses " + lastEnemySkillName + " for " + damage + " damage!";
+        } else {
+            msg = enemy.name + " uses " + lastEnemySkillName + "!";
+        }
+
         if (!logs.isEmpty()) msg += "\n" + String.join("\n", logs);
 
         return new ActionResult(msg, damage, 0, false, false, null);
     }
 
     private String resolveEnemySkillName() {
+        StatusManager heroSM = hero.getStatusManager();
+        StatusManager enemySM = enemy.getStatusManager();
+
         return switch (enemy.name) {
             case "Rotfang Wolf"        -> "Savage Howl";
             case "Shade Sprite"        -> "Trickster Strike";
@@ -277,30 +296,33 @@ public class BattleManager {
             case "Forsaken Cultist"    -> "Shadow Bolt";
             case "Blight Hound"        -> "Corpse Explosion";
             case "Ghoul Footman"       -> "Rotten Cleave";
-            case "Flame Revenant" -> "Ember Burst";
-            case "Bone Warlock" -> "Marrow Bolt";
-            case "Obsidian Crusher" -> "Magma Slam";
+            case "Flame Revenant"      -> "Ember Burst";
+            case "Bone Warlock"        -> "Marrow Bolt";
+            case "Obsidian Crusher"    -> "Magma Slam";
             case "Soulflayer Gargoyle" -> "Soul Scream";
-            case "The Hollow Stag"     -> rng.nextBoolean() ? "Deathly Charge"  : "Blackened Howl";
-            case "The Black Jailer"    -> rng.nextBoolean() ? "Tormenting Lash" : "Shackling Chains";
-            case "Luther Von"          -> switch (rng.nextInt(3)) {
-                case 0  -> "Crown of Despair";
-                case 1  -> "Dark Judgement";
-                default -> "Kings Wrath";
-            };
-            case "Zyrryl"              -> rng.nextBoolean() ? "Great Cleaver" : "Bone Shield";
-            case "Khai the Necromancer" -> switch (rng.nextInt(3)) {
-                case 0  -> "Soul Drain";
-                case 1  -> "Encapsulation";
-                default -> "Dark Ascension";
-            };
+
+            // ERROR FIXES: Uses StatusManager.Effect enum instead of boolean methods
+            case "The Hollow Stag" -> {
+                if (!heroSM.has(StatusManager.Effect.FRAGILE)) yield "Blackened Howl";
+                else yield "Deathly Charge";
+            }
+            case "The Black Jailer" -> rng.nextBoolean() ? "Tormenting Lash" : "Shackling Chains";
+            case "Luther Von" -> {
+                if (!heroSM.has(StatusManager.Effect.WEAKENED)) {
+                    yield rng.nextBoolean() ? "Crown of Despair" : "Dark Judgement";
+                } else {
+                    yield (rng.nextDouble() < 0.66) ? "Dark Judgement" : "Kings Wrath";
+                }
+            }
+            case "Zyrryl" -> {
+                if (!enemySM.has(StatusManager.Effect.FORTIFIED)) yield "Bone Shield";
+                else yield "Grave Cleaver";
+            }
+            case "Khai the Necromancer" -> finalBossManager.determineNextSkill();
             default -> "Attack";
         };
     }
 
-    /**
-     * Closes the current turn and prepares for the next round.
-     */
     public void advanceRound() {
         round++;
         currentTurn = TurnOwner.PLAYER;
@@ -312,10 +334,10 @@ public class BattleManager {
     public BattleOutcome checkOutcome() {
         if (!enemy.isAlive()) {
             boolean isMiniBoss = enemy.name.equals("The Hollow Stag") ||
-                                 enemy.name.equals("The Black Jailer") ||
-                                 enemy.name.equals("Luther Von") ||
-                                 enemy.name.equals("Zyrryl") ||
-                                 enemy.name.equals("Khai the Necromancer");
+                    enemy.name.equals("The Black Jailer") ||
+                    enemy.name.equals("Luther Von") ||
+                    enemy.name.equals("Zyrryl") ||
+                    enemy.name.equals("Khai the Necromancer");
 
             hero.inventory.lootPotions(isMiniBoss);
             return BattleOutcome.VICTORY;
@@ -327,6 +349,90 @@ public class BattleManager {
     private void applyMagePassive() {
         if (heroDef != null && "Mage".equals(heroDef.role)) {
             hero.restoreEnergy((int) (hero.maxEnergy * 0.05));
+        }
+    }
+
+    private void applyEnemySkillEffects(String skillName, int damageDealt, List<String> logs) {
+        StatusManager heroSM = hero.getStatusManager();
+        StatusManager enemySM = enemy.getStatusManager();
+
+        switch (skillName) {
+            case "Trickster Strike" -> {
+                // ERROR FIX: applyConfuse takes (int turns, List<String> logs)
+                if (rng.nextDouble() < 0.30) heroSM.applyConfuse(1, logs);
+            }
+            case "Root Snare" -> {
+                if (rng.nextDouble() < 0.20) heroSM.applyStun(logs);
+            }
+            case "Screech" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyWeaken((int)(hero.attack * 0.20), 2, logs);
+            }
+            case "Deathly Charge" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyStun(logs);
+            }
+            case "Blackened Howl" -> {
+                heroSM.applyFragile((int)(hero.defense * 0.20), 2, logs);
+            }
+            case "Plague Bite" -> {
+                heroSM.applyPoison(1, logs);
+            }
+            case "Shadow Bolt" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyWeaken((int)(hero.attack * 0.20), 2, logs);
+            }
+            case "Corpse Explosion" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyFragile((int)(hero.defense * 0.30), 2, logs);
+            }
+            case "Rotten Cleave", "Tormenting Lash" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyBleed(2, logs);
+            }
+            case "Shackling Chains" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyStun(logs);
+            }
+            case "Crown of Despair" -> {
+                heroSM.applyWeaken((int)(hero.attack * 0.20), 2, logs);
+            }
+            case "Kings Wrath" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyStun(logs);
+            }
+            case "Ember Burst" -> {
+                heroSM.applyBurn(1, logs);
+            }
+            case "Marrow Bolt" -> {
+                if (rng.nextDouble() < 0.30) heroSM.applyWeaken((int)(hero.attack * 0.30), 2, logs);
+            }
+            case "Magma Slam" -> {
+                if (rng.nextDouble() < 0.20) heroSM.applyStun(logs);
+            }
+            case "Soul Scream" -> {
+                // ERROR FIX: applyConfuse takes (int turns, List<String> logs)
+                if (rng.nextDouble() < 0.50) heroSM.applyConfuse(1, logs);
+            }
+            case "Bone Shield" -> {
+                enemySM.applyFortify(50, 2, logs);
+            }
+            case "Soul Drain" -> {
+                if (finalBossManager != null) {
+                    finalBossManager.executeSoulDrain(damageDealt, logs);
+                } else {
+                    enemy.heal(damageDealt);
+                    logs.add("🩸 Khai drains your essence, healing for " + damageDealt + " HP!");
+                }
+            }
+            case "Encapsulation" -> {
+                if (finalBossManager != null) {
+                    finalBossManager.executeEncapsulation(logs);
+                }
+            }
+            case "Dark Ascension" -> {
+                if (finalBossManager != null) {
+                    finalBossManager.executeDarkAscension(logs);
+                } else {
+                    if (rng.nextDouble() < 0.30) {
+                        heroSM.applyWeaken((int)(hero.attack * 0.30), 2, logs);
+                        logs.add("😱 You are paralyzed by Fear! (ATK Decreased)");
+                    }
+                }
+            }
         }
     }
 }

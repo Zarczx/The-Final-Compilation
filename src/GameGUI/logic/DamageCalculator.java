@@ -1,18 +1,15 @@
 package GameGUI.logic;
 
 import GameGUI.model.entity.Combatant;
-import java.util.Random;
 
 /**
  * DamageCalculator — Handles all math for attacks.
  *
  * All HP mutations go through Combatant's public mutators (takeDamage, heal)
  * so clamping is always consistent and never duplicated here.
- * * Note: Status/DoT damage is now handled exclusively by the StatusManager.
+ * Note: Status/DoT damage is now handled exclusively by the StatusManager.
  */
 public class DamageCalculator {
-
-    private static final Random rng = new Random();
 
     // =========================================================================
     // DAMAGE FORMULA
@@ -20,8 +17,7 @@ public class DamageCalculator {
 
     /**
      * Calculates and returns the final damage dealt by {@code attacker} to
-     * {@code defender}, applying skill multiplier, armor reduction, variance,
-     * and the defender's block bonus if they are currently defending.
+     * {@code defender}, applying skill multiplier and flat armor reduction.
      *
      * Does NOT apply the damage — the caller is responsible for calling
      * {@code defender.takeDamage(result)} so the hit is logged correctly.
@@ -29,26 +25,26 @@ public class DamageCalculator {
      * @param attacker        the attacking Combatant
      * @param defender        the defending Combatant
      * @param skillMultiplier damage multiplier from the skill definition
-     * @param pierce          if true, armor is reduced to 15% effectiveness
-     * @return final damage value (minimum 1)
+     * @param pierce          if true, armor is ignored completely (True Damage)
+     * @return final damage value
      */
     public static int calculateDamage(Combatant attacker, Combatant defender,
                                       double skillMultiplier, boolean pierce) {
 
-        // effectiveAttack() and effectiveDefense() now pull the exact stats
-        // updated by StatusManager and equipment!
-        double base   = attacker.effectiveAttack() * skillMultiplier;
-        double defVal = pierce
-                ? defender.effectiveDefense() * 0.15
-                : defender.effectiveDefense() * 0.50;
+        // 1. Calculate base damage from multiplier (which already contains RNG bounds from BattleManager)
+        int damage = (int) Math.round(attacker.effectiveAttack() * skillMultiplier);
 
-        // ±15% variance to keep combat feeling alive
-        double variance = 0.85 + rng.nextDouble() * 0.30;
-        double raw      = (base - defVal) * variance;
+        // 2. Armor Pierce logic (Text version ignored defense entirely for piercing attacks)
+        int defVal = pierce ? 0 : defender.effectiveDefense();
 
-        int damage = (int) Math.round(Math.max(1.0, raw));
+        // 3. Flat defense subtraction
+        damage -= defVal;
 
-        // Defender halves damage while in guard stance
-        return defender.defending ? Math.max(1, damage / 2) : damage;
+        // 4. Floor at 0 (Prevents healing the enemy if defense is higher than attack)
+        if (damage < 0) {
+            damage = 0;
+        }
+
+        return damage;
     }
 }
