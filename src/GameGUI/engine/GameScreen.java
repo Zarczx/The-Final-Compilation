@@ -225,6 +225,24 @@ public class GameScreen extends JPanel {
         battlePanel.setOnReturnToSelection(this::goToSelection);
         battlePanel.setOnRestartBattle(this::restartBattle);
 
+        battlePanel.setOnEnemyGroupDefeated((interIdx, resumeFight) -> {
+            // Use invokeLater to ensure the Battle UI finishes its cleanup before we switch
+            SwingUtilities.invokeLater(() -> {
+                // Hard reset the dialogue UI state to match a "Fresh Load"
+                if (w2TypingTimer != null) w2TypingTimer.stop();
+                w2DialogueBox.setText("");
+
+                // Clean the button listeners so they don't stack
+                for (ActionListener al : w2ContinueBtn.getActionListeners()) {
+                    w2ContinueBtn.removeActionListener(al);
+                }
+                w2ContinueBtn.addActionListener(e -> continueW2Dialogue());
+
+                // Trigger the transition dialogue
+                showWorld2InterDialogue(interIdx, resumeFight);
+            });
+        });
+
         battlePanel.setOnOpenSaveScreen(this::openSaveScreen);
         battlePanel.setOnPromptSaveAndExit(this::promptSaveAndExit);
 
@@ -347,8 +365,22 @@ public class GameScreen extends JPanel {
                         .collect(java.util.stream.Collectors.toList());
 
         cardLayout.show(cardPanel, SCREEN_BATTLE);
-        playBattleMusic();
-        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> resumeFight.run());
+        battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
+            SwingUtilities.invokeLater(() -> {
+                if (currentWorld == 1) {
+                    showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 2) {
+                    if (nextGroupIndex == 1) {
+                        battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                    }
+                    showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 3) {
+                    showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else {
+                    resumeFight.run();
+                }
+            });
+        });
         battlePanel.startEnemySequence(hero, stagOnly, this::startWorld2Transition);
     }
 
@@ -410,18 +442,20 @@ public class GameScreen extends JPanel {
 
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
-            if (currentWorld == 1) {
-                showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
-            } else if (currentWorld == 2) {
-                if (nextGroupIndex == 1) {
-                    battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+            SwingUtilities.invokeLater(() -> {
+                if (currentWorld == 1) {
+                    showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 2) {
+                    if (nextGroupIndex == 1) {
+                        battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                    }
+                    showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 3) {
+                    showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else {
+                    resumeFight.run();
                 }
-                showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
-            } else if (currentWorld == 3) {
-                showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
-            } else {
-                resumeFight.run();
-            }
+            });
         });
 
         battlePanel.startEnemySequence(hero, match, () -> {
@@ -499,18 +533,20 @@ public class GameScreen extends JPanel {
         playBattleMusic();
 
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
-            if (currentWorld == 1) {
-                showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
-            } else if (currentWorld == 2) {
-                if (nextGroupIndex == 1) {
-                    battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+            SwingUtilities.invokeLater(() -> {
+                if (currentWorld == 1) {
+                    showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 2) {
+                    if (nextGroupIndex == 1) {
+                        battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                    }
+                    showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 3) {
+                    showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else {
+                    resumeFight.run();
                 }
-                showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
-            } else if (currentWorld == 3) {
-                showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
-            } else {
-                resumeFight.run();
-            }
+            });
         });
 
         if (currentWorld == 1) {
@@ -1786,8 +1822,13 @@ public class GameScreen extends JPanel {
     private void continueW2Dialogue() {
         if (w2TypingTimer != null && w2TypingTimer.isRunning()) {
             w2TypingTimer.stop();
-            if (w2Chunks != null && w2ChunkIndex < w2Chunks.length)
-                w2DialogueBox.setText(w2Chunks[w2ChunkIndex]);
+            if (w2InInterDialogue) {
+                if (w2InterChunks != null && w2InterChunkIndex < w2InterChunks.length)
+                    w2DialogueBox.setText(w2InterChunks[w2InterChunkIndex]);
+            } else {
+                if (w2Chunks != null && w2ChunkIndex < w2Chunks.length)
+                    w2DialogueBox.setText(w2Chunks[w2ChunkIndex]);
+            }
             return;
         }
         if (w2InInterDialogue) {
@@ -1852,6 +1893,28 @@ public class GameScreen extends JPanel {
         if (interIndex < 0 || interIndex >= WORLD2_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
+
+
+        // =========================================================
+        // ★ COPYING THE LOADED GAME LOGIC (CLEAN SLATE RESET) ★
+        // =========================================================
+        // 1. Kill any ghost timers from the World 2 Intro
+        if (w2TypingTimer != null && w2TypingTimer.isRunning()) {
+            w2TypingTimer.stop();
+        }
+
+        // 2. Wipe the dialogue box clean
+        w2DialogueBox.setText("");
+
+        // 3. HARD RESET the Continue Button to its factory default
+        // This wipes away any leftover listeners from previous scenes
+        for (ActionListener l : w2ContinueBtn.getActionListeners()) {
+            w2ContinueBtn.removeActionListener(l);
+        }
+        w2ContinueBtn.addActionListener(e -> continueW2Dialogue());
+        w2ContinueBtn.setEnabled(true);
+        // =========================================================
+
         playWorldMusic();
         w2ResumeAfterDialogue = resumeFight;
         w2InInterDialogue = true;
@@ -1901,7 +1964,8 @@ public class GameScreen extends JPanel {
                 case 4 -> { showW2InterBg("/assets/Backgrounds/World2Beggar3.png"); typeW2InterChunkNow(); return; }
                 case 5 -> { /* stay on World2Beggar3.png */ typeW2InterChunkNow(); return; }
                 case 6 -> { showW2InterBg("/assets/Backgrounds/WanderAround.png"); typeW2InterChunkNow(); return; }
-                case 7 -> { utils.SoundUtil.play("CultSound.WAV"); showW2InterBg("/assets/Backgrounds/World2Chapel.png"); typeW2InterChunkNow(); return; }
+                case 7 -> { showW2InterBg("/assets/Backgrounds/World2Chapel.png"); typeW2InterChunkNow(); return; }
+
                 case 8 -> {
                     // Show World2Chapel2.png, let player read, then on continue:
                     // ForsakenCultist.png 2s → ForsakenCultist2.png, then type
@@ -2294,6 +2358,19 @@ public class GameScreen extends JPanel {
         w2DialogueBox.setText("");
         Runnable resume = w2ResumeAfterDialogue;
         w2ResumeAfterDialogue = null;
+
+        // Set battle background based on which inter-dialogue just finished
+        int interIdx = resolveW2InterIndex();
+        String battleBg = switch (interIdx) {
+            case 0 -> "/assets/Backgrounds/World2BattleBackground2.png"; // Forsaken Cultist
+            case 1 -> "/assets/Backgrounds/World2BattleBackground3.png"; // Blight Hound
+            case 2 -> "/assets/Backgrounds/World2BattleBackground4.png"; // Ghoul Footman
+            case 3 -> "/assets/Backgrounds/World2BattleBackground5.png"; // Black Jailer
+            case 4 -> "/assets/Backgrounds/World2BattleBackgroundLast.png"; // Luther Von
+            default -> "/assets/Backgrounds/World2Battle1Background.png";
+        };
+        battlePanel.setBattleBackground(battleBg);
+
         cardLayout.show(cardPanel, SCREEN_BATTLE);
 
         utils.SoundUtil.stopSFX(); // ★ ADD THIS — stops any one-shot sound before battle music starts
@@ -3921,20 +3998,21 @@ public class GameScreen extends JPanel {
 
         // ★ FIX: Wire up inter-enemy dialogues, same as goToBattle()
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
-            if (currentWorld == 1) {
-                showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
-            } else if (currentWorld == 2) {
-                if (nextGroupIndex == 1) {
-                    battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+            SwingUtilities.invokeLater(() -> {
+                if (currentWorld == 1) {
+                    showInterEnemyDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 2) {
+                    if (nextGroupIndex == 1) {
+                        battlePanel.setBattleBackground("/assets/Backgrounds/World2BattleBackground2.png");
+                    }
+                    showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else if (currentWorld == 3) {
+                    showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+                } else {
+                    resumeFight.run();
                 }
-                showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
-            } else if (currentWorld == 3) {
-                showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
-            } else {
-                resumeFight.run();
-            }
+            });
         });
-
         if (currentWorld == 1) {
             utils.SoundUtil.playLoop("World1BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
