@@ -84,13 +84,17 @@ public class EnemyStatsDialog extends JDialog {
         root.add(scroll, BorderLayout.CENTER);
 
         // ── Close ─────────────────────────────────────────────────────────
-        JButton closeBtn = new JButton("✕  Back");
+        JButton closeBtn = new JButton("  Back");
         closeBtn.setFont(new Font("Georgia", Font.BOLD, 13));
         closeBtn.setForeground(TEXT_DIM);
         closeBtn.setBackground(BG_DARK);
         closeBtn.setFocusPainted(false);
         closeBtn.setBorderPainted(false);
         closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { closeBtn.setForeground(GOLD); }
+            public void mouseExited (java.awt.event.MouseEvent e) { closeBtn.setForeground(TEXT_DIM); }
+        });
         closeBtn.addActionListener(e -> dispose());
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottom.setOpaque(false);
@@ -163,6 +167,7 @@ public class EnemyStatsDialog extends JDialog {
         card.setOpaque(false);
         card.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        card.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Icon box
         JPanel iconBox = new JPanel() {
@@ -207,25 +212,30 @@ public class EnemyStatsDialog extends JDialog {
     }
 
     private JLabel sectionHeader(String text) {
-        JLabel lbl = new JLabel(text);
+        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setFont(new Font("Georgia", Font.BOLD, 15));
         lbl.setForeground(GOLD);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
         return lbl;
     }
 
     private JLabel dimLabel(String text) {
-        JLabel lbl = new JLabel(text);
+        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setFont(new Font("Georgia", Font.ITALIC, 13));
         lbl.setForeground(TEXT_DIM);
+        lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         return lbl;
     }
 
     private JPanel statRow(String key, String value, Color valueColor) {
         JPanel row = new JPanel(new BorderLayout());
         row.setOpaque(false);
+        row.setAlignmentX(Component.CENTER_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
         JLabel k = new JLabel(key);
-        k.setFont(new Font("Georgia", Font.PLAIN, 14));
+        k.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
         k.setForeground(TEXT_DIM);
         JLabel v = new JLabel(value);
         v.setFont(new Font("Georgia", Font.BOLD, 14));

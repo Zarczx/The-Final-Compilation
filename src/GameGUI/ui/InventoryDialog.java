@@ -113,6 +113,10 @@ public class InventoryDialog extends JDialog {
         closeBtn.setFocusPainted(false);
         closeBtn.setBorderPainted(false);
         closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { closeBtn.setForeground(GOLD); }
+            public void mouseExited (java.awt.event.MouseEvent e) { closeBtn.setForeground(TEXT_DIM); }
+        });
         closeBtn.addActionListener(e -> dispose());
 
         JPanel bottom = new JPanel(new BorderLayout());
@@ -145,6 +149,10 @@ public class InventoryDialog extends JDialog {
         btn.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(GOLD, 1),
                 BorderFactory.createEmptyBorder(4, 12, 4, 12)));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(new Color(50, 44, 22)); }
+            public void mouseExited (java.awt.event.MouseEvent e) { btn.setBackground(PANEL_DARK); }
+        });
         return btn;
     }
 
@@ -171,7 +179,7 @@ public class InventoryDialog extends JDialog {
     }
 
     private void refreshUI() {
-        shardsLbl.setText("💎 Soul Shards: " + combatant.soulShards);
+        shardsLbl.setText("Soul Shards: " + combatant.soulShards);
         normPotLbl.setText("🧪 Normal Healing Potion: "   + combatant.inventory.potions.getNormalHealingPotions());
         fullPotLbl.setText("🩸 Full Healing Potion: "  + combatant.inventory.potions.getFullHealingPotions());
         energyPotLbl.setText("✨ Energy Potion: " + combatant.inventory.potions.getEnergyPotions());

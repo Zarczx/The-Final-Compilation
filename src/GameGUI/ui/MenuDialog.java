@@ -115,13 +115,17 @@ public class MenuDialog extends JDialog {
         root.add(centerPanel, BorderLayout.CENTER);
 
         // Close button — also resumes timer
-        JButton closeBtn = new JButton("✕  Back to Battle");
+        JButton closeBtn = new JButton("  Back to Battle");
         closeBtn.setFont(new Font("Georgia", Font.BOLD, 13));
         closeBtn.setForeground(TEXT_DIM);
         closeBtn.setBackground(BG_DARK);
         closeBtn.setFocusPainted(false);
         closeBtn.setBorderPainted(false);
         closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { closeBtn.setForeground(GOLD); }
+            public void mouseExited (java.awt.event.MouseEvent e) { closeBtn.setForeground(TEXT_DIM); }
+        });
         closeBtn.addActionListener(e -> {
             dispose();
             if (onFullyClose != null) onFullyClose.run();

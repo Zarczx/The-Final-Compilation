@@ -597,7 +597,6 @@ public class GameScreen extends JPanel {
         if (interIndex < 0 || interIndex >= WORLD1_INTER_DIALOGUES.length) {
             resumeFight.run(); return;
         }
-        playWorldMusic();
         w1ResumeAfterDialogue = resumeFight;
         w1InterDialogueIndex = interIndex;
         w1InInterDialogue = true;
@@ -769,6 +768,7 @@ public class GameScreen extends JPanel {
         w1ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         utils.SoundUtil.stopSFX(); // ★ ADD THIS
+        utils.SoundUtil.stopLoop();
         playBattleMusic();
         if (resume != null) resume.run();
     }
