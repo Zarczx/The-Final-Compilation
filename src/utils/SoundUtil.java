@@ -8,6 +8,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SoundUtil {
 
@@ -15,6 +17,7 @@ public class SoundUtil {
 
     private static Clip bgmClip;
     private static Clip bgmClip2;
+    private static final List<Clip> activeSFX = new ArrayList<>(); // ★ tracks all active SFX
 
     // ---------- ONE-SHOT SFX ----------
 
@@ -24,7 +27,6 @@ public class SoundUtil {
 
     public static void play(String relativePath, float volume) {
         String path = BASE_PATH + relativePath;
-
         try {
             File soundFile = new File(path);
             if (!soundFile.exists()) {
@@ -39,11 +41,23 @@ public class SoundUtil {
             Clip clip = AudioSystem.getClip();
             clip.open(audioStream);
             setVolume(clip, volume);
+            activeSFX.add(clip); // ★ track it
             clip.start();
 
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             System.out.println("Error playing sound (" + path + "): " + e.getMessage());
         }
+    }
+
+    // ★ Stops ALL active SFX — call this when entering battle
+    public static void stopSFX() {
+        for (Clip clip : activeSFX) {
+            try {
+                if (clip.isRunning()) clip.stop();
+                clip.close();
+            } catch (Exception ignored) {}
+        }
+        activeSFX.clear();
     }
 
     // ---------- LOOPING BGM ----------
@@ -56,7 +70,6 @@ public class SoundUtil {
         stopLoop();
 
         String path = BASE_PATH + relativePath;
-
         try {
             File soundFile = new File(path);
             if (!soundFile.exists()) {
@@ -86,43 +99,12 @@ public class SoundUtil {
         }
     }
 
-    // ---------- VOLUME HELPER ----------
-
-    private static void setVolume(Clip clip, float volume) {
-        if (volume < 0f) volume = 0f;
-        if (volume > 1f) volume = 1f;
-
-        if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-            float safe = (volume <= 0.0001f) ? 0.0001f : volume;
-            float dB = (float) (20.0 * Math.log10(safe));
-            gain.setValue(dB);
-        }
-    }
-
-    // ---------- DELAY SFX ----------
-
-    public static void playDelayed(String relativePath, int delayMs) {
-        new Thread(() -> {
-            try { Thread.sleep(delayMs); } catch (InterruptedException ignored) {}
-            play(relativePath);
-        }).start();
-    }
-
-    public static void playDelayed(String relativePath, int delayMs, float volume) {
-        new Thread(() -> {
-            try { Thread.sleep(delayMs); } catch (InterruptedException ignored) {}
-            play(relativePath, volume);
-        }).start();
-    }
-
     // ---------- LOOPING BGM 2 ----------
 
     public static void playLoop2(String relativePath, float volume) {
         stopLoop2();
 
         String path = BASE_PATH + relativePath;
-
         try {
             File soundFile = new File(path);
             if (!soundFile.exists()) {
@@ -158,6 +140,38 @@ public class SoundUtil {
             playLoop2(relativePath, volume);
         }).start();
     }
+
+    // ---------- VOLUME HELPER ----------
+
+    private static void setVolume(Clip clip, float volume) {
+        if (volume < 0f) volume = 0f;
+        if (volume > 1f) volume = 1f;
+
+        if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            float safe = (volume <= 0.0001f) ? 0.0001f : volume;
+            float dB = (float) (20.0 * Math.log10(safe));
+            gain.setValue(dB);
+        }
+    }
+
+    // ---------- DELAY SFX ----------
+
+    public static void playDelayed(String relativePath, int delayMs) {
+        new Thread(() -> {
+            try { Thread.sleep(delayMs); } catch (InterruptedException ignored) {}
+            play(relativePath);
+        }).start();
+    }
+
+    public static void playDelayed(String relativePath, int delayMs, float volume) {
+        new Thread(() -> {
+            try { Thread.sleep(delayMs); } catch (InterruptedException ignored) {}
+            play(relativePath, volume);
+        }).start();
+    }
+
+    // ---------- FADE OUT BGM ----------
 
     public static void fadeOutLoop(int durationMs) {
         if (bgmClip == null || !bgmClip.isRunning()) return;

@@ -290,6 +290,7 @@ public class GameScreen extends JPanel {
         }
 
         goToWorld2Intro();
+        this.currentWorld = 2;
     }
 
     public void debugSkipToWorld3(HeroDefinition hero) {
@@ -437,7 +438,7 @@ public class GameScreen extends JPanel {
         }
 
         utils.SoundUtil.stopLoop();
-        utils.SoundUtil.playLoop("BattleBackgroundMusic.wav", 0.7f);
+        playBattleMusic();
 
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
@@ -526,6 +527,7 @@ public class GameScreen extends JPanel {
 
     private void goToBattle() {
         if (confirmedHero == null) return;
+        utils.SoundUtil.stopSFX(); // ← ADD THIS LINE
         utils.SoundUtil.stopLoop();
         cardLayout.show(cardPanel, SCREEN_BATTLE);
         playBattleMusic();
@@ -666,6 +668,7 @@ public class GameScreen extends JPanel {
         // ★ INTER-DIALOGUE 0 logic
         if (w1InterDialogueIndex == 0 && w1InterChunkIndex == 1) {
             w1ContinueBtn.setEnabled(false);
+            utils.SoundUtil.play("WhisperingSound.WAV");
             showW1InterBg("/assets/Backgrounds/World1BattleBackgroundFog.png");
             delay(1500, () -> {
                 showW1InterBg("/assets/Backgrounds/World1BattleBackgroundFogHands.png");
@@ -687,6 +690,7 @@ public class GameScreen extends JPanel {
         }
 
         if (w1InterDialogueIndex == 1 && w1InterChunkIndex == 1) {
+            utils.SoundUtil.play("EarthquakeSound.WAV");
             showW1InterBg("/assets/Backgrounds/World1Cracks.png");
             typeW1InterChunkNow();
             return;
@@ -706,6 +710,7 @@ public class GameScreen extends JPanel {
 
         if (w1InterDialogueIndex == 2 && w1InterChunkIndex == 1) {
             w1ContinueBtn.setEnabled(false);
+            utils.SoundUtil.play("BatSound.WAV");
             showW1InterBg("/assets/Backgrounds/World1CarrionBatsCircle.png");
             delay(1500, () -> {
                 showW1InterBg("/assets/Backgrounds/World1CarrionBatsSpread.png");
@@ -799,6 +804,7 @@ public class GameScreen extends JPanel {
         Runnable resume = w1ResumeAfterDialogue;
         w1ResumeAfterDialogue = null;
         cardLayout.show(cardPanel, SCREEN_BATTLE);
+        utils.SoundUtil.stopSFX(); // ★ ADD THIS
         playBattleMusic();
         if (resume != null) resume.run();
     }
@@ -1095,6 +1101,7 @@ public class GameScreen extends JPanel {
         examStartBtn.addActionListener(e -> {
             examPopup.setVisible(false);
             continueBtn.setEnabled(false);
+            utils.SoundUtil.play("NGEGlitchSound2.WAV");
             utils.SoundUtil.fadeOutLoop(1500);
             Timer startWorld1Music = new Timer(1600, null);
             startWorld1Music.setRepeats(false);
@@ -1248,6 +1255,7 @@ public class GameScreen extends JPanel {
 
         if (dialogueIndex == 2) {
             continueBtn.setEnabled(false);
+            utils.SoundUtil.play("NGETypingSound2.WAV");
             setSceneBackground("assets/Backgrounds/NGELoginUser.png");
             Timer loginUserTimer = new Timer(1000, e -> {
                 setSceneBackground("assets/Backgrounds/NGELoginUser2.png");
@@ -1704,6 +1712,7 @@ public class GameScreen extends JPanel {
     }
 
     private void goToWorld2Intro() {
+        this.currentWorld = 2;
         switchMusic("World2BackgroundMusic.wav", 0.5f);
         w2DialogueIndex = 0;
 
@@ -1860,6 +1869,7 @@ public class GameScreen extends JPanel {
             );
             return;
         } else if (w2DialogueIndex == 11) {
+            utils.SoundUtil.play("RatHissing.WAV");
             showW2SceneImage("/assets/Backgrounds/World1Transition20.png");
         } else if (w2DialogueIndex == 12) {
             showW2SceneImage("/assets/Backgrounds/World2Battle1Background.png");
@@ -1998,6 +2008,7 @@ public class GameScreen extends JPanel {
                     return;
                 }
                 case 2 -> {
+                    utils.SoundUtil.play("DogGrowlSound.WAV");
                     // Stay on World2AfterChapel.png, just type
                     typeW2InterChunkNow();
                     return;
@@ -2037,6 +2048,7 @@ public class GameScreen extends JPanel {
                 }
                 case 2 -> {
                     // Show World2BlackCastleDoor.png
+                    utils.SoundUtil.play("LightningDoorSound.WAV");
                     showW2InterBg("/assets/Backgrounds/World2BlackCastleDoor.png");
                     typeW2InterChunkNow();
                     return;
@@ -2073,12 +2085,14 @@ public class GameScreen extends JPanel {
                 }
                 case 2 -> {
                     // Show World2BlackJailer.png
+                    utils.SoundUtil.play("DraggingWater.WAV");
                     showW2InterBg("/assets/Backgrounds/World2BlackJailer.png");
                     typeW2InterChunkNow();
                     return;
                 }
                 case 3 -> {
                     // Show World2BlackJailer2.png
+                    utils.SoundUtil.play("DraggingWater.WAV");
                     showW2InterBg("/assets/Backgrounds/World2BlackJailer2.png");
                     typeW2InterChunkNow();
                     return;
@@ -2220,6 +2234,7 @@ public class GameScreen extends JPanel {
                 }
                 case 7 -> {
                     // "As you step forward..." — TransitionMagicShop8.png
+                    utils.SoundUtil.play("TeleportMagicShop.WAV");
                     showW2InterBg("/assets/Backgrounds/TransitionMagicShop8.png");
                     typeW2InterChunkNow();
                     return;
@@ -2231,7 +2246,8 @@ public class GameScreen extends JPanel {
                     return;
                 }
                 case 9 -> {
-                    // "A BRILLIANT FLASH..." — TransitionMagicShop10.png
+                    // "A BRILLIANT FLASH..." — TransitionMagicShop10.png|
+                    utils.SoundUtil.play("LightSound.WAV");
                     showW2InterBg("/assets/Backgrounds/TransitionMagicShop10.png");
                     typeW2InterChunkNow();
                     return;
@@ -2356,7 +2372,14 @@ public class GameScreen extends JPanel {
         battlePanel.setBattleBackground(battleBg);
 
         cardLayout.show(cardPanel, SCREEN_BATTLE);
-        playBattleMusic();
+
+        utils.SoundUtil.stopSFX(); // ★ ADD THIS — stops any one-shot sound before battle music starts
+
+        int interIdx = resolveW2InterIndex();
+        if (interIdx == 3) switchMusic("World2BlackJailer.WAV", 0.7f);
+        else if (interIdx == 4) switchMusic("World2LutherSound.WAV", 0.7f);
+        else playBattleMusic();
+
         if (resume != null) resume.run();
     }
 
@@ -2550,7 +2573,7 @@ public class GameScreen extends JPanel {
             "You have been travelling for days, leaving the green world far behind.\n" +
                     "You have reached a land where not even a glimmer of life can survive.",         // index 0 — BG1 shown on entry
             "The earth here has turned to black glass. Ash falls like snow, coating your armor in gray dust.\n" +
-                    "Rivers of molten fire carve through the rock, lighting the underbelly of the dark clouds.", // index 1 — show BG2 before this
+                    "Rivers of molten fire carve through the rock.", // index 1 — show BG2 before this
             "At the center of this desolation, rising higher than the mountains...\n" +
                     "Stands a spire of twisted obsidian, piercing the storm itself.\n" +
                     "THE NECROMANCER'S TOWER.",                                                      // index 2 — show BG3→BG4 before this
@@ -2574,8 +2597,8 @@ public class GameScreen extends JPanel {
                     "The air grows cold, despite the rivers of lava flowing nearby.\n" +
                             "A hollow chanting fills the chamber, vibrating in your bones.",
                     // chunk 3 — BG14
-                    "From the shadows of the obsidian pillars, figures draped in tattered robes emerge.\n" +
-                            "BONE WARLOCKS.",
+                    "From the shadows of the obsidian pillars, figures draped in tattered robes emerge." +
+                            " BONE WARLOCKS.",
                     // chunk 4 — BG15.5 (battle bg set separately)
                     "They raise staffs made of spine and skull, chanting forbidden incantations\n" +
                             "to twist the very life force from your body."
@@ -2598,8 +2621,8 @@ public class GameScreen extends JPanel {
                     "Halfway up the winding stairs, you find something etched into the obsidian wall.\n" +
                             "It is a mural, ancient and jagged.",
                     // chunk 1 — BG22 stays
-                    "It shows a hooded figure holding three glowing stones high above a kneeling crowd.\n" +
-                            "Beneath it, carved in a language that looks chillingly familiar, is a single phrase:\n" +
+                    "It shows a hooded figure holding three glowing stones high above a kneeling crowd." +
+                            " Beneath it, carved in a language that looks chillingly familiar, is a single phrase: " +
                             "\"TO TEACH IS TO CONTROL.\"",
                     // chunk 2 — BG23
                     "A shiver runs down your spine that has nothing to do with the cold.\n" +
@@ -2804,6 +2827,10 @@ public class GameScreen extends JPanel {
     private void startW1Typing() {
         if (w1DialogueIndex >= WORLD1_DIALOGUES.length) return;
         if (w1TypingTimer != null && w1TypingTimer.isRunning()) w1TypingTimer.stop();
+        if (w1DialogueIndex == 3)  utils.SoundUtil.play("BellSound.WAV");
+        if (w1DialogueIndex == 9)  utils.SoundUtil.play("WolfEncounter.wav");
+        if (w1DialogueIndex == 10) utils.SoundUtil.play("WolfGlaring.WAV");
+        if (w1DialogueIndex == 11) utils.SoundUtil.play("WolfAttack.wav");  // ← move this here too
 
         w1Chunks = splitIntoChunks3(WORLD1_DIALOGUES[w1DialogueIndex]);
         w1ChunkIndex = 0;
@@ -2901,6 +2928,7 @@ public class GameScreen extends JPanel {
 
         if (w1DialogueIndex == 7) {
             w1ContinueBtn.setEnabled(false);
+            utils.SoundUtil.play("KhaiVanishSound.WAV");
             crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai2.jpg", () -> {
                 crossfadeKhaiToKhai("/assets/Backgrounds/SilhouetteSirKhai.png", () -> {
                     delay(1000, () -> {
@@ -2922,6 +2950,7 @@ public class GameScreen extends JPanel {
 
         if (w1DialogueIndex == 8) {
             w1ContinueBtn.setEnabled(false);
+            utils.SoundUtil.play("BushSound.WAV");
             crossfadeKhaiToKhai("/assets/Backgrounds/World1RodtfangWolf1.png", () -> {
                 delay(1000, () -> {
                     try {
@@ -2960,10 +2989,14 @@ public class GameScreen extends JPanel {
         w1DialogueIndex++;
         if (w1DialogueIndex < WORLD1_DIALOGUES.length) {
             startW1Typing();
+            if (w1DialogueIndex == 9)  utils.SoundUtil.play("WolfEncounter.wav");  // ★ "Three wolves emerge"
+            if (w1DialogueIndex == 10) utils.SoundUtil.play("WolfGlaring.WAV");     // ★ "Glowing red eyes"
         } else {
             w1DialogueIndex = 0;
             goToBattle();
         }
+
+        if (w1DialogueIndex == 11) utils.SoundUtil.play("WolfAttack.wav"); // ★ "They hunt to kill"
     }
 
     private void fadeW1Label() {
@@ -3389,7 +3422,7 @@ public class GameScreen extends JPanel {
 
     private void startWorld3Transition() {
         utils.SoundUtil.stopLoop();
-        utils.SoundUtil.playLoop("TheForestOfSilence.wav", 0.5f);
+        utils.SoundUtil.playLoop("World3BackgroundMusic.WAV", 0.5f);
         currentWorld = 3;
         w3DialogueIndex = 0;
 
@@ -3452,6 +3485,11 @@ public class GameScreen extends JPanel {
     private void startW3Typing() {
         if (w3DialogueIndex >= WORLD3_DIALOGUES.length) return;
         if (w3TypingTimer != null && w3TypingTimer.isRunning()) w3TypingTimer.stop();
+
+        if (w3DialogueIndex == 5) {
+            utils.SoundUtil.play("BurningSound.WAV");
+        }
+
         w3Chunks = splitIntoChunks3(WORLD3_DIALOGUES[w3DialogueIndex]);
         w3ChunkIndex = 0;
         typeW3Chunk();
@@ -3616,6 +3654,7 @@ public class GameScreen extends JPanel {
                             delay(2000, () -> {
                                 showW3InterBg("/assets/Backgrounds/World3BG18.png");
                                 delay(2000, () -> {
+                                    delay(1500, () -> utils.SoundUtil.play("ExplosionSound.WAV"));
                                     showW3InterBg("/assets/Backgrounds/World3BG19.png");
                                     w3ContinueBtn.setEnabled(true);
                                     typeW3InterChunkNow();
@@ -3638,6 +3677,7 @@ public class GameScreen extends JPanel {
                 case 2 -> { showW3InterBg("/assets/Backgrounds/World3BG23.png"); typeW3InterChunkNow(); return; }
                 case 3 -> {
                     w3ContinueBtn.setEnabled(false);
+                    utils.SoundUtil.play("CrackingSound.WAV");
                     showW3InterBg("/assets/Backgrounds/World3BG24.png");
                     delay(2000, () -> {
                         showW3InterBg("/assets/Backgrounds/World3BG25.png");
@@ -3668,20 +3708,19 @@ public class GameScreen extends JPanel {
         w3DialogueBox.setText("");
         Runnable resume = w3ResumeAfterDialogue;
         w3ResumeAfterDialogue = null;
-
-        // Set battle background based on which inter-dialogue just finished
         int interIdx = resolveW3InterIndex();
         String battleBg = switch (interIdx) {
-            case 0 -> "/assets/Backgrounds/World3BG15.5.png";  // Bone Warlock battle bg
-            case 1 -> "/assets/Backgrounds/World3BG21.5.png";  // Obsidian Crusher battle bg
-            case 2 -> "/assets/Backgrounds/World3BG27.png";    // Soulflayer Gargoyle battle bg
-            case 3 -> "/assets/Backgrounds/World3BG30.5.png";  // Zyrryl battle bg
+            case 0 -> "/assets/Backgrounds/World3BG15.5.png";
+            case 1 -> "/assets/Backgrounds/World3BG21.5.png";
+            case 2 -> "/assets/Backgrounds/World3BG27.png";
+            case 3 -> "/assets/Backgrounds/World3BG30.5.png";
             default -> "/assets/Backgrounds/World3BG9.png";
         };
         battlePanel.setBattleBackground(battleBg);
-
+        utils.SoundUtil.stopSFX(); // ★ ADD THIS
+        if (interIdx == 3) switchMusic("ZyrrylSound.WAV", 0.7f);
+        else playBattleMusic();
         cardLayout.show(cardPanel, SCREEN_BATTLE);
-        playBattleMusic();
         if (resume != null) resume.run();
     }
 
