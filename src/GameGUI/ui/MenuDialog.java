@@ -5,6 +5,8 @@ import GameGUI.model.entity.HeroData;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public class MenuDialog extends JDialog {
 
@@ -15,10 +17,13 @@ public class MenuDialog extends JDialog {
 
     public MenuDialog(Window parent, Combatant hero, HeroData.HeroDefinition heroDef,
                       Combatant enemy, HeroData.EnemyDefinition enemyDef,
-                      Runnable onUpdate) {
+                      Runnable onUpdate, Supplier<String> bossTauntSupplier,
+                      BooleanSupplier isBossCheck, Runnable onFullyClose) {
         super(parent, "Menu", ModalityType.APPLICATION_MODAL);
         setUndecorated(true);
-        setSize(420, 340);
+
+        boolean isBoss = isBossCheck != null && isBossCheck.getAsBoolean();
+        setSize(420, isBoss ? 400 : 340);
         setLocationRelativeTo(parent);
 
         JPanel root = new JPanel(new BorderLayout()) {
@@ -40,34 +45,65 @@ public class MenuDialog extends JDialog {
         JLabel title = new JLabel("Menu", SwingConstants.CENTER);
         title.setFont(new Font("Georgia", Font.BOLD, 26));
         title.setForeground(GOLD);
-        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
         root.add(title, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
 
+        // Boss taunt banner
+        if (isBoss && bossTauntSupplier != null) {
+            String taunt = bossTauntSupplier.get();
+            JLabel tauntLabel = new JLabel(
+                    "<html><div style='text-align:center; width:320px;'>" + taunt + "</div></html>",
+                    SwingConstants.CENTER);
+            tauntLabel.setFont(new Font("Georgia", Font.ITALIC, 13));
+            tauntLabel.setForeground(new Color(200, 80, 80));
+            tauntLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            tauntLabel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(140, 40, 40), 1),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+            centerPanel.add(tauntLabel);
+            centerPanel.add(Box.createVerticalStrut(14));
+        }
+
         JButton inventoryBtn   = menuBtn("Inventory");
         JButton playerStatsBtn = menuBtn("Player Stats");
         JButton enemyStatsBtn  = menuBtn("Enemy Stats");
 
+        // Each sub-dialog calls onFullyClose when IT closes — timer stays paused the whole time
         inventoryBtn.addActionListener(e -> {
             dispose();
             InventoryDialog inv = new InventoryDialog(
-                    (JFrame) SwingUtilities.getWindowAncestor((Component) parent),
-                    hero, onUpdate);
+                    (JFrame) SwingUtilities.getWindowAncestor((Component) parent), hero, onUpdate);
+            inv.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override public void windowClosed(java.awt.event.WindowEvent ev) {
+                    if (onFullyClose != null) onFullyClose.run();
+                }
+            });
             inv.setVisible(true);
         });
 
         playerStatsBtn.addActionListener(e -> {
             dispose();
             PlayerStatsDialog ps = new PlayerStatsDialog(parent, hero, heroDef);
+            ps.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override public void windowClosed(java.awt.event.WindowEvent ev) {
+                    if (onFullyClose != null) onFullyClose.run();
+                }
+            });
             ps.setVisible(true);
         });
 
         enemyStatsBtn.addActionListener(e -> {
             dispose();
             EnemyStatsDialog es = new EnemyStatsDialog(parent, enemy, enemyDef);
+            es.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override public void windowClosed(java.awt.event.WindowEvent ev) {
+                    if (onFullyClose != null) onFullyClose.run();
+                }
+            });
             es.setVisible(true);
         });
 
@@ -78,14 +114,18 @@ public class MenuDialog extends JDialog {
         centerPanel.add(enemyStatsBtn);
         root.add(centerPanel, BorderLayout.CENTER);
 
-        JButton closeBtn = new JButton("✕  Close");
+        // Close button — also resumes timer
+        JButton closeBtn = new JButton("✕  Back to Battle");
         closeBtn.setFont(new Font("Georgia", Font.BOLD, 13));
         closeBtn.setForeground(TEXT_DIM);
         closeBtn.setBackground(BG_DARK);
         closeBtn.setFocusPainted(false);
         closeBtn.setBorderPainted(false);
         closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        closeBtn.addActionListener(e -> dispose());
+        closeBtn.addActionListener(e -> {
+            dispose();
+            if (onFullyClose != null) onFullyClose.run();
+        });
 
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setOpaque(false);
