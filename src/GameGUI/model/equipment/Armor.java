@@ -1,7 +1,6 @@
 package GameGUI.model.equipment;
 
-import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.ArmorDef;
+import GameGUI.model.entity.data.ArmorDef;
 
 public class Armor {
     public ArmorDef def;
@@ -32,7 +31,6 @@ public class Armor {
 
     // ─── Constructor & Methods ──────────────────────────────────────────────
     public Armor(ArmorDef def) {
-        this.def = def;
         this.name = def.name;
         this.rarity = def.rarity;
 

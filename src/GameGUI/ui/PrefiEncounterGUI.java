@@ -1,8 +1,7 @@
 package GameGUI.ui;
 
 import GameGUI.model.entity.base.Combatant;
-import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.WeaponDef;
+import GameGUI.model.entity.data.WeaponDef;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;

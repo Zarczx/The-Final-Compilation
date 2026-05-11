@@ -50,7 +50,9 @@ public class SaveData {
     public int savedEnemySequenceIndex;
     public int savedEnemyFightIndex;
     public int savedEnemyCurrentHp;  // ★ enemy HP at time of save
-    public int savedEnemyMaxHp;      // ★ enemy max HP (so we know the ratio)
+    public int savedEnemyMaxHp;
+    public boolean isFinalBossSequence;// ★ enemy max HP (so we know the ratio)
+    public boolean isPrefiScreenActive;
 
 
     // Empty constructor is REQUIRED for JSON libraries (like Gson) to work properly
