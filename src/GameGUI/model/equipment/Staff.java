@@ -30,7 +30,7 @@ public class Staff extends Weapon {
         // Staff-specific effect (Energy Restoration)
         if (energyPerAttack > 0) {
             int restore = energyPerAttack;
-            player.energy = Math.min(player.maxEnergy, player.energy + restore);
+            player.setEnergy(Math.min(player.getMaxEnergy(), player.getEnergy() + restore));
             logs.add("✨ Arc Surge! Restored " + restore + " Energy!");
         }
 

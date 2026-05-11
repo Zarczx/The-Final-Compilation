@@ -6,6 +6,7 @@ import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;
 import GameGUI.model.equipment.Sword;
 import GameGUI.model.equipment.Weapon;
+import GameGUI.model.entity.DataManager;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -773,7 +774,7 @@ public class PrefiEncounterGUI extends JPanel {
     // =========================================================================
 
     private void resolveWeapon() {
-        legendaryArmor = new Armor(HeroData.CELESTIAL_BATTLEGEAR);
+        legendaryArmor = new Armor(DataManager.getData().getCelestialBattlegear());
         String classType = getClassType();
 
         HeroData.WeaponDef wDef = switch (classType) {

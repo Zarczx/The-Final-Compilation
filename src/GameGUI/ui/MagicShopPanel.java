@@ -1,6 +1,8 @@
 package GameGUI.ui;
 
 import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.ShopPassive;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -185,6 +187,9 @@ public class MagicShopPanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     //  ITEM GRID  – each button placed at exact pixel coordinates
     // ════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
+    //  ITEM GRID  – each button placed at exact pixel coordinates
+    // ════════════════════════════════════════════════════════════════════════
     private void populateGrid() {
         itemsGrid.removeAll();
         if (player == null) { itemsGrid.revalidate(); itemsGrid.repaint(); return; }
@@ -195,70 +200,70 @@ public class MagicShopPanel extends JPanel {
         // ── Row 1 ─────────────────────────────────────────────────────────────
         slot("Vitality Blessing", 10, LEFT_X,  ROW1_Y,
                 () -> false,
-                b -> { player.maxHp += 100; player.heal(100); },
+                b -> { player.setMaxHp(player.getMaxHp() + 100); player.heal(100); },
                 "All");
 
         slot("Attack Infusion", 12, RIGHT_X, ROW1_Y,
                 () -> false,
-                b -> { player.baseAttack += 8; player.recalculateBuffs(); },
+                b -> { player.setBaseAttack(player.getBaseAttack() + 8); player.recalculateBuffs(); },
                 "All");
 
         // ── Row 2 ─────────────────────────────────────────────────────────────
         slot("Vital Surge", 28, LEFT_X, ROW2_Y,
-                () -> player.hasVitalSurge,
-                b -> { player.hasVitalSurge = true;
+                () -> player.hasPassive(ShopPassive.VITAL_SURGE),
+                b -> { player.addPassive(ShopPassive.VITAL_SURGE);
                     if (wpn != null) { wpn.addLifestealPercent += 5;
                         wpn.enchantments.put("💖 Vital Surge", "(+5% Lifesteal)"); }},
                 "Swordsman", "Archer", "Mage");
 
         slot("Shock Bind", 30, RIGHT_X, ROW2_Y,
-                () -> player.hasShockBind,
-                b -> { player.hasShockBind = true;
+                () -> player.hasPassive(ShopPassive.SHOCK_BIND),
+                b -> { player.addPassive(ShopPassive.SHOCK_BIND);
                     if (wpn != null) { wpn.stunChance += 20;
                         wpn.enchantments.put("⛓️ Shockbind", "(20% Stun chance)"); }},
                 "Swordsman");
 
         // ── Row 3 ─────────────────────────────────────────────────────────────
         slot("Frost Arrow", 30, LEFT_X, ROW3_Y,
-                () -> player.hasFrostArrow,
-                b -> { player.hasFrostArrow = true;
+                () -> player.hasPassive(ShopPassive.FROST_ARROW),
+                b -> { player.addPassive(ShopPassive.FROST_ARROW);
                     if (wpn != null) { wpn.freezeChance += 20;
                         wpn.enchantments.put("❄️ Frost Arrow", "(20% Freeze chance)"); }},
                 "Archer");
 
         slot("Arc Surge", 26, RIGHT_X, ROW3_Y,
-                () -> player.hasArcSurge,
-                b -> { player.hasArcSurge = true;
+                () -> player.hasPassive(ShopPassive.ARC_SURGE),
+                b -> { player.addPassive(ShopPassive.ARC_SURGE);
                     if (wpn != null) { wpn.energyPerAttack += 3;
                         wpn.enchantments.put("✨ Arc Surge", "(+3 Energy per hit)"); }},
                 "Mage");
 
         // ── Row 4 ─────────────────────────────────────────────────────────────
         slot("Venom Infusion", 30, LEFT_X, ROW4_Y,
-                () -> player.hasVenomInfusion,
-                b -> { player.hasVenomInfusion = true;
+                () -> player.hasPassive(ShopPassive.VENOM_INFUSION),
+                b -> { player.addPassive(ShopPassive.VENOM_INFUSION);
                     if (wpn != null) { wpn.poisonChance += 20;
                         wpn.enchantments.put("☠️ Venom Infusion", "(+20% Poison chance)"); }},
                 "All");
 
         slot("Razor Edge", 32, RIGHT_X, ROW4_Y,
-                () -> player.hasRazorEdge,
-                b -> { player.hasRazorEdge = true;
+                () -> player.hasPassive(ShopPassive.RAZOR_EDGE),
+                b -> { player.addPassive(ShopPassive.RAZOR_EDGE);
                     if (wpn != null) { wpn.bleedChance += 20;
                         wpn.enchantments.put("🩸 Razor Edge", "(+20% Bleed chance)"); }},
                 "Swordsman", "Archer");
 
         // ── Row 5 ─────────────────────────────────────────────────────────────
         slot("Fortified Plating", 26, LEFT_X, ROW5_Y,
-                () -> player.hasFortifiedPlating,
-                b -> { player.hasFortifiedPlating = true;
+                () -> player.hasPassive(ShopPassive.FORTIFIED_PLATING),
+                b -> { player.addPassive(ShopPassive.FORTIFIED_PLATING);
                     if (armor != null) { armor.addDefBuff += 10;
                         armor.hasEnchantment = true; player.recalculateBuffs(); }},
                 "All");
 
         slot("Phoenix Soulstone", 40, RIGHT_X, ROW5_Y,
-                () -> player.hasPhoenixSoulstone,
-                b -> player.hasPhoenixSoulstone = true,
+                () -> player.hasPassive(ShopPassive.PHOENIX_SOULSTONE),
+                b -> player.addPassive(ShopPassive.PHOENIX_SOULSTONE),
                 "All");
 
         itemsGrid.revalidate();
@@ -298,8 +303,8 @@ public class MagicShopPanel extends JPanel {
         JButton  b    = imageBtn(imgs[0], imgs[1], BTN_W, BTN_H);
 
         b.addActionListener(e -> {
-            if (player.soulShards >= cost) {
-                player.soulShards -= cost;
+            if (player.getSoulShards() >= cost) {
+                player.setSoulShards(player.getSoulShards() - cost);
                 apply.accept(b);
                 updateShardsDisplay();
                 ImageIcon oi = scaledIcon("TakeItemOnly.png", BTN_W, BTN_H);
@@ -407,6 +412,6 @@ public class MagicShopPanel extends JPanel {
     // ── Shard display ─────────────────────────────────────────────────────────
     private void updateShardsDisplay() {
         if (player != null && shardsLabel != null)
-            shardsLabel.setText("Soul Shards: " + player.soulShards);
+            shardsLabel.setText("Soul Shards: " + player.getSoulShards());
     }
 }

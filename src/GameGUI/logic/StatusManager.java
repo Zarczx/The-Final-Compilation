@@ -1,7 +1,6 @@
 package GameGUI.model.logic;
 
 import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -200,21 +199,21 @@ public class StatusManager {
 
     public void updateDoTEffects(List<String> logs) {
         if (has(Effect.POISONED)) {
-            int damage = Math.min(45, Math.max(1, (int)(owner.maxHp * 0.03)));
+            int damage = Math.min(45, Math.max(1, (int)(owner.getMaxHp() * 0.03)));
             owner.takeDamage(damage);
             logs.add("☠️ POISON deals " + damage + " damage to " + owner.name + "!");
             tick(Effect.POISONED);
         }
         if (has(Effect.BLEEDING)) {
-            int missingHp = owner.maxHp - owner.currentHp;
+            int missingHp = owner.getMaxHp() - owner.getCurrentHp();
             int damage    = Math.min(45, Math.max(1, (int)(missingHp * 0.05)));
             owner.takeDamage(damage);
             logs.add("🩸 BLEED deals " + damage + " damage to " + owner.name + "!");
             tick(Effect.BLEEDING);
         }
         if (has(Effect.BURNING)) {
-            int rawBurn  = (int)((owner.maxHp * 0.02) + (owner.currentHp * 0.02));
-            int burnCap  = (int)(owner.maxHp * 0.06);
+            int rawBurn  = (int)((owner.getMaxHp() * 0.02) + (owner.getCurrentHp() * 0.02));
+            int burnCap  = (int)(owner.getMaxHp() * 0.06);
             int damage   = Math.min(45, Math.max(1, Math.min(rawBurn, burnCap)));
             owner.takeDamage(damage);
             logs.add("🔥 BURN deals " + damage + " damage to " + owner.name + "!");

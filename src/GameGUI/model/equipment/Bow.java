@@ -30,7 +30,7 @@ public class Bow extends Weapon {
         // Bow-specific extra hit (Piercing Shot)
         if (extraHitChance > 0 && Math.random() * 100 < extraHitChance) {
             int extraDamage = (int) (damage * (0.20 + (Math.random() * 0.20)));
-            enemy.currentHp -= extraDamage;
+            enemy.setCurrentHp(enemy.getCurrentHp() - extraDamage);
             logs.add("🏹 Twinshot! Extra arrow hit for " + extraDamage + " damage!");
         }
 

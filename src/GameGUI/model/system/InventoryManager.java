@@ -67,15 +67,15 @@ public class InventoryManager {
     public void setEquippedArmor(Armor armor) {
         // Remove old armor's HP contribution
         if (this.equippedArmor != null) {
-            owner.maxHp    -= this.equippedArmor.hpBuff;
-            owner.currentHp = Math.min(owner.currentHp, owner.maxHp);
+            owner.setMaxHp(owner.getMaxHp() - this.equippedArmor.hpBuff);
+            owner.setCurrentHp(Math.min(owner.getCurrentHp(), owner.getMaxHp()));
         }
 
         this.equippedArmor = armor;
 
         // Apply new armor's HP contribution
         if (armor != null) {
-            owner.maxHp += armor.hpBuff;
+            owner.setMaxHp(owner.getMaxHp() + armor.hpBuff);
         }
 
         owner.recalculateBuffs();

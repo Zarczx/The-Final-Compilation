@@ -54,14 +54,14 @@ public class PotionManager {
         if (normalHealingPotions <= 0) return "❌ No Healing Potions remaining.";
         normalHealingPotions--;
 
-        int oldHp      = owner.currentHp;
-        int healAmount = (int) (owner.maxHp * 0.15);
+        int oldHp      = owner.getCurrentHp();
+        int healAmount = (int) (owner.getMaxHp() * 0.15);
         owner.heal(healAmount);
-        int restored   = owner.currentHp - oldHp;
+        int restored   = owner.getCurrentHp() - oldHp;
 
         return String.format(
                 "🧪 Healing Potion consumed. Restored %d HP  (%d → %d)",
-                restored, oldHp, owner.currentHp);
+                restored, oldHp, owner.getCurrentHp());
     }
 
     /**
@@ -73,9 +73,9 @@ public class PotionManager {
         if (fullHealingPotions <= 0) return "❌ No Full Healing Potion remaining.";
         fullHealingPotions--;
 
-        int oldHp = owner.currentHp;
-        owner.heal(owner.maxHp);    // Combatant.heal() clamps at maxHp
-        int restored = owner.currentHp - oldHp;
+        int oldHp = owner.getCurrentHp();
+        owner.heal(owner.getMaxHp());    // Combatant.heal() clamps at maxHp
+        int restored = owner.getCurrentHp() - oldHp;
 
         return String.format(
                 "🩸 Full Healing Potion consumed. Health fully restored  (+%d HP)", restored);
@@ -98,16 +98,16 @@ public class PotionManager {
             case "Swordsman" -> 30;
             case "Archer"    ->  6;
             case "Mage"      -> 40;
-            default          -> (int) (owner.maxEnergy * 0.25);
+            default          -> (int) (owner.getMaxEnergy() * 0.25);
         };
 
-        int oldEnergy = owner.energy;
+        int oldEnergy = owner.getEnergy();
         owner.restoreEnergy(restoreAmount);
-        int restored = owner.energy - oldEnergy;
+        int restored = owner.getEnergy() - oldEnergy;
 
         return String.format(
                 "✨ Energy Potion consumed. Restored %d %s  (%d → %d)",
-                restored, owner.getEnergyName(), oldEnergy, owner.energy);
+                restored, owner.getEnergyName(), oldEnergy, owner.getEnergy());
     }
 
     // =========================================================================

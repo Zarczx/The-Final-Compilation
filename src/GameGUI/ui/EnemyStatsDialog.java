@@ -56,7 +56,7 @@ public class EnemyStatsDialog extends JDialog {
 
         content.add(sectionHeader("Stats"));
         content.add(Box.createVerticalStrut(6));
-        content.add(statRow("❤  HP",      enemy.currentHp + " / " + enemy.maxHp, new Color(200, 80, 80)));
+        content.add(statRow("❤  HP",      enemy.getCurrentHp() + " / " + enemy.getMaxHp(), new Color(200, 80, 80)));
         content.add(Box.createVerticalStrut(4));
         content.add(statRow("⚔  Attack",  String.valueOf(enemy.attack),  new Color(220, 160, 60)));
         content.add(Box.createVerticalStrut(4));

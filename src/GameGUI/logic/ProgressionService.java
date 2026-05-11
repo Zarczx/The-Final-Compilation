@@ -19,12 +19,12 @@ public class ProgressionService {
      * Returns true if the character leveled up during this transaction.
      */
     public static boolean gainExp(Combatant hero, int amount, int currentWorldLevel) {
-        if (hero.level >= 30) return false;
+        if (hero.getLevel() >= 30) return false;
 
-        hero.exp += amount;
+        hero.setExp(hero.getExp() + amount);
         boolean leveledUp = false;
 
-        while (hero.level < 30 && hero.level < XP_TABLE.length - 1 && hero.exp >= hero.nextLevelExp) {
+        while (hero.getLevel() < 30 && hero.getLevel() < XP_TABLE.length - 1 && hero.getExp() >= hero.getNextLevelExp()) {
             applyLevelUp(hero, currentWorldLevel);
             leveledUp = true;
         }
@@ -39,35 +39,35 @@ public class ProgressionService {
      * Applies the permanent stat increases based on Role and World Level.
      */
     private static void applyLevelUp(Combatant hero, int worldLevel) {
-        if (hero.level >= 30) return;
+        if (hero.getLevel() >= 30) return;
 
-        hero.level++;
+        hero.setLevel(hero.getLevel() + 1);
 
-        int oldMaxHp = hero.maxHp;
-        int oldAtk   = hero.baseAttack;
-        int oldDef   = hero.baseDefense;
+        int oldMaxHp = hero.getMaxHp();
+        int oldAtk   = hero.getBaseAttack();
+        int oldDef   = hero.getBaseDefense();
 
         // Apply class-specific growth formulas to BASE stats
         switch (hero.role) {
             case "Swordsman" -> {
-                hero.maxHp += 60 + (worldLevel * 5);
-                hero.baseAttack += 7 + worldLevel;
-                hero.baseDefense += 3 + worldLevel;
+                hero.setMaxHp(hero.getMaxHp() + 60 + (worldLevel * 5));
+                hero.setBaseAttack(hero.getBaseAttack() + 7 + worldLevel);
+                hero.setBaseDefense(hero.getBaseDefense() + 3 + worldLevel);
             }
             case "Archer" -> {
-                hero.maxHp += 56 + (worldLevel * 5);
-                hero.baseAttack += 8 + worldLevel;
-                hero.baseDefense += 2 + worldLevel;
+                hero.setMaxHp(hero.getMaxHp() + 56 + (worldLevel * 5));
+                hero.setBaseAttack(hero.getBaseAttack() + 8 + worldLevel);
+                hero.setBaseDefense(hero.getBaseDefense() + 2 + worldLevel);
             }
             case "Mage" -> {
-                hero.maxHp += 50 + (worldLevel * 5);
-                hero.baseAttack += 9 + worldLevel;
-                hero.baseDefense += 1 + worldLevel;
+                hero.setMaxHp(hero.getMaxHp() + 50 + (worldLevel * 5));
+                hero.setBaseAttack(hero.getBaseAttack() + 9 + worldLevel);
+                hero.setBaseDefense(hero.getBaseDefense() + 1 + worldLevel);
             }
             default -> {
-                hero.maxHp += 55 + (worldLevel * 5);
-                hero.baseAttack += 7 + worldLevel;
-                hero.baseDefense += 2 + worldLevel;
+                hero.setMaxHp(hero.getMaxHp() + 55 + (worldLevel * 5));
+                hero.setBaseAttack(hero.getBaseAttack() + 7 + worldLevel);
+                hero.setBaseDefense(hero.getBaseDefense() + 2 + worldLevel);
             }
         }
 
@@ -76,23 +76,23 @@ public class ProgressionService {
         hero.recalculateBuffs();
 
         // Restore 50% HP and Energy
-        hero.heal((int)(hero.maxHp * 0.50)); // Use the safe mutator!
-        hero.restoreEnergy((int)(hero.maxEnergy * 0.50));
+        hero.heal((int)(hero.getMaxHp() * 0.50)); // Use the safe mutator!
+        hero.restoreEnergy((int)(hero.getMaxEnergy() * 0.50));
 
         // Deduct XP requirement for the next level
-        hero.exp -= hero.nextLevelExp;
-        if (hero.level < XP_TABLE.length) {
-            hero.nextLevelExp = XP_TABLE[hero.level];
+        hero.setExp(hero.getExp() - hero.getNextLevelExp());
+        if (hero.getLevel() < XP_TABLE.length) {
+            hero.setNextLevelExp(XP_TABLE[hero.getLevel()]);
         }
 
         // Store the exact stat gains so the UI can read them later to show the Level Up screen
-        int hpGain  = hero.maxHp - oldMaxHp;
-        int atkGain = hero.baseAttack - oldAtk;
-        int defGain = hero.baseDefense - oldDef;
+        int hpGain  = hero.getMaxHp() - oldMaxHp;
+        int atkGain = hero.getBaseAttack() - oldAtk;
+        int defGain = hero.getBaseDefense() - oldDef;
 
-        hero.lastLevelUpData = String.format(
+        hero.setLastLevelUpData(String.format(
                 "LVL_UP|%d|%d|%d|%d|%d|%d|%d|%d",
-                hero.level, hpGain, hero.maxHp, atkGain, hero.attack, defGain, hero.defense, hero.maxEnergy
-        );
+                hero.getLevel(), hpGain, hero.getMaxHp(), atkGain, hero.attack, defGain, hero.defense, hero.getMaxEnergy()
+        ));
     }
 }
