@@ -5625,7 +5625,7 @@ public class BattlePanel extends JPanel {
 
             // 2. Apply Rewards Immediately
             boolean leveledUp =
-                    ProgressionService.gainExp(currentHero, individualXp, 1);
+                    ProgressionService.gainExp(currentHero, individualXp, enemyDef.getWorldLevel());
 
             currentHero.setSoulShards(currentHero.getSoulShards() + individualShards);
 
