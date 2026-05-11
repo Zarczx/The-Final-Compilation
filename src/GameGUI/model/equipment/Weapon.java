@@ -4,6 +4,7 @@ import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.WeaponDef;
 import GameGUI.model.entity.data.WeaponType;
 import GameGUI.model.logic.StatusManager;
+import GameGUI.model.entity.data.definition.WeaponDef;
 
 import java.util.HashMap;
 import java.util.List;

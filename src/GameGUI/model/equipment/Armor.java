@@ -3,6 +3,7 @@ package GameGUI.model.equipment;
 import GameGUI.model.entity.data.ArmorDef;
 
 public class Armor {
+    public ArmorDef def;
     public String name, rarity;
     public int hpBuff;
     public int defBuff, addDefBuff;
