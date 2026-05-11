@@ -129,7 +129,8 @@ public class TitleScreen extends JPanel {
                     null,
                     1,
                     0,  // ★ ADDED: Dummy seqIndex for Load Mode
-                    0,  // ★ ADDED: Dummy fightIndex for Load Mode
+                    0,
+                    false,// ★ ADDED: Dummy fightIndex for Load Mode
                     (Combatant loadedHero, GameGUI.model.system.SaveData data) -> {
                         timer.stop(); // Stop the Title Screen animations
 

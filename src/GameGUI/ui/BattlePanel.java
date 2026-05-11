@@ -653,7 +653,7 @@ public class BattlePanel extends JPanel {
 
         // Right after: this.enemyDef = eDef;
 
-        if (eDef.getName().equals("Khai the Gray")) {
+        if (eDef.getName().equals("Khai the Necromancer")) {
             setBattleBackground("/assets/Backgrounds/NecroBackground.png");
         } else if (isWorld2Battle) {
             String bg = switch (eDef.getName()) {
@@ -5624,8 +5624,7 @@ public class BattlePanel extends JPanel {
             int individualShards = isBoss ? 10 : 1;
 
             // 2. Apply Rewards Immediately
-            boolean leveledUp =
-                    ProgressionService.gainExp(currentHero, individualXp, 1);
+            boolean leveledUp = ProgressionService.gainExp(currentHero, individualXp, enemyDef.getWorldLevel());
 
             currentHero.setSoulShards(currentHero.getSoulShards() + individualShards);
 
@@ -6957,7 +6956,7 @@ public class BattlePanel extends JPanel {
                 case "Obsidian Crusher"    -> "/assets/Backgrounds/World3BG21.5.png";
                 case "Soulflayer Gargoyle" -> "/assets/Backgrounds/World3BG27.png";
                 case "Zyrryl"              -> "/assets/Backgrounds/World3BG30.5.png";
-                case "Khai the Gray"       -> "/assets/Backgrounds/NecroBackground.png";
+                case "Khai the Necromancer"       -> "/assets/Backgrounds/NecroBackground.png";
                 // World 1 default
                 default -> "/assets/Backgrounds/World1BattleBackground.png";
             };

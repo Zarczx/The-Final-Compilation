@@ -36,7 +36,7 @@ public class SaveManager {
      * The ATOMIC SAVE method.
      * Extracts data from Kael, writes to a temp file, then safely overwrites the real save.
      */
-    public static boolean saveGame(Combatant hero, Combatant enemy, int slotNumber, int currentWorld, int seqIndex, int fightIndex) {
+    public static boolean saveGame(Combatant hero, Combatant enemy, int slotNumber, int currentWorld, int seqIndex, int fightIndex, boolean isPrefiActive) {
         ensureDirectoryExists();
 
         // 1. Create our "Dumb" DTO
@@ -84,6 +84,10 @@ public class SaveManager {
         data.savedEnemyFightIndex = fightIndex;
         data.savedEnemyCurrentHp = (enemy != null) ? enemy.getCurrentHp() : -1;
         data.savedEnemyMaxHp     = (enemy != null) ? enemy.getMaxHp() : -1;
+
+        data.isPrefiScreenActive = isPrefiActive;
+        boolean isFightingKhai = (enemy != null && enemy.name != null && enemy.name.toLowerCase().contains("khai"));
+        data.isFinalBossSequence = (isPrefiActive || isFightingKhai);
 
         // ════════════════════════════════════════════════════
         // 7. ★ ATOMIC SAVE LOGIC ★
@@ -160,7 +164,7 @@ public class SaveManager {
         hero.setSoulShards(data.soulShards);
 
         // 3. Restore Consumables
-        hero.inventory.potions.addNormalHealingPotions(data.normalFlasks - 3); // -3 because Factory gives 3 by default
+        hero.inventory.potions.addNormalHealingPotions(data.normalFlasks);
         hero.inventory.potions.addFullHealingPotions(data.crimsonFlasks);
         hero.inventory.potions.addEnergyPotions(data.ceruleanFlasks);
 
