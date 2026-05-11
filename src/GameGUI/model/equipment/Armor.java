@@ -31,7 +31,6 @@ public class Armor {
 
     // ─── Constructor & Methods ──────────────────────────────────────────────
     public Armor(ArmorDef def) {
-        this.def = def;
         this.name = def.name;
         this.rarity = def.rarity;
 

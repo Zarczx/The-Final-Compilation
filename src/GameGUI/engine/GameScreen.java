@@ -358,6 +358,7 @@ public class GameScreen extends JPanel {
 
     // This handles the actual transition and logic
     private void startPrefiEncounter(Combatant player) {
+
         switchMusic("PrefinalMusic.WAV", 0.6f);
 
         GameGUI.ui.PrefiEncounterGUI prefiPanel = new GameGUI.ui.PrefiEncounterGUI(player, () -> {
@@ -3930,7 +3931,7 @@ public class GameScreen extends JPanel {
                                                         showW3SceneImage("/assets/Backgrounds/W3Epilogue13.png");
                                                         delay(2000, () -> {
                                                             showW3SceneImage("/assets/Backgrounds/W3Epilogue14.png");
-                                                            typeVictoryLine(6, () -> System.exit(0));
+                                                            typeVictoryLine(6, () -> finishEpilogue());
                                                         });
                                                     })
                                             )
@@ -4000,6 +4001,12 @@ public class GameScreen extends JPanel {
 
     private void typeFromArray(String[] source, int lineIdx, Runnable onContinue) {
         if (lineIdx >= source.length) return;
+
+        w3ContinueBtn.setEnabled(false);
+        for (ActionListener l : w3ContinueBtn.getActionListeners()) {
+            w3ContinueBtn.removeActionListener(l);
+        }
+
         String text = source[lineIdx];
         w3DialogueBox.setText("");
         w3DialogueBox.setForeground(Color.WHITE);
@@ -4055,9 +4062,13 @@ public class GameScreen extends JPanel {
         this.currentWorld = data.currentWorld;
         battlePanel.setCurrentHero(loadedHero);
         utils.SoundUtil.stopLoop();
+
+        if (data.isPrefiScreenActive) {
+            startPrefiEncounter(loadedHero);
+            return;
+        }
         cardLayout.show(cardPanel, SCREEN_BATTLE);
 
-        // ★ FIX: Wire up inter-enemy dialogues, same as goToBattle()
         battlePanel.setOnEnemyGroupDefeated((nextGroupIndex, resumeFight) -> {
             SwingUtilities.invokeLater(() -> {
                 if (currentWorld == 1) {
@@ -4068,12 +4079,18 @@ public class GameScreen extends JPanel {
                     }
                     showWorld2InterDialogue(nextGroupIndex - 1, resumeFight);
                 } else if (currentWorld == 3) {
-                    showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+                    // If we are in the Final Boss sequence, we might not want standard World 3 dialogues
+                    if (data.isFinalBossSequence) {
+                        resumeFight.run();
+                    } else {
+                        showWorld3InterDialogue(nextGroupIndex - 1, resumeFight);
+                    }
                 } else {
                     resumeFight.run();
                 }
             });
         });
+
         if (currentWorld == 1) {
             utils.SoundUtil.playLoop("World1BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
@@ -4103,17 +4120,29 @@ public class GameScreen extends JPanel {
             restoreEnemyHp(data);
 
         } else if (currentWorld == 3) {
-            utils.SoundUtil.playLoop("World3BGMusic.wav", 0.5f);
-            battlePanel.resumeEnemySequence(
-                    confirmedHero,
-                    DataManager.getData().getWorld3Enemies(),
-                    data.savedEnemySequenceIndex,
-                    data.savedEnemyFightIndex,
-                    () -> {
-                        startPrefiEncounter(battlePanel.getCurrentHero());
-                    }
-            );
-            restoreEnemyHp(data);
+            if (data.isFinalBossSequence) {
+                battlePanel.setBattleBackground("/assets/Backgrounds/NecroBackground.png");
+                switchMusic("FinalBossBattleMusic.WAV", 0.8f);
+                battlePanel.resumeEnemySequence(
+                        confirmedHero,
+                        DataManager.getData().getFinalBossSequence(),
+                        data.savedEnemySequenceIndex,
+                        data.savedEnemyFightIndex,
+                        this::showKhaiVictoryDialogue
+                );
+
+
+            } else {
+                utils.SoundUtil.playLoop("World3BGMusic.wav", 0.5f);
+                battlePanel.resumeEnemySequence(
+                        confirmedHero,
+                        DataManager.getData().getWorld3Enemies(),
+                        data.savedEnemySequenceIndex,
+                        data.savedEnemyFightIndex,
+                        () -> startPrefiEncounter(battlePanel.getCurrentHero())
+                );
+            }
+            restoreEnemyHp(data); // ← one call covers both branches
         }
     }
 
@@ -4134,6 +4163,15 @@ public class GameScreen extends JPanel {
             showStyledCannotSaveDialog();
             return;
         }
+        boolean prefiActive = false;
+        if (cardPanel.getComponentCount() > 0) {
+            for (Component comp : cardPanel.getComponents()) {
+                if (comp.isVisible() && comp instanceof GameGUI.ui.PrefiEncounterGUI) {
+                    prefiActive = true;
+                    break;
+                }
+            }
+        }
 
         // Open the dialog in Save Mode (isSaveMode = true)
         GameGUI.ui.SaveSlotDialog saveDialog = new GameGUI.ui.SaveSlotDialog(
@@ -4144,6 +4182,7 @@ public class GameScreen extends JPanel {
                 currentWorld,
                 battlePanel.getEnemySequenceIndex(),
                 battlePanel.getEnemyFightIndex(),
+                prefiActive,
                 null
         );
         saveDialog.setVisible(true);

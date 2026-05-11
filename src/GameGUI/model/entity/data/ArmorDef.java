@@ -9,8 +9,13 @@ public class ArmorDef {
 
     public ArmorDef(String name, String rarity, int hpBuff, int defBuff,
                     boolean immuneDebuff, boolean immuneEffects, int reflectChance, int reflectPercent) {
-        this.name = name; this.rarity = rarity; this.hpBuff = hpBuff; this.defBuff = defBuff;
-        this.immuneDebuff = immuneDebuff; this.immuneEffects = immuneEffects;
-        this.reflectChance = reflectChance; this.reflectPercent = reflectPercent;
+        this.name = name;
+        this.rarity = rarity;
+        this.hpBuff = hpBuff;
+        this.defBuff = defBuff;
+        this.immuneDebuff = immuneDebuff;
+        this.immuneEffects = immuneEffects;
+        this.reflectChance = reflectChance;
+        this.reflectPercent = reflectPercent;
     }
 }

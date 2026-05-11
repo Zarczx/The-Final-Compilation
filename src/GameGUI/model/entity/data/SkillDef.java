@@ -12,10 +12,14 @@ public class SkillDef {
     public SkillDef(String icon, String name, String description,
                     double minMultiplier, double maxMultiplier,
                     boolean pierceArmor, int cooldown, int energyCost, int hitCount) {
-        this.icon = icon; this.name = name; this.description = description;
-        this.minMultiplier = minMultiplier; this.maxMultiplier = maxMultiplier;
+        this.icon = icon;
+        this.name = name;
+        this.description = description;
+        this.minMultiplier = minMultiplier;
+        this.maxMultiplier = maxMultiplier;
         this.pierceArmor = pierceArmor;
-        this.cooldown = cooldown; this.energyCost = energyCost;
+        this.cooldown = cooldown;
+        this.energyCost = energyCost;
         this.hitCount = hitCount;
     }
 }

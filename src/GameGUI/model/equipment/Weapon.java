@@ -1,7 +1,8 @@
 package GameGUI.model.equipment;
 
 import GameGUI.model.entity.base.Combatant;
-import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.WeaponDef;
+import GameGUI.model.entity.data.WeaponType;
 import GameGUI.model.logic.StatusManager;
 import GameGUI.model.entity.data.WeaponDef;
 
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class Weapon {
-    public HeroData.WeaponType type;
+    public WeaponType type;
     public String name, rarity;
     public int atkBuff, lifestealPercent, poisonChance, bleedChance;
     public int stunChance, freezeChance, confuseChance, energyPerAttack, extraHitChance;

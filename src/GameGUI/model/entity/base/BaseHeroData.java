@@ -89,5 +89,4 @@ public class BaseHeroData implements HeroData {
     }
 
 
-    // ... repeat for World 3 and Final Boss
 }
