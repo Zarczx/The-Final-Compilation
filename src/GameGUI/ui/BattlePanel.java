@@ -3,6 +3,8 @@ package GameGUI.ui;
 import GameGUI.model.entity.Combatant;
 import GameGUI.model.entity.HeroData.HeroDefinition;
 import GameGUI.model.entity.HeroData.EnemyDefinition;
+import GameGUI.model.entity.DataManager;
+
 import GameGUI.model.HeroFactory;
 import GameGUI.logic.BattleManager;
 import GameGUI.logic.ProgressionService;
@@ -682,7 +684,7 @@ public class BattlePanel extends JPanel {
             // Case 3: Entering a New World or Boss fight with our veteran hero!
             // Clean up old poisons/stuns, but KEEP ALL ITEMS AND HP!
             this.currentHero.getStatusManager().resetAllEffects();
-            this.currentHero.specialCooldown = 0;
+            this.currentHero.setSpecialCooldown(0);
         }
 
 
@@ -5605,7 +5607,7 @@ public class BattlePanel extends JPanel {
             boolean leveledUp =
                     ProgressionService.gainExp(currentHero, individualXp, 1);
 
-            currentHero.soulShards += individualShards;
+            currentHero.setSoulShards(currentHero.getSoulShards() + individualShards);
 
             // POTION DROPS
             boolean isMiniBoss = eDef.name.equals("The Hollow Stag") ||
@@ -5730,9 +5732,9 @@ public class BattlePanel extends JPanel {
         // NO XP, SHARDS, OR POTIONS ARE ADDED TO THE HERO HERE!
         // They were already paid out per-kill in handleVictory.
 
-        if (currentHero.lastLevelUpData != null) {
-            parseLevelUpMsg(currentHero.lastLevelUpData);
-            currentHero.lastLevelUpData = null;
+        if (currentHero.getLastLevelUpData() != null) {
+            parseLevelUpMsg(currentHero.getLastLevelUpData());
+            currentHero.setLastLevelUpData(null);
         }
 
         setLogFontSmall();
@@ -5861,9 +5863,9 @@ public class BattlePanel extends JPanel {
 
         // 1. First chance: Phoenix Soulstone
         try {
-            if ((boolean) currentHero.getClass().getField("hasPhoenixSoulstone").get(currentHero)) {
-                currentHero.getClass().getField("hasPhoenixSoulstone").set(currentHero, false);
-                currentHero.currentHp = currentHero.maxHp;
+            if ((boolean) currentHero.getClass().getField("addPassive(ShopPassive.PHOENIX_SOULSTONE)ixSoulstone").get(currentHero)) {
+                currentHero.getClass().getField("addPassive(ShopPassive.PHOENIX_SOULSTONE)ixSoulstone").set(currentHero, false);
+                currentHero.setCurrentHp(currentHero.getMaxHp());
                 clearLog();
                 addLog("Phoenix Soulstone activated! Revived!", GREEN);
                 refreshBattleUI();
@@ -5880,8 +5882,8 @@ public class BattlePanel extends JPanel {
             String ans = JOptionPane.showInputDialog(this, "Q: What keyword is used to inherit a class in Java?");
             if (ans != null && ans.trim().equalsIgnoreCase("extends")) {
                 hasUsedQuizRevive = true; // Mark as used so it cannot be triggered again
-                currentHero.currentHp = currentHero.maxHp / 2;
-                currentHero.energy = currentHero.maxEnergy / 2;
+                currentHero.setCurrentHp(currentHero.getMaxHp() / 2);
+                currentHero.setEnergy(currentHero.getMaxEnergy() / 2);
                 clearLog();
                 addLog("Correct! Revived at 50% HP!", GREEN);
                 refreshBattleUI();
@@ -6057,7 +6059,7 @@ public class BattlePanel extends JPanel {
         heroEmojiLbl.setText(heroDef.emoji);
         heroNameLbl.setText(heroDef.name);
         heroRoleLbl.setText(heroDef.role);
-        if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.level);
+        if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.getLevel());
 
         String enemyEmoji = switch (enemyDef.name) {
             case "Rotfang Wolf" -> "🐾";
@@ -6068,9 +6070,9 @@ public class BattlePanel extends JPanel {
         enemyNameLbl.setText(enemyDef.name);
         enemyRoleLbl.setText(enemyDef.role);
 
-        heroHpBar.setMaximum(currentHero.maxHp);
-        enemyHpBar.setMaximum(currentEnemy.maxHp);
-        if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.maxEnergy);
+        heroHpBar.setMaximum(currentHero.getMaxHp());
+        enemyHpBar.setMaximum(currentEnemy.getMaxHp());
+        if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.getMaxEnergy());
 
         if (heroDef.skills != null && heroDef.skills.length >= 3) {
             configureSkillButton(skill1Btn, heroDef.skills[0].name, heroDef.skills[0].icon, new Color(60, 30, 90), new Color(130, 60, 200));
@@ -6085,24 +6087,24 @@ public class BattlePanel extends JPanel {
 
     private void refreshBattleUI() {
         // ★ FIX: Constantly update the maximums so mid-fight level-ups scale the bars correctly!
-        heroHpBar.setMaximum(currentHero.maxHp);
-        enemyHpBar.setMaximum(currentEnemy.maxHp);
-        if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.maxEnergy);
+        heroHpBar.setMaximum(currentHero.getMaxHp());
+        enemyHpBar.setMaximum(currentEnemy.getMaxHp());
+        if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.getMaxEnergy());
 
-        heroHpBar.setValue(currentHero.currentHp);
-        heroHpText.setText(currentHero.currentHp + "/" + currentHero.maxHp);
-        if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.level);
+        heroHpBar.setValue(currentHero.getCurrentHp());
+        heroHpText.setText(currentHero.getCurrentHp() + "/" + currentHero.getMaxHp());
+        if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.getLevel());
 
-        enemyHpBar.setValue(currentEnemy.currentHp);
-        enemyHpText.setText(currentEnemy.currentHp + "/" + currentEnemy.maxHp);
+        enemyHpBar.setValue(currentEnemy.getCurrentHp());
+        enemyHpText.setText(currentEnemy.getCurrentHp() + "/" + currentEnemy.getMaxHp());
 
         if (heroEnergyBar != null) {
-            heroEnergyBar.setValue(currentHero.energy);
-            heroEnergyText.setText(currentHero.energy + "/" + currentHero.maxEnergy);
+            heroEnergyBar.setValue(currentHero.getEnergy());
+            heroEnergyText.setText(currentHero.getEnergy() + "/" + currentHero.getMaxEnergy());
         }
 
         roundLabel.setText("Round " + engine.getRound());
-        int cd = currentHero.specialCooldown;
+        int cd = currentHero.getSpecialCooldown();
         specialCdLabel.setText(cd > 0 ? "CD: " + cd : "");
 
         skill1Btn.setEnabled(engine == null || engine.canUseSkill1());
@@ -6640,7 +6642,7 @@ public class BattlePanel extends JPanel {
         hitHeroBtn.addActionListener(e -> {
             if (currentHero == null) return;
             int dmg = (int) dmgSpinner.getValue();
-            currentHero.currentHp = Math.max(0, currentHero.currentHp - dmg);
+            currentHero.setCurrentHp(Math.max(0, currentHero.getCurrentHp() - dmg));
             refreshBattleUI();
             addLog("[DEV] Hero hit for " + dmg + " damage!", new Color(255, 80, 80));
         });
@@ -6654,7 +6656,7 @@ public class BattlePanel extends JPanel {
         hitEnemyBtn.addActionListener(e -> {
             if (currentEnemy == null) return;
             int dmg = (int) dmgSpinner.getValue();
-            currentEnemy.currentHp = Math.max(0, currentEnemy.currentHp - dmg);
+            currentEnemy.setCurrentHp(Math.max(0, currentEnemy.getCurrentHp() - dmg));
             refreshBattleUI();
             addLog("[DEV] Enemy hit for " + dmg + " damage!", new Color(80, 180, 255));
         });
@@ -6667,7 +6669,7 @@ public class BattlePanel extends JPanel {
         killEnemyBtn.setFocusPainted(false);
         killEnemyBtn.addActionListener(e -> {
             if (currentEnemy == null) return;
-            currentEnemy.currentHp = 0;
+            currentEnemy.setCurrentHp(0);
             refreshBattleUI();
             addLog("[DEV] Enemy instantly killed!", new Color(200, 100, 255));
         });
@@ -6704,17 +6706,17 @@ public class BattlePanel extends JPanel {
         setStatsBtn.addActionListener(e -> {
             if (currentEnemy == null) return;
 
-            currentEnemy.maxHp = (int) hpSpin.getValue();
-            currentEnemy.currentHp = currentEnemy.maxHp;
+            currentEnemy.setMaxHp((int) hpSpin.getValue());
+            currentEnemy.setCurrentHp(currentEnemy.getMaxHp());
 
-            currentEnemy.baseAttack = (int) atkSpin.getValue();
-            currentEnemy.attack = currentEnemy.baseAttack;
+            currentEnemy.setBaseAttack((int) atkSpin.getValue());
+            currentEnemy.attack = currentEnemy.getBaseAttack();
 
-            currentEnemy.baseDefense = (int) defSpin.getValue();
-            currentEnemy.defense = currentEnemy.baseDefense;
+            currentEnemy.setBaseDefense((int) defSpin.getValue());
+            currentEnemy.defense = currentEnemy.getBaseDefense();
 
             refreshBattleUI();
-            addLog("[DEV] Enemy stats forcibly updated! (HP:" + currentEnemy.maxHp + " ATK:" + currentEnemy.attack + " DEF:" + currentEnemy.defense + ")", new Color(100, 255, 100));
+            addLog("[DEV] Enemy stats forcibly updated! (HP:" + currentEnemy.getMaxHp() + " ATK:" + currentEnemy.attack + " DEF:" + currentEnemy.defense + ")", new Color(100, 255, 100));
         });
         devPanel.add(setStatsBtn);
 
@@ -6741,7 +6743,7 @@ public class BattlePanel extends JPanel {
                 case "Archer"    -> new Bow(Bow.OAK_LONGBOW);
                 default          -> new Staff(Staff.APPRENTICE_STAFF);
             };
-            Armor a = new Armor(GameGUI.model.entity.HeroData.IRON_VANGUARD);
+            Armor a = new Armor(GameGUI.model.entity.DataManager.getData().getIronVanguard());
 
             currentHero.inventory.setEquippedWeapon(w);
             currentHero.inventory.setEquippedArmor(a);
@@ -6762,7 +6764,7 @@ public class BattlePanel extends JPanel {
                 case "Archer"    -> new Bow(Bow.AETHERSTRIKE_BOW);
                 default          -> new Staff(Staff.AETHERIC_STAFF);
             };
-            Armor a = new Armor(GameGUI.model.entity.HeroData.SKYFORGE_PLATE);
+            Armor a = new Armor(GameGUI.model.entity.DataManager.getData().getSkyforgePlate());
 
             currentHero.inventory.setEquippedWeapon(w);
             currentHero.inventory.setEquippedArmor(a);
@@ -6837,7 +6839,7 @@ public class BattlePanel extends JPanel {
         for (ActionListener al : lootItem1Btn.getActionListeners()) lootItem1Btn.removeActionListener(al);
         lootItem1Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.AEGIS_MAIL));
+            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getAegisMail()));
             currentHero.recalculateBuffs();
             addLog("🎁 Obtained: Aegis Mail!", new Color(80, 80, 80));
             delay(1500, onDone);
@@ -6849,7 +6851,7 @@ public class BattlePanel extends JPanel {
         for (ActionListener al : lootItem2Btn.getActionListeners()) lootItem2Btn.removeActionListener(al);
         lootItem2Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.VANGUARD_ROBE));
+            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getVanguardRobe()));
             currentHero.recalculateBuffs();
             addLog("🎁 Obtained: Vanguard Robe!", new Color(80, 80, 80));
             delay(1500, onDone);
@@ -6880,7 +6882,7 @@ public class BattlePanel extends JPanel {
         lootItem1Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
             currentHero.inventory.setEquippedWeapon(w1);
-            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.AEGIS_MAIL));
+            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getAegisMail()));
             currentHero.recalculateBuffs();
             addLog("🎁 Chose: " + w1.name + " & Aegis Mail!", new Color(200, 180, 50));
             delay(1500, onDone);
@@ -6894,7 +6896,7 @@ public class BattlePanel extends JPanel {
         lootItem2Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
             currentHero.inventory.setEquippedWeapon(w2);
-            currentHero.inventory.setEquippedArmor(new Armor(GameGUI.model.entity.HeroData.VANGUARD_ROBE));
+            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getVanguardRobe()));
             currentHero.recalculateBuffs();
             addLog("🎁 Chose: " + w2.name + " & Vanguard Robe!", new Color(200, 180, 50));
             delay(1500, onDone);

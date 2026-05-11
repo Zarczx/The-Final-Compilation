@@ -41,7 +41,7 @@ public abstract class Weapon {
         int totalLifesteal = lifestealPercent + addLifestealPercent;
         if (totalLifesteal > 0) {
             int heal = (int)(damage * (totalLifesteal / 100.0));
-            heal = Math.min(heal, player.maxHp - player.currentHp);
+            heal = Math.min(heal, player.getMaxHp() - player.getCurrentHp());
             if (heal > 0) {
                 player.heal(heal);
                 logs.add("💖 " + name + " restores " + heal + " HP!");

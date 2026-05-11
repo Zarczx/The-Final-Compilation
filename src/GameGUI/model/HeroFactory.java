@@ -31,7 +31,7 @@ public class HeroFactory {
                 def.maxEnergy, def.maxEnergy
         );
 
-        hero.specialCooldown = 3;
+        hero.setSpecialCooldown(3);
 
         if (def.startingWeapon != null) {
             hero.inventory.setEquippedWeapon(instantiateWeapon(def.startingWeapon));

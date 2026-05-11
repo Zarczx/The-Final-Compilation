@@ -1,5 +1,6 @@
 package GameGUI.ui;
 
+import GameGUI.model.entity.DataManager;
 import GameGUI.model.entity.HeroData;
 import GameGUI.model.entity.HeroData.HeroDefinition;
 
@@ -118,10 +119,10 @@ public class HeroSelectionPanel extends JPanel {
         titlePanel.add(sub);
 
         // ── Hero card grid ────────────────────────────────────────────────────
-        JPanel grid = new JPanel(new GridLayout(1, HeroData.HEROES.size(), 14, 0));
+        JPanel grid = new JPanel(new GridLayout(1, DataManager.getData().getHeroes().size(), 14, 0));
         grid.setBackground(BG_DARK);
 
-        for (HeroDefinition def : HeroData.HEROES) {
+        for (HeroDefinition def : DataManager.getData().getHeroes()) {
             HeroCard card = new HeroCard(def);
             card.addMouseListener(new MouseAdapter() {
                 @Override public void mouseClicked(MouseEvent e) { selectHero(def, card); }

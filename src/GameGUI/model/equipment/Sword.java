@@ -31,7 +31,7 @@ public class Sword extends Weapon {
         // 2. Apply Sword-specific effects (Extra Hit)
         if (extraHitChance > 0 && Math.random() * 100 < extraHitChance) {
             int extraDamage = (int) (damage * (0.20 + (Math.random() * 0.20))); // 20-40% extra
-            enemy.currentHp -= extraDamage;
+            enemy.setCurrentHp(enemy.getCurrentHp() - extraDamage);
             logs.add("⚡ Sword combo! Extra hit for " + extraDamage + " damage!");
         }
 

@@ -2,7 +2,7 @@ package GameGUI.model.system;
 
 import GameGUI.model.entity.Combatant;
 import GameGUI.model.equipment.*;
-
+import GameGUI.model.entity.DataManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -46,17 +46,17 @@ public class SaveManager {
         data.timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm a"));
         data.heroName = hero.name;
         data.heroRole = hero.role != null ? hero.role : "Swordsman";
-        data.level = hero.level;
+        data.level = hero.getLevel();
 
         // 3. Core Stats
-        data.currentHp = hero.currentHp;
-        data.maxHp = hero.maxHp;
-        data.energy = hero.energy;
-        data.maxEnergy = hero.maxEnergy;
-        data.baseAttack = hero.baseAttack;
-        data.baseDefense = hero.baseDefense;
-        data.exp = hero.exp;
-        data.soulShards = hero.soulShards;
+        data.currentHp = hero.getCurrentHp();
+        data.maxHp = hero.getMaxHp();
+        data.energy = hero.getEnergy();
+        data.maxEnergy = hero.getMaxEnergy();
+        data.baseAttack = hero.getBaseAttack();
+        data.baseDefense = hero.getBaseDefense();
+        data.exp = hero.getExp();
+        data.soulShards = hero.getSoulShards();
 
         // 4. Equipment
         Weapon w = hero.inventory.getEquippedWeapon();
@@ -81,8 +81,8 @@ public class SaveManager {
         data.currentWorld = currentWorld;
         data.savedEnemySequenceIndex = seqIndex;
         data.savedEnemyFightIndex = fightIndex;
-        data.savedEnemyCurrentHp = (enemy != null) ? enemy.currentHp : -1;
-        data.savedEnemyMaxHp     = (enemy != null) ? enemy.maxHp     : -1;
+        data.savedEnemyCurrentHp = (enemy != null) ? enemy.getCurrentHp() : -1;
+        data.savedEnemyMaxHp     = (enemy != null) ? enemy.getMaxHp() : -1;
 
         // ════════════════════════════════════════════════════
         // 7. ★ ATOMIC SAVE LOGIC ★
@@ -136,9 +136,9 @@ public class SaveManager {
 
         // 1. Find the base blueprint based on the saved role/name
         GameGUI.model.entity.HeroData.HeroDefinition baseDef =
-                GameGUI.model.entity.HeroData.HEROES.get(0); // Default to Kael
+                GameGUI.model.entity.DataManager.getData().getHeroes().get(0); // Default to Kael
 
-        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.HeroData.HEROES) {
+        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.DataManager.getData().getHeroes()) {
             if (def.name.equals(data.heroName)) {
                 baseDef = def;
                 break;
@@ -148,15 +148,15 @@ public class SaveManager {
         // 2. Create a fresh hero, then overwrite their stats with the saved data
         Combatant hero = GameGUI.model.HeroFactory.createHero(baseDef);
 
-        hero.level = data.level;
-        hero.currentHp = data.currentHp;
-        hero.maxHp = data.maxHp;
-        hero.energy = data.energy;
-        hero.maxEnergy = data.maxEnergy;
-        hero.baseAttack = data.baseAttack;
-        hero.baseDefense = data.baseDefense;
-        hero.exp = data.exp;
-        hero.soulShards = data.soulShards;
+        hero.setLevel(data.level);
+        hero.setCurrentHp(data.currentHp);
+        hero.setMaxHp(data.maxHp);
+        hero.setEnergy(data.energy);
+        hero.setMaxEnergy(data.maxEnergy);
+        hero.setBaseAttack(data.baseAttack);
+        hero.setBaseDefense(data.baseDefense);
+        hero.setExp(data.exp);
+        hero.setSoulShards(data.soulShards);
 
         // 3. Restore Consumables
         hero.inventory.potions.addNormalHealingPotions(data.normalFlasks - 3); // -3 because Factory gives 3 by default
@@ -200,12 +200,12 @@ public class SaveManager {
         // 5. Restore Armor
         if (data.equippedArmorName != null) {
             Armor a = switch (data.equippedArmorName) {
-                case "Iron Vanguard" -> new Armor(GameGUI.model.entity.HeroData.IRON_VANGUARD);
-                case "Aegis Mail" -> new Armor(GameGUI.model.entity.HeroData.AEGIS_MAIL);
-                case "Vanguard Robe" -> new Armor(GameGUI.model.entity.HeroData.VANGUARD_ROBE);
-                case "Skyforge Plate" -> new Armor(GameGUI.model.entity.HeroData.SKYFORGE_PLATE);
-                case "Celestial Battlegear" -> new Armor(GameGUI.model.entity.HeroData.CELESTIAL_BATTLEGEAR);
-                default -> new Armor(GameGUI.model.entity.HeroData.LEATHER_GUARD);
+                case "Iron Vanguard" -> new Armor(DataManager.getData().getIronVanguard());
+                case "Aegis Mail" -> new Armor(DataManager.getData().getAegisMail());
+                case "Vanguard Robe" -> new Armor(DataManager.getData().getVanguardRobe());
+                case "Skyforge Plate" -> new Armor(DataManager.getData().getSkyforgePlate());
+                case "Celestial Battlegear" -> new Armor(DataManager.getData().getCelestialBattlegear());
+                default -> new Armor(DataManager.getData().getLeatherGuard());
             };
 
             a.hasEnchantment = data.armorHasFortified;

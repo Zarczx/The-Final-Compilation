@@ -63,7 +63,7 @@ public class FinalBossManager {
     private void checkBrokenShield(List<String> logs) {
         if (encapsulated && shieldBroken) {
             voidEnergyStacks++;
-            boss.baseDefense = (int) (boss.baseDefense * 1.05);
+            boss.setBaseDefense((int) (boss.getBaseDefense() * 1.05));
             boss.recalculateBuffs(); // Refresh effective stats
             logs.add("🕳️ Khai absorbs the shattered fragments! +1 Void Energy (+5% Permanent DEF)");
             encapsulated = false; // Prevent multiple procs
@@ -73,7 +73,7 @@ public class FinalBossManager {
     public void checkUnbrokenShield(List<String> logs) {
         if (encapsulated && !shieldBroken) {
             nullEnergyStacks++;
-            boss.baseAttack = (int) (boss.baseAttack * 1.05);
+            boss.setBaseAttack((int) (boss.getBaseAttack() * 1.05));
             boss.recalculateBuffs();
             logs.add("🔮 The barrier completes its cycle! +1 Null Energy (+5% Permanent ATK)");
         }
@@ -89,7 +89,7 @@ public class FinalBossManager {
     // =========================================================================
 
     public String determineNextSkill() {
-        double hpPercent = (double) boss.currentHp / boss.maxHp;
+        double hpPercent = (double) boss.getCurrentHp() / boss.getMaxHp();
 
         if (hpPercent > 0.80) {
             return (rng.nextDouble() < 0.80) ? "Encapsulation" : "Soul Drain";

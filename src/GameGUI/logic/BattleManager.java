@@ -76,9 +76,9 @@ public class BattleManager {
     public TurnOwner  getCurrentTurn()        { return currentTurn;        }
     public String     getLastEnemySkillName() { return lastEnemySkillName; }
 
-    public boolean canUseSkill1()   { return hero.energy >= s1Cost; }
-    public boolean canUseSkill2()   { return hero.energy >= s2Cost; }
-    public boolean canUseUltimate() { return hero.energy >= ultCost && hero.specialCooldown == 0; }
+    public boolean canUseSkill1()   { return hero.getEnergy() >= s1Cost; }
+    public boolean canUseSkill2()   { return hero.getEnergy() >= s2Cost; }
+    public boolean canUseUltimate() { return hero.getEnergy() >= ultCost && hero.getSpecialCooldown() == 0; }
 
     // =========================================================================
     // PLAYER TURN
@@ -148,7 +148,7 @@ public class BattleManager {
             // Apply Swordsman Passive per hit
             if ("Swordsman".equals(heroDef.role) && rng.nextDouble() < 0.15) {
                 hitDamage = (int) (hitDamage * 1.5);
-                hero.restoreEnergy((int) (hero.maxEnergy * 0.05));
+                hero.restoreEnergy((int) (hero.getMaxEnergy() * 0.05));
                 if (!loggedBladeSwift) {
                     logs.add("⚡ Blade Swift! Critical Hit + Stamina Restored.");
                     loggedBladeSwift = true; // Prevent log spam on multi-hits
@@ -156,7 +156,7 @@ public class BattleManager {
             }
 
             // Apply Archer Passive per hit
-            if ("Archer".equals(heroDef.role) && (double) enemy.currentHp / enemy.maxHp < 0.3) {
+            if ("Archer".equals(heroDef.role) && (double) enemy.getCurrentHp() / enemy.getMaxHp() < 0.3) {
                 hitDamage = (int) (hitDamage * 1.2);
             }
 
@@ -170,8 +170,8 @@ public class BattleManager {
             enemy.takeDamage(totalDamage);
         }
 
-        if (isUlt) hero.specialCooldown = heroDef.skills[2].cooldown;
-        else hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
+        if (isUlt) hero.setSpecialCooldown(heroDef.skills[2].cooldown);
+        else hero.setSpecialCooldown(Math.max(0, hero.getSpecialCooldown() - 1));
 
         if (hero.inventory != null && hero.inventory.getEquippedWeapon() != null) {
             List<String> effectLogs = hero.inventory.getEquippedWeapon().applyEffects(hero, enemy, totalDamage);
@@ -228,9 +228,9 @@ public class BattleManager {
     }
 
     private ActionResult resolveSkipTurn(List<String> logs) {
-        hero.heal((int) (hero.maxHp * 0.10));
+        hero.heal((int) (hero.getMaxHp() * 0.10));
         hero.restoreEnergy(15);
-        hero.specialCooldown = Math.max(0, hero.specialCooldown - 1);
+        hero.setSpecialCooldown(Math.max(0, hero.getSpecialCooldown() - 1));
         return new ActionResult(hero.name + " rests, recovering HP and Energy.", 0, 0, false, true, null);
     }
 
@@ -343,7 +343,7 @@ public class BattleManager {
     public void advanceRound() {
         round++;
         currentTurn = TurnOwner.PLAYER;
-        if (hero.specialCooldown > 0) hero.specialCooldown--;
+        if (hero.getSpecialCooldown() > 0) hero.setSpecialCooldown(hero.getSpecialCooldown() - 1);
     }
 
     public void advanceToEnemyTurn() { currentTurn = TurnOwner.ENEMY; }
@@ -365,7 +365,7 @@ public class BattleManager {
 
     private void applyMagePassive() {
         if (heroDef != null && "Mage".equals(heroDef.role)) {
-            hero.restoreEnergy((int) (hero.maxEnergy * 0.05));
+            hero.restoreEnergy((int) (hero.getMaxEnergy() * 0.05));
         }
     }
 

@@ -1,0 +1,6 @@
+package GameGUI.model.entity;
+
+public enum ShopPassive {
+    VITAL_SURGE, SHOCK_BIND, FROST_ARROW, ARC_SURGE,
+    VENOM_INFUSION, RAZOR_EDGE, FORTIFIED_PLATING, PHOENIX_SOULSTONE
+}

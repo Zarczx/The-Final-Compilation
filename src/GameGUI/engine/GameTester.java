@@ -1,5 +1,6 @@
 package GameGUI.engine;
 
+import GameGUI.model.entity.DataManager;
 import GameGUI.model.entity.HeroData;
 import GameGUI.model.entity.HeroData.ArmorDef;
 import GameGUI.model.entity.HeroData.HeroDefinition;
@@ -36,7 +37,7 @@ public class GameTester {
         builderPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         // Create UI Elements
-        JComboBox<HeroDefinition> heroCombo = new JComboBox<>(HeroData.HEROES.toArray(new HeroDefinition[0]));
+        JComboBox<HeroDefinition> heroCombo = new JComboBox<>(DataManager.getData().getHeroes().toArray(new HeroDefinition[0]));
         heroCombo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -70,8 +71,8 @@ public class GameTester {
         });
 
         ArmorDef[] allArmors = {
-                HeroData.LEATHER_GUARD, HeroData.IRON_VANGUARD, HeroData.AEGIS_MAIL,
-                HeroData.VANGUARD_ROBE, HeroData.SKYFORGE_PLATE, HeroData.CELESTIAL_BATTLEGEAR
+                DataManager.getData().getLeatherGuard(), DataManager.getData().getIronVanguard(), DataManager.getData().getAegisMail(),
+                DataManager.getData().getVanguardRobe(), DataManager.getData().getSkyforgePlate(), DataManager.getData().getCelestialBattlegear()
         };
         JComboBox<ArmorDef> armorCombo = new JComboBox<>(allArmors);
         armorCombo.setRenderer(new DefaultListCellRenderer() {

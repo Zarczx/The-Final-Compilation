@@ -3,7 +3,6 @@ package GameGUI.ui;
 import GameGUI.model.entity.Combatant;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
@@ -179,7 +178,7 @@ public class InventoryDialog extends JDialog {
     }
 
     private void refreshUI() {
-        shardsLbl.setText("Soul Shards: " + combatant.soulShards);
+        shardsLbl.setText("Soul Shards: " + combatant.getSoulShards());
         normPotLbl.setText("🧪 Normal Healing Potion: "   + combatant.inventory.potions.getNormalHealingPotions());
         fullPotLbl.setText("🩸 Full Healing Potion: "  + combatant.inventory.potions.getFullHealingPotions());
         energyPotLbl.setText("✨ Energy Potion: " + combatant.inventory.potions.getEnergyPotions());

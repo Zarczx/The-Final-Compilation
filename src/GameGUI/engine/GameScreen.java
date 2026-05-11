@@ -1,5 +1,6 @@
 package GameGUI.engine;
 
+import GameGUI.model.entity.DataManager;
 import GameGUI.model.entity.HeroData;
 import GameGUI.model.entity.HeroData.HeroDefinition;
 import GameGUI.model.entity.Combatant;
@@ -315,7 +316,7 @@ public class GameScreen extends JPanel {
 
         // 1. Create the test hero
         Combatant realHero = GameGUI.model.HeroFactory.createHero(heroDef);
-        realHero.soulShards = 999;
+        realHero.setSoulShards(999);
 
         // 2. INJECT the hero into BattlePanel so Shop upgrades carry over to battles!
         battlePanel.setCurrentHero(realHero);
@@ -360,7 +361,7 @@ public class GameScreen extends JPanel {
         if (typingTimer != null) typingTimer.stop();
 
         java.util.List<HeroData.EnemyDefinition> stagOnly =
-                HeroData.WORLD1_ENEMIES.stream()
+                DataManager.getData().getWorld1Enemies().stream()
                         .filter(e -> e.name.equals("The Hollow Stag"))
                         .collect(java.util.stream.Collectors.toList());
 
@@ -390,9 +391,9 @@ public class GameScreen extends JPanel {
         if (typingTimer != null) typingTimer.stop();
 
         java.util.List<HeroData.EnemyDefinition> allEnemies = new java.util.ArrayList<>();
-        allEnemies.addAll(HeroData.WORLD1_ENEMIES);
-        allEnemies.addAll(HeroData.WORLD2_ENEMIES);
-        allEnemies.addAll(HeroData.WORLD3_ENEMIES);
+        allEnemies.addAll(DataManager.getData().getWorld1Enemies());
+        allEnemies.addAll(DataManager.getData().getWorld1Enemies());
+        allEnemies.addAll(DataManager.getData().getWorld3Enemies());
 
         java.util.List<HeroData.EnemyDefinition> match = allEnemies.stream()
                 .filter(e -> e.name.equals(enemyName))
@@ -552,7 +553,7 @@ public class GameScreen extends JPanel {
         if (currentWorld == 1) {
             battlePanel.startEnemySequence(
                     confirmedHero,
-                    HeroData.WORLD1_ENEMIES,
+                    DataManager.getData().getWorld1Enemies(),
                     () -> {
                         playWorldMusic();
                         startWorld2Transition();
@@ -562,7 +563,7 @@ public class GameScreen extends JPanel {
             battlePanel.setBattleBackground("/assets/Backgrounds/World2Battle1Background.png");
             battlePanel.startEnemySequence(
                     confirmedHero,
-                    HeroData.WORLD2_ENEMIES,
+                    DataManager.getData().getWorld2Enemies(),
                     () -> {
                         playWorldMusic();
                         showKingVictoryDialogue();
@@ -572,7 +573,7 @@ public class GameScreen extends JPanel {
             battlePanel.setBattleBackground("/assets/Backgrounds/World3BG9.png");
             battlePanel.startEnemySequence(
                     confirmedHero,
-                    HeroData.WORLD3_ENEMIES,
+                    DataManager.getData().getWorld3Enemies(),
                     () -> {
                         // ★ PREFI ENCOUNTER LAUNCHES HERE ★
                         startPrefiEncounter(battlePanel.getCurrentHero());
@@ -2375,9 +2376,9 @@ public class GameScreen extends JPanel {
 
         utils.SoundUtil.stopSFX(); // ★ ADD THIS — stops any one-shot sound before battle music starts
 
-        int interIdx = resolveW2InterIndex();
-        if (interIdx == 3) switchMusic("World2BlackJailer.WAV", 0.7f);
-        else if (interIdx == 4) switchMusic("World2LutherSound.WAV", 0.7f);
+        int interIdx1 = resolveW2InterIndex();
+        if (interIdx1 == 3) switchMusic("World2BlackJailer.WAV", 0.7f);
+        else if (interIdx1 == 4) switchMusic("World2LutherSound.WAV", 0.7f);
         else playBattleMusic();
 
         if (resume != null) resume.run();
@@ -3800,7 +3801,7 @@ public class GameScreen extends JPanel {
                 cardLayout.show(cardPanel, SCREEN_BATTLE);
                 battlePanel.startEnemySequence(
                         confirmedHero,
-                        HeroData.FINAL_BOSS_SEQUENCE,
+                        DataManager.getData().getFinalBossSequence(),
                         this::showKhaiVictoryDialogue
                 );
                 return;
@@ -3987,7 +3988,7 @@ public class GameScreen extends JPanel {
     public void loadSavedGame(GameGUI.model.entity.Combatant loadedHero, GameGUI.model.system.SaveData data) {
         if (typingTimer != null) typingTimer.stop();
 
-        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.HeroData.HEROES) {
+        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.DataManager.getData().getHeroes()) {
             if (def.name.equals(loadedHero.name)) {
                 this.confirmedHero = def;
                 break;
@@ -4020,7 +4021,7 @@ public class GameScreen extends JPanel {
             utils.SoundUtil.playLoop("World1BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
                     confirmedHero,
-                    GameGUI.model.entity.HeroData.WORLD1_ENEMIES,
+                    GameGUI.model.entity.DataManager.getData().getWorld1Enemies(),
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
@@ -4034,7 +4035,7 @@ public class GameScreen extends JPanel {
             utils.SoundUtil.playLoop("World2BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
                     confirmedHero,
-                    GameGUI.model.entity.HeroData.WORLD2_ENEMIES,
+                    GameGUI.model.entity.DataManager.getData().getWorld2Enemies(),
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
@@ -4048,7 +4049,7 @@ public class GameScreen extends JPanel {
             utils.SoundUtil.playLoop("World3BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
                     confirmedHero,
-                    GameGUI.model.entity.HeroData.WORLD3_ENEMIES,
+                    GameGUI.model.entity.DataManager.getData().getWorld3Enemies(),
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
@@ -4064,9 +4065,9 @@ public class GameScreen extends JPanel {
         GameGUI.model.entity.Combatant enemy = battlePanel.getCurrentEnemy();
         if (enemy == null) return;
         // Only restore if the saved enemy matches the one that spawned (same max HP)
-        if (enemy.maxHp == data.savedEnemyMaxHp) {
-            enemy.currentHp = data.savedEnemyCurrentHp;
-            System.out.println("★ Enemy HP restored: " + enemy.currentHp + "/" + enemy.maxHp);
+        if (enemy.getMaxHp() == data.savedEnemyMaxHp) {
+            enemy.setCurrentHp(data.savedEnemyCurrentHp);
+            System.out.println("★ Enemy HP restored: " + enemy.getCurrentHp() + "/" + enemy.getMaxHp());
         }
     }
 

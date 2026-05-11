@@ -80,13 +80,13 @@ public class PlayerStatsDialog extends JDialog {
 
         content.add(sectionHeader("Core Stats"));
         content.add(Box.createVerticalStrut(6));
-        content.add(statLabel("❤  HP",      hero.currentHp + " / " + hero.maxHp,    new Color(200, 80,  80)));
+        content.add(statLabel("❤  HP",      hero.getCurrentHp() + " / " + hero.getMaxHp(),    new Color(200, 80,  80)));
         content.add(Box.createVerticalStrut(4));
-        content.add(statLabel("⚡ Energy",  hero.energy    + " / " + hero.maxEnergy, new Color(90,  150, 220)));
+        content.add(statLabel("⚡ Energy",  hero.getEnergy() + " / " + hero.getMaxEnergy(), new Color(90,  150, 220)));
         content.add(Box.createVerticalStrut(4));
 
         // ── Attack with breakdown tooltip ─────────────────────────────────
-        int baseAtk   = hero.baseAttack;
+        int baseAtk   = hero.getBaseAttack();
         int weaponAtk = (hero.inventory.getEquippedWeapon() != null) ? hero.inventory.getEquippedWeapon().atkBuff : 0;
         int totalAtk  = hero.attack;
         JPanel atkRow = statLabel("⚔  Attack", String.valueOf(totalAtk), new Color(220, 160, 60));
@@ -101,7 +101,7 @@ public class PlayerStatsDialog extends JDialog {
         content.add(Box.createVerticalStrut(4));
 
 // ── Defense with breakdown tooltip ────────────────────────────────
-        int baseDef  = hero.baseDefense;
+        int baseDef  = hero.getBaseDefense();
         int armorDef = (hero.inventory.getEquippedArmor() != null) ? hero.inventory.getEquippedArmor().defBuff : 0;
         int totalDef = hero.defense;
         JPanel defRow = statLabel("🛡  Defense", String.valueOf(totalDef), new Color(100, 180, 120));
@@ -115,7 +115,7 @@ public class PlayerStatsDialog extends JDialog {
         content.add(defRow);
         content.add(defRow);
         content.add(Box.createVerticalStrut(4));
-        content.add(statLabel("⭐ Level",   String.valueOf(hero.level),               GOLD));
+        content.add(statLabel("⭐ Level",   String.valueOf(hero.getLevel()),               GOLD));
         content.add(Box.createVerticalStrut(14));
         content.add(divider());
         content.add(Box.createVerticalStrut(10));
