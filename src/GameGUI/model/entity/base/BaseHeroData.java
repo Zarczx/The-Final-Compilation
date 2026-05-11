@@ -2,6 +2,7 @@ package GameGUI.model.entity.base;
 
 import GameGUI.model.entity.data.EnemyData;
 import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.definition.*;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;
@@ -43,7 +44,7 @@ public class BaseHeroData implements HeroData {
                         "Simon Versace", "Mage", "🧙",
                         "Driven by an unshakable dream of power, Simon bends the arcane elements to his will.",
                         "Arcane Flow - Restores +5% of total Mana each turn.",
-                        60, 18, 2, 120,
+                        60, 18, 2, 150,
                         new SkillDef[]{
                                 new SkillDef("🔥", "Fireball", "Conjures a blazing orb of fire and hurls it at an enemy.\n⚡ Effects: Applies Burn (1 turn). 30% chance to Weaken (-15% ATK for 2 turns).", 1.25, 1.55, false, 0, 15, 1),
                                 new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.00, 1.25, false, 0, 25, 1),

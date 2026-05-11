@@ -2,7 +2,7 @@ package GameGUI.ui;
 
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.HeroData.HeroDefinition;
+import GameGUI.model.entity.data.definition.*;
 import GameGUI.model.entity.data.EnemyData;
 
 import GameGUI.model.HeroFactory;
@@ -1208,7 +1208,7 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     // ★ SKILL TOOLTIP HELPER — shows live damage range + energy cost on hover
     // ════════════════════════════════════════════════════════════════════════
-    private void setSkillTooltip(JButton btn, HeroData.SkillDef skill) {
+    private void setSkillTooltip(JButton btn, SkillDef skill) {
         if (skill == null || currentHero == null) return;
 
         int atk = currentHero.attack;

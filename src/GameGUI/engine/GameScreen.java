@@ -3,7 +3,7 @@ package GameGUI.engine;
 import GameGUI.model.entity.data.DataManager;
 import GameGUI.model.entity.data.EnemyData;
 import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.HeroData.HeroDefinition;
+import GameGUI.model.entity.data.definition.HeroDefinition;
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.ui.BattlePanel;
 import GameGUI.ui.DashboardPanel;
@@ -325,7 +325,7 @@ public class GameScreen extends JPanel {
         startFinalBossTransition();
     }
 
-    public void debugSkipToShop(HeroData.HeroDefinition heroDef) {
+    public void debugSkipToShop(HeroDefinition heroDef) {
         this.confirmedHero = heroDef;
         this.currentWorld = 2;
         if (typingTimer != null) typingTimer.stop();
@@ -342,7 +342,7 @@ public class GameScreen extends JPanel {
     }
 
     // Use this for the GameTester button
-    public void debugSkipToPrefiEncounter(HeroData.HeroDefinition heroDef) {
+    public void debugSkipToPrefiEncounter(HeroDefinition heroDef) {
         this.confirmedHero = heroDef;
         this.currentWorld = 3;
         if (typingTimer != null) typingTimer.stop();
@@ -401,7 +401,7 @@ public class GameScreen extends JPanel {
         battlePanel.startEnemySequence(hero, stagOnly, this::startWorld2Transition);
     }
 
-    public void debugSkipToEnemy(HeroData.HeroDefinition hero, String enemyName, int currentWorld) {
+    public void debugSkipToEnemy(HeroDefinition hero, String enemyName, int currentWorld) {
         this.confirmedHero = hero;
         this.currentWorld = currentWorld;
         if (typingTimer != null) typingTimer.stop();
@@ -4046,7 +4046,7 @@ public class GameScreen extends JPanel {
     public void loadSavedGame(Combatant loadedHero, GameGUI.model.system.SaveData data) {
         if (typingTimer != null) typingTimer.stop();
 
-        for (HeroData.HeroDefinition def : DataManager.getData().getHeroes()) {
+        for (HeroDefinition def : DataManager.getData().getHeroes()) {
             if (def.name.equals(loadedHero.name)) {
                 this.confirmedHero = def;
                 break;
