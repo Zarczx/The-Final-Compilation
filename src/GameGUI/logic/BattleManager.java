@@ -2,8 +2,7 @@ package GameGUI.logic;
 
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.EnemyData;
-import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.HeroData.HeroDefinition;
+import GameGUI.model.entity.data.HeroDefinition;
 import GameGUI.model.logic.StatusManager;
 
 import java.util.ArrayList;

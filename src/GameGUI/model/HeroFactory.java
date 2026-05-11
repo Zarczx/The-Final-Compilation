@@ -2,13 +2,14 @@ package GameGUI.model;
 
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.EnemyData;
-import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.HeroDefinition;
+import GameGUI.model.entity.data.WeaponDef;
 import GameGUI.model.equipment.*;
 
 public class HeroFactory {
 
     // Helper method to create the correct subclass based on the weapon definition
-    public static Weapon instantiateWeapon(HeroData.WeaponDef def) {
+    public static Weapon instantiateWeapon(WeaponDef def) {
         if (def == null) return null;
         return switch (def.type) {
             case SWORD -> new Sword(def);
@@ -18,7 +19,7 @@ public class HeroFactory {
     }
 
 
-    public static Combatant createHero(HeroData.HeroDefinition def) {
+    public static Combatant createHero(HeroDefinition def) {
         // ★ We no longer need to build a BattleLogic.Special here!
 
         int hp     = def.maxHp + (def.startingArmor != null ? def.startingArmor.hpBuff : 0);

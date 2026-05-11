@@ -1,7 +1,7 @@
 package GameGUI.ui;
 
 import GameGUI.model.entity.base.Combatant;
-import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.WeaponDef;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;
@@ -777,7 +777,7 @@ public class PrefiEncounterGUI extends JPanel {
         legendaryArmor = new Armor(Armor.CELESTIAL_BATTLEGEAR);
         String classType = getClassType();
 
-        HeroData.WeaponDef wDef = switch (classType) {
+        WeaponDef wDef = switch (classType) {
             case "Swordsman" -> Sword.CELESTIAL_EDGE;
             case "Archer"    -> Bow.GOLDEN_TALON;
             default          -> Staff.CHRONOMANCER_STAFF;
@@ -786,7 +786,7 @@ public class PrefiEncounterGUI extends JPanel {
         updateWeaponCard();
     }
 
-    private Weapon createWeapon(HeroData.WeaponDef def) {
+    private Weapon createWeapon(WeaponDef def) {
         return switch (def.type) {
             case SWORD -> new Sword(def);
             case BOW   -> new Bow(def);

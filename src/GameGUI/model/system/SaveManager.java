@@ -2,7 +2,7 @@ package GameGUI.model.system;
 
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.DataManager;
-import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.HeroDefinition;
 import GameGUI.model.equipment.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -140,10 +140,10 @@ public class SaveManager {
         if (data == null) return null;
 
         // 1. Find the base blueprint based on the saved role/name
-        HeroData.HeroDefinition baseDef =
+        HeroDefinition baseDef =
                 DataManager.getData().getHeroes().get(0); // Default to Kael
 
-        for (HeroData.HeroDefinition def : DataManager.getData().getHeroes()) {
+        for (HeroDefinition def : DataManager.getData().getHeroes()) {
             if (def.name.equals(data.heroName)) {
                 baseDef = def;
                 break;
