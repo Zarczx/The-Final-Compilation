@@ -3,6 +3,6 @@ import GameGUI.model.entity.base.BaseEnemy;
 
 public class ObsidianCrusher extends BaseEnemy {
     public ObsidianCrusher() {
-        super("Obsidian Crusher", "Magma Golem", "🗿", 1580, 286, 48, 3, 2, 1900, 1.00, 1.20);
+        super("Obsidian Crusher",    "Magma Golem",  "🗿", 1100, 235, 150, 3, 2, 1400, 1.25, 1.40);
     }
 }

@@ -3,6 +3,6 @@ import GameGUI.model.entity.base.BaseEnemy;
 
 public class ForsakenCultist extends BaseEnemy {
     public ForsakenCultist() {
-        super("Forsaken Cultist", "Dark Mage", "🔮", 580, 105, 14, 2, 2, 233, 1.00, 1.20);
+        super("Forsaken Cultist", "Dark Mage",       "🔮", 580,  175, 48, 2, 2, 620,  1.00, 1.15);
     }
 }

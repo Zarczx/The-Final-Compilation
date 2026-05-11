@@ -120,27 +120,25 @@ public class PotionManager {
      * Mini-boss drops are guaranteed and more generous, matching the original table.
      */
     public String lootPotions(boolean isMiniBoss) {
-        int totalDrops;
-        if (isMiniBoss) {
-            totalDrops = RandomUtil.range(4, 8);
-        } else {
-            totalDrops = RandomUtil.chance(50) ? 1 : 0;
-        }
-
         int normCount   = 0;
         int energyCount = 0;
+        int fullCount   = 0;
 
-        for (int i = 0; i < totalDrops; i++) {
-            if (RandomUtil.chance(50)) { normalHealingPotions++; normCount++;   }
-            else                      { energyPotions++;         energyCount++; }
-        }
-
-        int fullCount = 0;
         if (isMiniBoss) {
-            // Was: range(1,2) — now a 40% chance for exactly 1
-            if (RandomUtil.chance(40)) {
-                fullHealingPotions++;
-                fullCount = 1;
+            // Exactly 4 potions, 50/50 split between normal and energy
+            for (int i = 0; i < 4; i++) {
+                if (RandomUtil.chance(50)) { normalHealingPotions++; normCount++; }
+                else                      { energyPotions++;         energyCount++; }
+            }
+            // Guaranteed exactly 1 full healing potion
+            fullHealingPotions++;
+            fullCount = 1;
+
+        } else {
+            // Regular enemies: 50% chance to drop exactly 1 potion
+            if (RandomUtil.chance(50)) {
+                if (RandomUtil.chance(50)) { normalHealingPotions++; normCount++; }
+                else                      { energyPotions++;         energyCount++; }
             }
         }
 

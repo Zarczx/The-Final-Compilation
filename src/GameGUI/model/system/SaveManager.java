@@ -160,7 +160,7 @@ public class SaveManager {
         hero.setSoulShards(data.soulShards);
 
         // 3. Restore Consumables
-        hero.inventory.potions.addNormalHealingPotions(data.normalFlasks - 3); // -3 because Factory gives 3 by default
+        hero.inventory.potions.addNormalHealingPotions(data.normalFlasks);
         hero.inventory.potions.addFullHealingPotions(data.crimsonFlasks);
         hero.inventory.potions.addEnergyPotions(data.ceruleanFlasks);
 

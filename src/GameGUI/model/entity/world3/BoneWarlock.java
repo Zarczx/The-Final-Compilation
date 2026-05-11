@@ -3,6 +3,6 @@ import GameGUI.model.entity.base.BaseEnemy;
 
 public class BoneWarlock extends BaseEnemy {
     public BoneWarlock() {
-        super("Bone Warlock", "Undead Mage", "💀", 1280, 262, 41, 3, 3, 2083, 1.00, 1.20);
+        super("Bone Warlock",        "Undead Mage",  "💀", 980,  220, 148, 3, 3, 1150, 1.20, 1.35);
     }
 }
