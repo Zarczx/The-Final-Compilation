@@ -1,6 +1,6 @@
 package GameGUI.logic;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 
 /**
  * ProgressionService — Handles all math related to XP, Leveling, and Stat Growth.

@@ -1,14 +1,12 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.system.SaveData;
 import GameGUI.model.system.SaveManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.function.BiConsumer;
-
-import java.io.File;
 
 public class SaveSlotDialog extends JDialog {
 

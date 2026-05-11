@@ -1,9 +1,9 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData.HeroDefinition;
-import GameGUI.model.entity.HeroData.EnemyDefinition;
-import GameGUI.model.entity.DataManager;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.HeroData.HeroDefinition;
+import GameGUI.model.entity.data.EnemyData;
 
 import GameGUI.model.HeroFactory;
 import GameGUI.logic.BattleManager;
@@ -46,7 +46,7 @@ public class BattlePanel extends JPanel {
     private Combatant currentHero;
     private Combatant currentEnemy;
     private HeroDefinition heroDef;
-    private EnemyDefinition enemyDef;
+    private EnemyData enemyDef;
     private boolean animating = false;
 
     private JLabel battleBg;
@@ -573,7 +573,7 @@ public class BattlePanel extends JPanel {
     private JButton lootItem2Btn;
 
     // Sequence tracking
-    private List<EnemyDefinition> enemySequence;
+    private List<EnemyData> enemySequence;
     private int enemySequenceIndex = 0;
     private int enemyFightIndex = 0;
     private Runnable onSequenceComplete;
@@ -584,7 +584,7 @@ public class BattlePanel extends JPanel {
 
     private PostVictoryStep postVictoryStep = PostVictoryStep.NONE;
     private int lvlUp_level, lvlUp_hpGain, lvlUp_newHp, lvlUp_atkGain, lvlUp_newAtk, lvlUp_defGain, lvlUp_newDef;
-    private EnemyDefinition postVictoryEnemy = null;
+    private EnemyData postVictoryEnemy = null;
     private Runnable postVictoryNext = null;
 
     private Font normalLogFont = null;
@@ -632,7 +632,7 @@ public class BattlePanel extends JPanel {
     public void setOnOpenSaveScreen(Runnable r) { this.onOpenSaveScreen = r; }
     public void setOnPromptSaveAndExit(Runnable r) { this.onPromptSaveAndExit = r; }
 
-    public void startEnemySequence(HeroDefinition hero, List<EnemyDefinition> sequence, Runnable onComplete) {
+    public void startEnemySequence(HeroDefinition hero, List<EnemyData> sequence, Runnable onComplete) {
         //System.out.println(">>> BattlePanel heroDef set to: " + (hero != null ? hero.name : "null")); // debug
         this.heroDef = hero;
         this.enemySequence = new ArrayList<>(sequence);
@@ -648,15 +648,15 @@ public class BattlePanel extends JPanel {
             return;
         }
 
-        EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
+        EnemyData eDef = enemySequence.get(enemySequenceIndex);
         this.enemyDef = eDef;
 
         // Right after: this.enemyDef = eDef;
 
-        if (eDef.name.equals("Khai the Gray")) {
+        if (eDef.getName().equals("Khai the Gray")) {
             setBattleBackground("/assets/Backgrounds/NecroBackground.png");
         } else if (isWorld2Battle) {
-            String bg = switch (eDef.name) {
+            String bg = switch (eDef.getName()) {
                 case "Plague Vermin"     -> "/assets/Backgrounds/World2BattleBackground.png";
                 case "Forsaken Cultist"  -> "/assets/Backgrounds/World2BattleBackground2.png";
                 case "Blight Hound"      -> "/assets/Backgrounds/World2BattleBackground3.png";
@@ -667,7 +667,7 @@ public class BattlePanel extends JPanel {
             };
             setBattleBackground(bg);
         } else if (isWorld3Battle()) {
-            String bg = switch (eDef.name) {
+            String bg = switch (eDef.getName()) {
                 default -> currentBattleBgPath;
             };
             setBattleBackground(bg);
@@ -697,7 +697,7 @@ public class BattlePanel extends JPanel {
         clearLog();
 
         int fightNum = enemyFightIndex + 1;
-        addLog(eDef.name.toUpperCase() + " " + fightNum + "/" + eDef.count + " — FIGHT!", GOLD);
+        addLog(eDef.getName().toUpperCase() + " " + fightNum + "/" + eDef.getCount() + " — FIGHT!", GOLD);
 
         resultOverlay.setVisible(false);
         setActionsEnabled(false);
@@ -709,9 +709,9 @@ public class BattlePanel extends JPanel {
         startHeroIdleAnimation();
 
         // MINIBOSS CHECKS
-        boolean isStagFight   = eDef.name.equals("The Hollow Stag");
-        boolean isJailerFight = eDef.name.equals("The Black Jailer");
-        boolean isLutherFight = eDef.name.equals("Luther Von");
+        boolean isStagFight   = eDef.getName().equals("The Hollow Stag");
+        boolean isJailerFight = eDef.getName().equals("The Black Jailer");
+        boolean isLutherFight = eDef.getName().equals("Luther Von");
 
         if (isStagFight || isJailerFight || isLutherFight) {
 
@@ -727,7 +727,7 @@ public class BattlePanel extends JPanel {
             setComponentZOrder(minibossLabel, 0);
             repaint();
 
-            delay(2500, () -> {
+            delay(2000, () -> {
                 float[] alpha = {1.0f};
                 javax.swing.Timer fadeOut = new javax.swing.Timer(16, null);
                 fadeOut.addActionListener(ev -> {
@@ -981,7 +981,7 @@ public class BattlePanel extends JPanel {
 
     private boolean isBossOrMiniboss() {
         if (enemyDef == null) return false;
-        return switch (enemyDef.name) {
+        return switch (enemyDef.getName()) {
             case "The Hollow Stag", "The Black Jailer", "Luther Von",
                  "Zyrryl", "Khai the Necromancer" -> true;
             default -> false;
@@ -990,7 +990,7 @@ public class BattlePanel extends JPanel {
 
     private String getBossPauseBlockMessage() {
         if (enemyDef == null) return "You have no power here.";
-        return switch (enemyDef.name) {
+        return switch (enemyDef.getName()) {
             case "The Hollow Stag"      -> "\"The forest does not pause for the weak.\"";
             case "The Black Jailer"     -> "\"No rest. No mercy. The chains never stop.\"";
             case "Luther Von"           -> "\"A king does not wait. Neither shall your death.\"";
@@ -1055,8 +1055,14 @@ public class BattlePanel extends JPanel {
             playHeroHurtAnimation(() -> {
                 clearLog();
                 if (er != null) addEnemyAttackLog(er);
+
                 if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
                     handleDefeat();
+                } else if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) { // ★ FIXED: Now checks for enemy death
+                    playEnemyDefeat(() -> {
+                        handleVictory();
+                        animating = false;
+                    });
                 } else {
                     Timer t = new Timer(800, ev -> {
                         clearLog();
@@ -1202,7 +1208,7 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     // ★ SKILL TOOLTIP HELPER — shows live damage range + energy cost on hover
     // ════════════════════════════════════════════════════════════════════════
-    private void setSkillTooltip(JButton btn, GameGUI.model.entity.HeroData.SkillDef skill) {
+    private void setSkillTooltip(JButton btn, HeroData.SkillDef skill) {
         if (skill == null || currentHero == null) return;
 
         int atk = currentHero.attack;
@@ -1495,8 +1501,8 @@ public class BattlePanel extends JPanel {
                 g2.drawImage(frame, 0, 0, (int) (frame.getWidth() * SPRITE_SCALE), (int) (frame.getHeight() * SPRITE_SCALE), null);
                 g2.dispose();
 
-                boolean isShade = enemyDef != null && enemyDef.name.equals("Shade Sprite");
-                boolean isStag = enemyDef != null && enemyDef.name.equals("The Hollow Stag");
+                boolean isShade = enemyDef != null && enemyDef.getName().equals("Shade Sprite");
+                boolean isStag = enemyDef != null && enemyDef.getName().equals("The Hollow Stag");
 
                 if (isPlayingWolfHurt) frames = wolfHurtFrames;
                 else if (isPlayingWolfSavageHowl) frames = wolfSavageHowlFrames;
@@ -2729,9 +2735,9 @@ public class BattlePanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 BufferedImage[] frames;
-                boolean isShade = enemyDef != null && enemyDef.name.equals("Shade Sprite");
-                boolean isStag = enemyDef != null && enemyDef.name.equals("The Hollow Stag");
-                boolean isTreant = enemyDef != null && enemyDef.name.equals("Dreadbark Treant");
+                boolean isShade = enemyDef != null && enemyDef.getName().equals("Shade Sprite");
+                boolean isStag = enemyDef != null && enemyDef.getName().equals("The Hollow Stag");
+                boolean isTreant = enemyDef != null && enemyDef.getName().equals("Dreadbark Treant");
 
                 if (isPlayingWolfHurt) frames = wolfHurtFrames;
                 else if (isPlayingWolfSavageHowl) frames = wolfSavageHowlFrames;
@@ -2833,16 +2839,16 @@ public class BattlePanel extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                boolean isTreantEnemy = enemyDef != null && enemyDef.name.equals("Dreadbark Treant");
+                boolean isTreantEnemy = enemyDef != null && enemyDef.getName().equals("Dreadbark Treant");
                 boolean isTreantEntrance = isTreantEnemy && isPlayingTreantEntrance;
                 boolean isTreantAttack   = isTreantEnemy && isPlayingTreantAttack;
-                boolean isBatEnemy          = enemyDef != null && enemyDef.name.equals("Carrion Bat");
-                boolean isPlagueVerminEnemy = enemyDef != null && enemyDef.name.equals("Plague Vermin");
-                boolean isForsakenCultistEnemy = enemyDef != null && enemyDef.name.equals("Forsaken Cultist");
-                boolean isBlightHoundEnemy = enemyDef != null && enemyDef.name.equals("Blight Hound");
-                boolean isGhoulFootmanEnemy = enemyDef != null && enemyDef.name.equals("Ghoul Footman");
-                boolean isBlackJailerEnemy = enemyDef != null && enemyDef.name.equals("The Black Jailer");
-                boolean isLutherVonEnemy = enemyDef != null && enemyDef.name.equals("Luther Von");
+                boolean isBatEnemy          = enemyDef != null && enemyDef.getName().equals("Carrion Bat");
+                boolean isPlagueVerminEnemy = enemyDef != null && enemyDef.getName().equals("Plague Vermin");
+                boolean isForsakenCultistEnemy = enemyDef != null && enemyDef.getName().equals("Forsaken Cultist");
+                boolean isBlightHoundEnemy = enemyDef != null && enemyDef.getName().equals("Blight Hound");
+                boolean isGhoulFootmanEnemy = enemyDef != null && enemyDef.getName().equals("Ghoul Footman");
+                boolean isBlackJailerEnemy = enemyDef != null && enemyDef.getName().equals("The Black Jailer");
+                boolean isLutherVonEnemy = enemyDef != null && enemyDef.getName().equals("Luther Von");
 
 
                 double scale = isTreantEntrance    ? TREANT_SCALE
@@ -3165,7 +3171,7 @@ public class BattlePanel extends JPanel {
         heroIdleTimer.start();
     }
 
-    private void startEnemyIdleAnimation(EnemyDefinition eDef) {
+    private void startEnemyIdleAnimation(EnemyData eDef) {
         if (enemyIdleTimer != null && enemyIdleTimer.isRunning()) enemyIdleTimer.stop();
         isPlayingWolfHurt = false; isPlayingWolfSavageHowl = false;
         isPlayingWolfDefeat = false; isPlayingWolfEntrance = false;
@@ -3207,7 +3213,7 @@ public class BattlePanel extends JPanel {
         isPlayingKhaiNecroDefeat = false; isPlayingKhaiNecroEntrance = false;
         enemySpriteFrame = 0;
 
-        if (eDef.name.equals("Rotfang Wolf") && wolfIdleFrames != null) {
+        if (eDef.getName().equals("Rotfang Wolf") && wolfIdleFrames != null) {
             int w = (int) (wolfIdleFrames[0].getWidth() * ENEMY_SCALE);
             int h = (int) (wolfIdleFrames[0].getHeight() * ENEMY_SCALE);
             enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y, w, h);
@@ -3217,7 +3223,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Shade Sprite") && spriteIdleFrames != null) {
+        } else if (eDef.getName().equals("Shade Sprite") && spriteIdleFrames != null) {
             int w = (int) (spriteIdleFrames[0].getWidth() * ENEMY_SCALE);
             int h = (int) (spriteIdleFrames[0].getHeight() * ENEMY_SCALE);
             enemySpriteLabel.setBounds(SHADE_X, SHADE_Y, w, h);
@@ -3227,7 +3233,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("The Hollow Stag") && stagIdleFrames != null) {
+        } else if (eDef.getName().equals("The Hollow Stag") && stagIdleFrames != null) {
             int w = (int) (stagIdleFrames[0].getWidth() * ENEMY_SCALE);
             int h = (int) (stagIdleFrames[0].getHeight() * ENEMY_SCALE);
             enemySpriteLabel.setBounds(STAG_X, STAG_Y, w, h);
@@ -3237,7 +3243,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start(); // THIS WAS MISSING
-        } else if (eDef.name.equals("Dreadbark Treant") && treantIdleFrames != null) {
+        } else if (eDef.getName().equals("Dreadbark Treant") && treantIdleFrames != null) {
             int w = (int) (treantIdleFrames[0].getWidth() * TREANT_IDLE_SCALE);
             int h = (int) (treantIdleFrames[0].getHeight() * TREANT_IDLE_SCALE);
             enemySpriteLabel.setBounds(TREANT_X, TREANT_Y, w, h);
@@ -3247,7 +3253,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Carrion Bat") && batIdleFrames != null) {
+        } else if (eDef.getName().equals("Carrion Bat") && batIdleFrames != null) {
             int w = (int) (batIdleFrames[0].getWidth() * BAT_SCALE);
             int h = (int) (batIdleFrames[0].getHeight() * BAT_SCALE);
             enemySpriteLabel.setBounds(BAT_X, BAT_Y, w, h);
@@ -3257,7 +3263,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Plague Vermin") && plagueVerminIdleFrames != null) {
+        } else if (eDef.getName().equals("Plague Vermin") && plagueVerminIdleFrames != null) {
             int w = (int)(plagueVerminIdleFrames[0].getWidth()  * PLAGUE_VERMIN_SCALE);
             int h = (int)(plagueVerminIdleFrames[0].getHeight() * PLAGUE_VERMIN_SCALE);
             enemySpriteLabel.setBounds(PLAGUE_VERMIN_X, PLAGUE_VERMIN_Y, w, h);
@@ -3267,7 +3273,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Forsaken Cultist") && forsakenCultistIdleFrames != null) {
+        } else if (eDef.getName().equals("Forsaken Cultist") && forsakenCultistIdleFrames != null) {
             int w = (int) (forsakenCultistIdleFrames[0].getWidth() * FORSAKEN_CULTIST_SCALE);
             int h = (int) (forsakenCultistIdleFrames[0].getHeight() * FORSAKEN_CULTIST_SCALE);
             enemySpriteLabel.setBounds(ENEMY_X, ENEMY_Y - 70, w, h);
@@ -3277,7 +3283,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Blight Hound") && blightHoundIdleFrames != null) {
+        } else if (eDef.getName().equals("Blight Hound") && blightHoundIdleFrames != null) {
             int w = (int)(blightHoundIdleFrames[0].getWidth()  * BLIGHT_HOUND_SCALE);
             int h = (int)(blightHoundIdleFrames[0].getHeight() * BLIGHT_HOUND_SCALE);
             enemySpriteLabel.setBounds(BLIGHT_HOUND_X, BLIGHT_HOUND_Y, w, h);
@@ -3287,7 +3293,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Ghoul Footman") && ghoulFootmanIdleFrames != null) {
+        } else if (eDef.getName().equals("Ghoul Footman") && ghoulFootmanIdleFrames != null) {
             int w = (int) (ghoulFootmanIdleFrames[0].getWidth() * GHOUL_FOOTMAN_SCALE);
             int h = (int) (ghoulFootmanIdleFrames[0].getHeight() * GHOUL_FOOTMAN_SCALE);
             enemySpriteLabel.setBounds(GHOUL_FOOTMAN_X, GHOUL_FOOTMAN_Y, w, h);
@@ -3297,7 +3303,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("The Black Jailer") && blackJailerIdleFrames != null) {
+        } else if (eDef.getName().equals("The Black Jailer") && blackJailerIdleFrames != null) {
             int w = (int) (blackJailerIdleFrames[0].getWidth() * BLACK_JAILER_SCALE);
             int h = (int) (blackJailerIdleFrames[0].getHeight() * BLACK_JAILER_SCALE);
             enemySpriteLabel.setBounds(BLACK_JAILER_X, BLACK_JAILER_Y, w, h);
@@ -3307,7 +3313,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Luther Von") && lutherVonIdleFrames != null) {
+        } else if (eDef.getName().equals("Luther Von") && lutherVonIdleFrames != null) {
             int w = (int) (lutherVonIdleFrames[0].getWidth() * LUTHER_VON_SCALE);
             int h = (int) (lutherVonIdleFrames[0].getHeight() * LUTHER_VON_SCALE);
             enemySpriteLabel.setBounds(LUTHER_VON_X, LUTHER_VON_Y, w, h);
@@ -3317,7 +3323,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        }else if (eDef.name.equals("Flame Revenant") && flameRevenantIdleFrames != null) {
+        }else if (eDef.getName().equals("Flame Revenant") && flameRevenantIdleFrames != null) {
             int w = (int) (flameRevenantIdleFrames[0].getWidth() * FLAME_REVENANT_SCALE);
             int h = (int) (flameRevenantIdleFrames[0].getHeight() * FLAME_REVENANT_SCALE);
             enemySpriteLabel.setBounds(FLAME_REVENANT_X, FLAME_REVENANT_Y, w, h);
@@ -3327,7 +3333,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Bone Warlock") && boneWarlockIdleFrames != null) {
+        } else if (eDef.getName().equals("Bone Warlock") && boneWarlockIdleFrames != null) {
             int w = (int) (boneWarlockIdleFrames[0].getWidth() * BONE_WARLOCK_SCALE);
             int h = (int) (boneWarlockIdleFrames[0].getHeight() * BONE_WARLOCK_SCALE);
             enemySpriteLabel.setBounds(BONE_WARLOCK_X, BONE_WARLOCK_Y, w, h);
@@ -3337,7 +3343,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Obsidian Crusher") && obsidianCrusherIdleFrames != null) {
+        } else if (eDef.getName().equals("Obsidian Crusher") && obsidianCrusherIdleFrames != null) {
             int w = (int) (obsidianCrusherIdleFrames[0].getWidth() * OBSIDIAN_CRUSHER_SCALE);
             int h = (int) (obsidianCrusherIdleFrames[0].getHeight() * OBSIDIAN_CRUSHER_SCALE);
             enemySpriteLabel.setBounds(OBSIDIAN_CRUSHER_X, OBSIDIAN_CRUSHER_Y, w, h);
@@ -3347,7 +3353,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Soulflayer Gargoyle") && soulflayerGargoyleIdleFrames != null) {
+        } else if (eDef.getName().equals("Soulflayer Gargoyle") && soulflayerGargoyleIdleFrames != null) {
             int w = (int) (soulflayerGargoyleIdleFrames[0].getWidth() * SOULFLAYER_GARGOYLE_SCALE);
             int h = (int) (soulflayerGargoyleIdleFrames[0].getHeight() * SOULFLAYER_GARGOYLE_SCALE);
             enemySpriteLabel.setBounds(SOULFLAYER_GARGOYLE_X, SOULFLAYER_GARGOYLE_Y, w, h);
@@ -3357,7 +3363,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Zyrryl") && zyrrylIdleFrames != null) {
+        } else if (eDef.getName().equals("Zyrryl") && zyrrylIdleFrames != null) {
             int w = (int) (zyrrylIdleFrames[0].getWidth() * ZYRRYL_SCALE);
             int h = (int) (zyrrylIdleFrames[0].getHeight() * ZYRRYL_SCALE);
             enemySpriteLabel.setBounds(ZYRRYL_X, ZYRRYL_Y, w, h);
@@ -3367,7 +3373,7 @@ public class BattlePanel extends JPanel {
                 if (enemySpriteLabel != null) enemySpriteLabel.repaint();
             });
             enemyIdleTimer.start();
-        } else if (eDef.name.equals("Khai the Necromancer") && khaiNecroIdleFrames != null) {
+        } else if (eDef.getName().equals("Khai the Necromancer") && khaiNecroIdleFrames != null) {
             int w = (int)(khaiNecroIdleFrames[0].getWidth()  * KHAI_NECRO_SCALE);
             int h = (int)(khaiNecroIdleFrames[0].getHeight() * KHAI_NECRO_SCALE);
             enemySpriteLabel.setBounds(KHAI_NECRO_X, KHAI_NECRO_Y, w, h);
@@ -3388,25 +3394,25 @@ public class BattlePanel extends JPanel {
     }
 
     //Helper Methods
-    private boolean isShadeSprite() { return enemyDef != null && enemyDef.name.equals("Shade Sprite"); }
-    private boolean isTreant() { return enemyDef != null && enemyDef.name.equals("Dreadbark Treant"); }
-    private boolean isBat() { return enemyDef != null && enemyDef.name.equals("Carrion Bat"); }
-    private boolean isPlagueVermin() { return enemyDef != null && enemyDef.name.equals("Plague Vermin"); }
-    private boolean isForsakenCultist() { return enemyDef != null && enemyDef.name.equals("Forsaken Cultist"); }
-    private boolean isBlightHound() { return enemyDef != null && enemyDef.name.equals("Blight Hound"); }
-    private boolean isGhoulFootman() { return enemyDef != null && enemyDef.name.equals("Ghoul Footman"); }
-    private boolean isBlackJailer() { return enemyDef != null && enemyDef.name.equals("The Black Jailer"); }
-    private boolean isLutherVon() { return enemyDef != null && enemyDef.name.equals("Luther Von"); }
-    private boolean isFlameRevenant() { return enemyDef != null && enemyDef.name.equals("Flame Revenant"); }
-    private boolean isBoneWarlock() { return enemyDef != null && enemyDef.name.equals("Bone Warlock"); }
-    private boolean isObsidianCrusher() { return enemyDef != null && enemyDef.name.equals("Obsidian Crusher"); }
-    private boolean isSoulflayerGargoyle() { return enemyDef != null && enemyDef.name.equals("Soulflayer Gargoyle"); }
-    private boolean isZyrryl() { return enemyDef != null && enemyDef.name.equals("Zyrryl"); }
-    private boolean isKhaiNecro() { return enemyDef != null && enemyDef.name.equals("Khai the Necromancer"); }
+    private boolean isShadeSprite() { return enemyDef != null && enemyDef.getName().equals("Shade Sprite"); }
+    private boolean isTreant() { return enemyDef != null && enemyDef.getName().equals("Dreadbark Treant"); }
+    private boolean isBat() { return enemyDef != null && enemyDef.getName().equals("Carrion Bat"); }
+    private boolean isPlagueVermin() { return enemyDef != null && enemyDef.getName().equals("Plague Vermin"); }
+    private boolean isForsakenCultist() { return enemyDef != null && enemyDef.getName().equals("Forsaken Cultist"); }
+    private boolean isBlightHound() { return enemyDef != null && enemyDef.getName().equals("Blight Hound"); }
+    private boolean isGhoulFootman() { return enemyDef != null && enemyDef.getName().equals("Ghoul Footman"); }
+    private boolean isBlackJailer() { return enemyDef != null && enemyDef.getName().equals("The Black Jailer"); }
+    private boolean isLutherVon() { return enemyDef != null && enemyDef.getName().equals("Luther Von"); }
+    private boolean isFlameRevenant() { return enemyDef != null && enemyDef.getName().equals("Flame Revenant"); }
+    private boolean isBoneWarlock() { return enemyDef != null && enemyDef.getName().equals("Bone Warlock"); }
+    private boolean isObsidianCrusher() { return enemyDef != null && enemyDef.getName().equals("Obsidian Crusher"); }
+    private boolean isSoulflayerGargoyle() { return enemyDef != null && enemyDef.getName().equals("Soulflayer Gargoyle"); }
+    private boolean isZyrryl() { return enemyDef != null && enemyDef.getName().equals("Zyrryl"); }
+    private boolean isKhaiNecro() { return enemyDef != null && enemyDef.getName().equals("Khai the Necromancer"); }
 
 
     private boolean isStag() {
-        return enemyDef != null && enemyDef.name.equals("The Hollow Stag");
+        return enemyDef != null && enemyDef.getName().equals("The Hollow Stag");
     }
 
     private void playEnemyHurt(Runnable onDone) {
@@ -5380,7 +5386,7 @@ public class BattlePanel extends JPanel {
                     clearLog();
                     if (pResult != null) addLogFromResult(pResult, true);
 
-                    Timer t1 = new Timer(1500, e -> {
+                    Timer t1 = new Timer(2000, e -> {
                         clearLog();
                         executeEnemyTurnSequence();
                     });
@@ -5401,7 +5407,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                     return;
                 }
-                Timer t1 = new Timer(900, e -> {
+                Timer t1 = new Timer(2000, e -> {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
@@ -5438,7 +5444,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                     return;
                 }
-                Timer t1 = new Timer(900, e -> {
+                Timer t1 = new Timer(2000, e -> {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
@@ -5475,7 +5481,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                     return;
                 }
-                Timer t1 = new Timer(900, e -> {
+                Timer t1 = new Timer(2000, e -> {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
@@ -5518,19 +5524,28 @@ public class BattlePanel extends JPanel {
         }
         refreshBattleUI();
 
+        // ★ FIXED: Check if the ENEMY died during the pre-check (e.g., from an effect ticking)
+        if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
+            playEnemyDefeat(() -> {
+                handleVictory();
+                animating = false;
+            });
+            return;
+        }
+
+        // Check if player died to DoT before the enemy even acts
+        if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
+            handleDefeat();
+            return;
+        }
+
         // If the Pre-Check caused the turn to immediately pass to the enemy (e.g., Stunned/Frozen)
         if (engine.getCurrentTurn() == BattleManager.TurnOwner.ENEMY) {
             animating = true;
             setActionsEnabled(false);
 
-            // Check if player died to DoT before the enemy even acts
-            if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
-                handleDefeat();
-                return;
-            }
-
             // Wait a moment so the player can read the "Turn Skipped" message, then start enemy turn
-            Timer skipTimer = new Timer(1800, e -> {
+            Timer skipTimer = new Timer(2000, e -> {
                 clearLog();
                 executeEnemyTurnSequence();
             });
@@ -5564,11 +5579,16 @@ public class BattlePanel extends JPanel {
             // ✅ Use the engine’s formatted message directly
             if (er != null) addLogFromResult(er, false);
 
-            // Continue flow (back to player turn or check defeat)
+            // Continue flow (back to player turn or check defeat/victory)
             if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) {
                 handleDefeat();
+            } else if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) { // ★ FIXED: Now checks for enemy death
+                playEnemyDefeat(() -> {
+                    handleVictory();
+                    animating = false;
+                });
             } else {
-                Timer t = new Timer(800, e -> {
+                Timer t = new Timer(2000, e -> {
                     clearLog();
                     beginPlayerTurnSequence();
                 });
@@ -5581,7 +5601,7 @@ public class BattlePanel extends JPanel {
             // Animation plays first, THEN postEnemyAction updates the HP and log
             playEnemyAttack(() -> playHeroHurtAnimation(postEnemyAction));
         } else {
-            // If Stunned/Frozen, just update UI and logs immediately
+            // If Stunned/Frozen/Died to DoT, just update UI and logs immediately
             postEnemyAction.run();
         }
     }
@@ -5590,16 +5610,16 @@ public class BattlePanel extends JPanel {
 
         if (enemySequence != null) {
 
-            EnemyDefinition eDef = enemySequence.get(enemySequenceIndex);
+            EnemyData eDef = enemySequence.get(enemySequenceIndex);
             enemyFightIndex++;
 
             // 1. Calculate Per-Kill Rewards
-            int individualXp = eDef.xpReward;
+            int individualXp = eDef.getXpReward();
 
-            boolean isBoss = eDef.name.equals("The Hollow Stag") ||
-                    eDef.name.equals("The Black Jailer") ||
-                    eDef.name.equals("Luther Von") ||
-                    eDef.name.equals("The Tower Warden");
+            boolean isBoss = eDef.getName().equals("The Hollow Stag") ||
+                    eDef.getName().equals("The Black Jailer") ||
+                    eDef.getName().equals("Luther Von") ||
+                    eDef.getName().equals("The Tower Warden");
 
             int individualShards = isBoss ? 10 : 1;
 
@@ -5610,11 +5630,11 @@ public class BattlePanel extends JPanel {
             currentHero.setSoulShards(currentHero.getSoulShards() + individualShards);
 
             // POTION DROPS
-            boolean isMiniBoss = eDef.name.equals("The Hollow Stag") ||
-                    eDef.name.equals("The Black Jailer") ||
-                    eDef.name.equals("Luther Von") ||
-                    eDef.name.equals("Zyrryl") ||
-                    eDef.name.equals("Khai the Necromancer");
+            boolean isMiniBoss = eDef.getName().equals("The Hollow Stag") ||
+                    eDef.getName().equals("The Black Jailer") ||
+                    eDef.getName().equals("Luther Von") ||
+                    eDef.getName().equals("Zyrryl") ||
+                    eDef.getName().equals("Khai the Necromancer");
 
             String potionDrops = currentHero.inventory.lootPotions(isMiniBoss);
 
@@ -5667,7 +5687,7 @@ public class BattlePanel extends JPanel {
                 );
             }
 
-            if (enemyFightIndex < eDef.count) {
+            if (enemyFightIndex < eDef.getCount()) {
 
                 savedHeroCombatant = engine.getHero();
 
@@ -5723,7 +5743,7 @@ public class BattlePanel extends JPanel {
         }
     }
 
-    private void startPostVictorySequence(EnemyDefinition eDef, Runnable onDone, String potionDrops) {
+    private void startPostVictorySequence(EnemyData eDef, Runnable onDone, String potionDrops) {
         postVictoryEnemy = eDef;
         postVictoryNext = onDone;
         postVictoryStep = PostVictoryStep.LOOT;
@@ -5740,14 +5760,14 @@ public class BattlePanel extends JPanel {
         setLogFontSmall();
         clearLog();
 
-        int totalXp = eDef.xpReward * eDef.count;
+        int totalXp = eDef.getXpReward() * eDef.getCount();
 
-        boolean isBoss = eDef.name.equals("The Hollow Stag") ||
-                eDef.name.equals("The Black Jailer") ||
-                eDef.name.equals("Luther Von") ||
-                eDef.name.equals("The Tower Warden");
+        boolean isBoss = eDef.getName().equals("The Hollow Stag") ||
+                eDef.getName().equals("The Black Jailer") ||
+                eDef.getName().equals("Luther Von") ||
+                eDef.getName().equals("The Tower Warden");
 
-        int totalShards = (isBoss ? 10 : 1) * eDef.count;
+        int totalShards = (isBoss ? 10 : 1) * eDef.getCount();
 
         addLog("⚔️ HORDE CLEARED!", GOLD);
         addLog("Total Rewards Secured:", new Color(120, 120, 120));
@@ -5841,7 +5861,7 @@ public class BattlePanel extends JPanel {
             }
             case LOOT_FLAVOUR -> {
                 postVictoryStep = PostVictoryStep.NONE;
-                EnemyDefinition savedEnemy = postVictoryEnemy; // Save a reference
+                EnemyData savedEnemy = postVictoryEnemy; // Save a reference
                 postVictoryEnemy = null;
                 clearLog();
                 setLogFontNormal();
@@ -5903,45 +5923,45 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     // ★ FLAVOUR TEXTS
     // ════════════════════════════════════════════════════════════════════════
-    private String getPerKillMessage(EnemyDefinition eDef, int killed) {
-        String score = killed + "/" + eDef.count;
-        return switch (eDef.name) {
+    private String getPerKillMessage(EnemyData eDef, int killed) {
+        String score = killed + "/" + eDef.getCount();
+        return switch (eDef.getName()) {
             case "Rotfang Wolf" -> "The wolf whimpers and dissolves into black smoke. (" + score + ")";
             case "Shade Sprite" -> "You dispelled the Shade Sprite! (" + score + ")";
             case "Dreadbark Treant" -> "You felled the Dreadbark Treant! (" + score + ")";
             case "Carrion Bat" -> "You slayed the Carrion Bat! (" + score + ")";
             case "The Hollow Stag" -> "The Hollow Stag has fallen! (" + score + ")";
-            default -> eDef.name + " defeated! (" + score + ")";
+            default -> eDef.getName() + " defeated! (" + score + ")";
         };
     }
 
-    private String getNextApproachMessage(EnemyDefinition eDef, int killed) {
+    private String getNextApproachMessage(EnemyData eDef, int killed) {
         int next = killed + 1;
-        return switch (eDef.name) {
-            case "Rotfang Wolf" -> "Another wolf snarls and steps forward! (" + next + "/" + eDef.count + ")";
+        return switch (eDef.getName()) {
+            case "Rotfang Wolf" -> "Another wolf snarls and steps forward! (" + next + "/" + eDef.getCount() + ")";
             case "Shade Sprite" ->
-                    "The mist swirls — another soul screams into existence! (" + next + "/" + eDef.count + ")";
+                    "The mist swirls — another soul screams into existence! (" + next + "/" + eDef.getCount() + ")";
             case "Dreadbark Treant" ->
-                    "The ground quakes again! The second ancient giant lumbers forward! (" + next + "/" + eDef.count + ")";
+                    "The ground quakes again! The second ancient giant lumbers forward! (" + next + "/" + eDef.getCount() + ")";
             case "Carrion Bat" ->
-                    "Another screech echoes above — the swarm continues! (" + next + "/" + eDef.count + ")";
-            default -> "Another " + eDef.name + " approaches! (" + next + "/" + eDef.count + ")";
+                    "Another screech echoes above — the swarm continues! (" + next + "/" + eDef.getCount() + ")";
+            default -> "Another " + eDef.getName() + " approaches! (" + next + "/" + eDef.getCount() + ")";
         };
     }
 
-    private String getObjectiveCompleteText(EnemyDefinition eDef) {
-        return switch (eDef.name) {
+    private String getObjectiveCompleteText(EnemyData eDef) {
+        return switch (eDef.getName()) {
             case "Rotfang Wolf" -> "OBJECTIVE: DEFEAT 3 ROTFANG WOLVES!  (3/3)";
             case "Shade Sprite" -> "OBJECTIVE: DEFEAT 2 SHADE SPRITES!  (2/2)";
             case "Dreadbark Treant" -> "OBJECTIVE: DEFEAT 2 DREADBARK TREANTS!  (2/2)";
             case "Carrion Bat" -> "OBJECTIVE: DEFEAT 4 CARRION BATS!  (4/4)";
             case "The Hollow Stag" -> "OBJECTIVE: DEFEAT THE HOLLOW STAG!  COMPLETE";
-            default -> "OBJECTIVE: " + eDef.name.toUpperCase() + " CLEARED!";
+            default -> "OBJECTIVE: " + eDef.getName().toUpperCase() + " CLEARED!";
         };
     }
 
-    private String getVictoryFlavourText(EnemyDefinition eDef) {
-        return switch (eDef.name) {
+    private String getVictoryFlavourText(EnemyData eDef) {
+        return switch (eDef.getName()) {
             case "Rotfang Wolf" ->
                     "Victory! The last of the Rotfang Wolves collapses.\nThe adrenaline in your veins cools, but the forest feels no safer.";
             case "Shade Sprite" ->
@@ -5952,12 +5972,12 @@ public class BattlePanel extends JPanel {
                     "The last bat crashes into the ground.\nThe forest grows quiet. The stench of decay lifts into the cold wind.";
             case "The Hollow Stag" ->
                     "MINI-BOSS DEFEATED!\nThe Stag staggers. The white fire in its antlers flickers and dies.\nIt dissolves into particles of pure light.";
-            default -> "You have defeated " + eDef.name + "!";
+            default -> "You have defeated " + eDef.getName() + "!";
         };
     }
 
-    private String getLootFlavourText(EnemyDefinition eDef) {
-        return switch (eDef.name) {
+    private String getLootFlavourText(EnemyData eDef) {
+        return switch (eDef.getName()) {
             case "Rotfang Wolf" -> "You bandage your wounds and collect what little the wolves carried.";
             case "Shade Sprite" -> "You feel your strength returning after overcoming the darkness.";
             case "Dreadbark Treant" ->
@@ -6061,14 +6081,14 @@ public class BattlePanel extends JPanel {
         heroRoleLbl.setText(heroDef.role);
         if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.getLevel());
 
-        String enemyEmoji = switch (enemyDef.name) {
+        String enemyEmoji = switch (enemyDef.getName()) {
             case "Rotfang Wolf" -> "🐾";
             case "Shade Sprite" -> "👻";
-            default -> enemyDef.emoji;
+            default -> enemyDef.getName();
         };
         enemyEmojiLbl.setText(enemyEmoji);
-        enemyNameLbl.setText(enemyDef.name);
-        enemyRoleLbl.setText(enemyDef.role);
+        enemyNameLbl.setText(enemyDef.getName());
+        enemyRoleLbl.setText(enemyDef.getRole());
 
         heroHpBar.setMaximum(currentHero.getMaxHp());
         enemyHpBar.setMaximum(currentEnemy.getMaxHp());
@@ -6729,7 +6749,7 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     // ★ MINI-BOSS LOOT SYSTEM
     // ════════════════════════════════════════════════════════════════════════
-    private void grantMiniBossLoot(EnemyDefinition eDef, Runnable onDone) {
+    private void grantMiniBossLoot(EnemyData eDef, Runnable onDone) {
         if (currentHero == null || eDef == null) {
             onDone.run();
             return;
@@ -6737,13 +6757,13 @@ public class BattlePanel extends JPanel {
 
         String role = currentHero.role;
 
-        if (eDef.name.equals("The Hollow Stag")) {
+        if (eDef.getName().equals("The Hollow Stag")) {
             Weapon w = switch(role) {
                 case "Swordsman" -> new Sword(Sword.IRON_SHORTSWORD);
                 case "Archer"    -> new Bow(Bow.OAK_LONGBOW);
                 default          -> new Staff(Staff.APPRENTICE_STAFF);
             };
-            Armor a = new Armor(GameGUI.model.entity.DataManager.getData().getIronVanguard());
+            Armor a = new Armor(Armor.IRON_VANGUARD);
 
             currentHero.inventory.setEquippedWeapon(w);
             currentHero.inventory.setEquippedArmor(a);
@@ -6752,19 +6772,19 @@ public class BattlePanel extends JPanel {
             addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(80, 80, 80));
             showItemDropImage("/assets/ItemAssets/World1ItemDrop.png", onDone);
         }
-        else if (eDef.name.equals("The Black Jailer")) {
+        else if (eDef.getName().equals("The Black Jailer")) {
             showBlackJailerLoot(onDone);
         }
-        else if (eDef.name.equals("Luther Von")) {
+        else if (eDef.getName().equals("Luther Von")) {
             showWorld2LootChoice(role, onDone);
         }
-        else if (eDef.name.equals("Zyrryl")) {
+        else if (eDef.getName().equals("Zyrryl")) {
             Weapon w = switch(role) {
                 case "Swordsman" -> new Sword(Sword.ECLIPSE_GREATSWORD);
                 case "Archer"    -> new Bow(Bow.AETHERSTRIKE_BOW);
                 default          -> new Staff(Staff.AETHERIC_STAFF);
             };
-            Armor a = new Armor(GameGUI.model.entity.DataManager.getData().getSkyforgePlate());
+            Armor a = new Armor(Armor.SKYFORGE_PLATE);
 
             currentHero.inventory.setEquippedWeapon(w);
             currentHero.inventory.setEquippedArmor(a);
@@ -6839,7 +6859,7 @@ public class BattlePanel extends JPanel {
         for (ActionListener al : lootItem1Btn.getActionListeners()) lootItem1Btn.removeActionListener(al);
         lootItem1Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getAegisMail()));
+            currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
             currentHero.recalculateBuffs();
             addLog("🎁 Obtained: Aegis Mail!", new Color(80, 80, 80));
             delay(1500, onDone);
@@ -6851,7 +6871,7 @@ public class BattlePanel extends JPanel {
         for (ActionListener al : lootItem2Btn.getActionListeners()) lootItem2Btn.removeActionListener(al);
         lootItem2Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getVanguardRobe()));
+            currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
             currentHero.recalculateBuffs();
             addLog("🎁 Obtained: Vanguard Robe!", new Color(80, 80, 80));
             delay(1500, onDone);
@@ -6882,7 +6902,7 @@ public class BattlePanel extends JPanel {
         lootItem1Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
             currentHero.inventory.setEquippedWeapon(w1);
-            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getAegisMail()));
+            currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
             currentHero.recalculateBuffs();
             addLog("🎁 Chose: " + w1.name + " & Aegis Mail!", new Color(200, 180, 50));
             delay(1500, onDone);
@@ -6896,7 +6916,7 @@ public class BattlePanel extends JPanel {
         lootItem2Btn.addActionListener(e -> {
             lootChoiceOverlay.setVisible(false);
             currentHero.inventory.setEquippedWeapon(w2);
-            currentHero.inventory.setEquippedArmor(new Armor(DataManager.getData().getVanguardRobe()));
+            currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
             currentHero.recalculateBuffs();
             addLog("🎁 Chose: " + w2.name + " & Vanguard Robe!", new Color(200, 180, 50));
             delay(1500, onDone);
@@ -6914,7 +6934,7 @@ public class BattlePanel extends JPanel {
     public int getEnemyFightIndex() { return enemyFightIndex; }
 
     // ★ ADD THIS METHOD: Allows us to skip the wolves and jump straight to the saved enemy!
-    public void resumeEnemySequence(HeroDefinition hero, List<EnemyDefinition> sequence, int seqIndex, int fightIndex, Runnable onComplete) {
+    public void resumeEnemySequence(HeroDefinition hero, List<EnemyData> sequence, int seqIndex, int fightIndex, Runnable onComplete) {
         this.heroDef = hero;
         this.enemySequence = new ArrayList<>(sequence);
         this.enemySequenceIndex = seqIndex;
@@ -6922,8 +6942,8 @@ public class BattlePanel extends JPanel {
         this.onSequenceComplete = onComplete;
 
         if (!sequence.isEmpty() && seqIndex < sequence.size()) {
-            EnemyDefinition firstEnemy = sequence.get(seqIndex);
-            String preloadBg = switch (firstEnemy.name) {
+            EnemyData firstEnemy = sequence.get(seqIndex);
+            String preloadBg = switch (firstEnemy.getName()) {
                 // World 2
                 case "Plague Vermin"       -> "/assets/Backgrounds/World2Battle1Background.png";
                 case "Forsaken Cultist"    -> "/assets/Backgrounds/World2BattleBackground2.png";

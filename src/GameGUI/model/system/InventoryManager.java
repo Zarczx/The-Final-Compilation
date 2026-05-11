@@ -1,6 +1,6 @@
 package GameGUI.model.system;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Weapon;
 

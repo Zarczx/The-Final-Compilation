@@ -1,6 +1,6 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;

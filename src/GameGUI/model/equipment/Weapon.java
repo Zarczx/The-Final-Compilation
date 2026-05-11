@@ -1,7 +1,7 @@
 package GameGUI.model.equipment;
 
-import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.HeroData;
 import GameGUI.model.logic.StatusManager;
 
 import java.util.HashMap;

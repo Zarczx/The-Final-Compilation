@@ -1,7 +1,7 @@
 package GameGUI;
 
 import GameGUI.engine.GameScreen;
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,7 +130,7 @@ public class TitleScreen extends JPanel {
                     1,
                     0,  // ★ ADDED: Dummy seqIndex for Load Mode
                     0,  // ★ ADDED: Dummy fightIndex for Load Mode
-                    (GameGUI.model.entity.Combatant loadedHero, GameGUI.model.system.SaveData data) -> {
+                    (Combatant loadedHero, GameGUI.model.system.SaveData data) -> {
                         timer.stop(); // Stop the Title Screen animations
 
                         // 1. Create the brand new GameScreen!

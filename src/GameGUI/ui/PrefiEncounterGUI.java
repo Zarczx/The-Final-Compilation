@@ -1,12 +1,12 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.HeroData;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;
 import GameGUI.model.equipment.Sword;
 import GameGUI.model.equipment.Weapon;
-import GameGUI.model.entity.DataManager;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -774,7 +774,7 @@ public class PrefiEncounterGUI extends JPanel {
     // =========================================================================
 
     private void resolveWeapon() {
-        legendaryArmor = new Armor(DataManager.getData().getCelestialBattlegear());
+        legendaryArmor = new Armor(Armor.CELESTIAL_BATTLEGEAR);
         String classType = getClassType();
 
         HeroData.WeaponDef wDef = switch (classType) {
@@ -864,7 +864,7 @@ public class PrefiEncounterGUI extends JPanel {
 
     private void equipWeapon() {
         if (player == null || legendaryWeapon == null) return;
-        GameGUI.model.entity.Combatant c = (GameGUI.model.entity.Combatant) player;
+        Combatant c = (Combatant) player;
 
         // NOTE: If your method in InventoryManager is called something else
         // (like setEquippedWeapon or setWeapon), change the word below!
@@ -874,7 +874,7 @@ public class PrefiEncounterGUI extends JPanel {
 
     private void equipArmor() {
         if (player == null || legendaryArmor == null) return;
-        GameGUI.model.entity.Combatant c = (GameGUI.model.entity.Combatant) player;
+        Combatant c = (Combatant) player;
 
         // Same here: change equipArmor to match your InventoryManager method!
         c.inventory.setEquippedArmor(legendaryArmor);

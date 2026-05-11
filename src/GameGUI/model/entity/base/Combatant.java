@@ -1,8 +1,9 @@
-package GameGUI.model.entity;
+package GameGUI.model.entity.base;
 
 import java.util.EnumSet;
 import java.util.Set;
 
+import GameGUI.model.entity.ShopPassive;
 import GameGUI.model.system.InventoryManager;
 import GameGUI.model.logic.StatusManager;
 

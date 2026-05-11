@@ -1,8 +1,9 @@
 package GameGUI.model.system;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.DataManager;
+import GameGUI.model.entity.data.HeroData;
 import GameGUI.model.equipment.*;
-import GameGUI.model.entity.DataManager;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -135,10 +136,10 @@ public class SaveManager {
         if (data == null) return null;
 
         // 1. Find the base blueprint based on the saved role/name
-        GameGUI.model.entity.HeroData.HeroDefinition baseDef =
-                GameGUI.model.entity.DataManager.getData().getHeroes().get(0); // Default to Kael
+        HeroData.HeroDefinition baseDef =
+                DataManager.getData().getHeroes().get(0); // Default to Kael
 
-        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.DataManager.getData().getHeroes()) {
+        for (HeroData.HeroDefinition def : DataManager.getData().getHeroes()) {
             if (def.name.equals(data.heroName)) {
                 baseDef = def;
                 break;
@@ -200,12 +201,12 @@ public class SaveManager {
         // 5. Restore Armor
         if (data.equippedArmorName != null) {
             Armor a = switch (data.equippedArmorName) {
-                case "Iron Vanguard" -> new Armor(DataManager.getData().getIronVanguard());
-                case "Aegis Mail" -> new Armor(DataManager.getData().getAegisMail());
-                case "Vanguard Robe" -> new Armor(DataManager.getData().getVanguardRobe());
-                case "Skyforge Plate" -> new Armor(DataManager.getData().getSkyforgePlate());
-                case "Celestial Battlegear" -> new Armor(DataManager.getData().getCelestialBattlegear());
-                default -> new Armor(DataManager.getData().getLeatherGuard());
+                case "Iron Vanguard" -> new Armor(Armor.AEGIS_MAIL);
+                case "Aegis Mail" -> new Armor(Armor.AEGIS_MAIL);
+                case "Vanguard Robe" -> new Armor(Armor.VANGUARD_ROBE);
+                case "Skyforge Plate" -> new Armor(Armor.SKYFORGE_PLATE);
+                case "Celestial Battlegear" -> new Armor(Armor.CELESTIAL_BATTLEGEAR);
+                default -> new Armor(Armor.LEATHER_GUARD);
             };
 
             a.hasEnchantment = data.armorHasFortified;

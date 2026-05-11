@@ -1,10 +1,12 @@
 package GameGUI.engine;
 
-import GameGUI.model.entity.DataManager;
-import GameGUI.model.entity.HeroData;
-import GameGUI.model.entity.HeroData.HeroDefinition;
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.data.DataManager;
+import GameGUI.model.entity.data.EnemyData;
+import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.HeroData.HeroDefinition;
+import GameGUI.model.entity.base.Combatant;
 import GameGUI.ui.BattlePanel;
+import GameGUI.ui.DashboardPanel;
 import GameGUI.ui.HeroSelectionPanel;
 
 import javax.swing.*;
@@ -22,8 +24,12 @@ public class GameScreen extends JPanel {
     private static final String SCREEN_BATTLE ="battle";
     private static final String SCREEN_SHOP = "shop";
     private static final String SCREEN_PREFI = "prefi";
+    private static final String SCREEN_DASHBOARD = "dashboard";
+
 
     private GameGUI.ui.MagicShopPanel magicShopPanel;
+    private DashboardPanel dashboardPanel;
+    private long sessionStartTime = System.currentTimeMillis();
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel cardPanel = new JPanel(cardLayout);
@@ -253,6 +259,16 @@ public class GameScreen extends JPanel {
         magicShopPanel.setOnLeaveShop(this::showPostShopDialogue);
         cardPanel.add(magicShopPanel, SCREEN_SHOP);
 
+        // Initialize the dashboard and define the "Return to Menu" action
+        dashboardPanel = new DashboardPanel(() -> {
+            utils.SoundUtil.play("SelectSound2.wav");
+
+            // Return to the main menu screen and reset the music
+            switchMusic("MainMenuMusic.WAV", 0.5f);
+            cardLayout.show(cardPanel, SCREEN_INTRO);
+        });
+        cardPanel.add(dashboardPanel, SCREEN_DASHBOARD);
+        // ★ END OF NEW BLOCK
         add(cardPanel, BorderLayout.CENTER);
 
         setSceneBackground("assets/Backgrounds/NGEBackground.png");
@@ -360,9 +376,9 @@ public class GameScreen extends JPanel {
         this.currentWorld = 1;
         if (typingTimer != null) typingTimer.stop();
 
-        java.util.List<HeroData.EnemyDefinition> stagOnly =
+        java.util.List<EnemyData> stagOnly =
                 DataManager.getData().getWorld1Enemies().stream()
-                        .filter(e -> e.name.equals("The Hollow Stag"))
+                        .filter(e -> e.getName().equals("The Hollow Stag"))
                         .collect(java.util.stream.Collectors.toList());
 
         cardLayout.show(cardPanel, SCREEN_BATTLE);
@@ -390,13 +406,13 @@ public class GameScreen extends JPanel {
         this.currentWorld = currentWorld;
         if (typingTimer != null) typingTimer.stop();
 
-        java.util.List<HeroData.EnemyDefinition> allEnemies = new java.util.ArrayList<>();
+        java.util.List<EnemyData> allEnemies = new java.util.ArrayList<>();
         allEnemies.addAll(DataManager.getData().getWorld1Enemies());
         allEnemies.addAll(DataManager.getData().getWorld1Enemies());
         allEnemies.addAll(DataManager.getData().getWorld3Enemies());
 
-        java.util.List<HeroData.EnemyDefinition> match = allEnemies.stream()
-                .filter(e -> e.name.equals(enemyName))
+        java.util.List<EnemyData> match = allEnemies.stream()
+                .filter(e -> e.getName().equals(enemyName))
                 .collect(java.util.stream.Collectors.toList());
 
         if (match.isEmpty()) {
@@ -959,6 +975,25 @@ public class GameScreen extends JPanel {
         backBtn.addActionListener(e -> openSaveScreen());
         continueBtn.addActionListener(e -> continueDialogue());
 
+        // ==========================================
+        // DEBUG: INSTANT WIN BUTTON
+        // ==========================================
+        /*JButton debugWinBtn = new JButton("DEBUG: Instant Win");
+        debugWinBtn.setFont(new Font("Georgia", Font.BOLD, 14));
+        debugWinBtn.setForeground(Color.RED);
+        debugWinBtn.setBackground(new Color(30, 28, 45));
+
+
+
+        // Position it at the top-left corner of the screen
+        debugWinBtn.setBounds(20, 20, 200, 40);
+
+        debugWinBtn.addActionListener(e -> {
+            finishEpilogue();
+        });
+        // ==========================================
+        */
+
         loginPopup = buildLoginPopup();
         examPopup = buildExamPopup();
         battleChoicePopup = buildBattleChoicePopup();
@@ -972,6 +1007,7 @@ public class GameScreen extends JPanel {
         layeredPane.add(menuBtn,           JLayeredPane.PALETTE_LAYER);
         layeredPane.add(backBtn,           JLayeredPane.PALETTE_LAYER);
         layeredPane.add(exitBtn,           JLayeredPane.PALETTE_LAYER);
+        //layeredPane.add(debugWinBtn,       JLayeredPane.PALETTE_LAYER);
         layeredPane.add(loginPopup,        JLayeredPane.MODAL_LAYER);
         layeredPane.add(examPopup,         JLayeredPane.MODAL_LAYER);
         layeredPane.add(battleChoicePopup, JLayeredPane.MODAL_LAYER);
@@ -3910,6 +3946,28 @@ public class GameScreen extends JPanel {
         });
     }
 
+    private void finishEpilogue() {
+        // Calculate total playtime
+        long totalPlayTime = System.currentTimeMillis() - sessionStartTime;
+
+        // Prompt for name
+        String playerName = JOptionPane.showInputDialog(this,
+                "The realm is safe. Enter your name for the chronicles:",
+                "Victory!",
+                JOptionPane.PLAIN_MESSAGE);
+
+        if (playerName == null || playerName.trim().isEmpty()) {
+            playerName = "Unknown Hero";
+        }
+
+        // Save to leaderboard
+        GameGUI.model.system.LeaderboardManager.addEntry(playerName, totalPlayTime);
+
+        // Refresh and show the dashboard
+        dashboardPanel.refreshData();
+        cardLayout.show(cardPanel, SCREEN_DASHBOARD);
+    }
+
     private static final String[] KHAI_VICTORY_DIALOGUE = {
             // index 0 — Epilogue1 shown immediately, then type this
             "With your last strike, Khai staggers.\n" +
@@ -3985,10 +4043,10 @@ public class GameScreen extends JPanel {
         w3TypingTimer.start();
     }
 
-    public void loadSavedGame(GameGUI.model.entity.Combatant loadedHero, GameGUI.model.system.SaveData data) {
+    public void loadSavedGame(Combatant loadedHero, GameGUI.model.system.SaveData data) {
         if (typingTimer != null) typingTimer.stop();
 
-        for (GameGUI.model.entity.HeroData.HeroDefinition def : GameGUI.model.entity.DataManager.getData().getHeroes()) {
+        for (HeroData.HeroDefinition def : DataManager.getData().getHeroes()) {
             if (def.name.equals(loadedHero.name)) {
                 this.confirmedHero = def;
                 break;
@@ -4021,7 +4079,7 @@ public class GameScreen extends JPanel {
             utils.SoundUtil.playLoop("World1BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
                     confirmedHero,
-                    GameGUI.model.entity.DataManager.getData().getWorld1Enemies(),
+                    DataManager.getData().getWorld1Enemies(),
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
@@ -4035,7 +4093,7 @@ public class GameScreen extends JPanel {
             utils.SoundUtil.playLoop("World2BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
                     confirmedHero,
-                    GameGUI.model.entity.DataManager.getData().getWorld2Enemies(),
+                    DataManager.getData().getWorld2Enemies(),
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
@@ -4049,7 +4107,7 @@ public class GameScreen extends JPanel {
             utils.SoundUtil.playLoop("World3BGMusic.wav", 0.5f);
             battlePanel.resumeEnemySequence(
                     confirmedHero,
-                    GameGUI.model.entity.DataManager.getData().getWorld3Enemies(),
+                    DataManager.getData().getWorld3Enemies(),
                     data.savedEnemySequenceIndex,
                     data.savedEnemyFightIndex,
                     () -> {
@@ -4062,7 +4120,7 @@ public class GameScreen extends JPanel {
 
     private void restoreEnemyHp(GameGUI.model.system.SaveData data) {
         if (data.savedEnemyCurrentHp <= 0 || data.savedEnemyMaxHp <= 0) return;
-        GameGUI.model.entity.Combatant enemy = battlePanel.getCurrentEnemy();
+        Combatant enemy = battlePanel.getCurrentEnemy();
         if (enemy == null) return;
         // Only restore if the saved enemy matches the one that spawned (same max HP)
         if (enemy.getMaxHp() == data.savedEnemyMaxHp) {

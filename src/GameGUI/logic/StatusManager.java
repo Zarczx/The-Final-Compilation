@@ -1,6 +1,6 @@
 package GameGUI.model.logic;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 
 import java.util.EnumMap;
 import java.util.List;

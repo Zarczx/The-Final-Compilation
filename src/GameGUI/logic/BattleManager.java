@@ -1,8 +1,9 @@
 package GameGUI.logic;
 
-import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData;
-import GameGUI.model.entity.HeroData.HeroDefinition;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.EnemyData;
+import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.HeroData.HeroDefinition;
 import GameGUI.model.logic.StatusManager;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class BattleManager {
     private final Combatant      hero, enemy;
     private final HeroDefinition heroDef;
     private final Random         rng = new Random();
-    private final HeroData.EnemyDefinition enemyDef;
+    private final EnemyData enemyDef;
     private final FinalBossManager finalBossManager;
 
     private TurnOwner currentTurn      = TurnOwner.PLAYER;
@@ -48,7 +49,7 @@ public class BattleManager {
 
     private final int s1Cost, s2Cost, ultCost;
 
-    public BattleManager(Combatant hero, Combatant enemy, HeroDefinition heroDef, HeroData.EnemyDefinition enemyDef, boolean hasPhoenix) {
+    public BattleManager(Combatant hero, Combatant enemy, HeroDefinition heroDef, EnemyData enemyDef, boolean hasPhoenix) {
         this.enemyDef         = enemyDef;
         this.hero             = hero;
         this.enemy            = enemy;
@@ -270,14 +271,14 @@ public class BattleManager {
                 lastEnemySkillName.equals("Encapsulation")) {
             mult = 0.0;
         } else {
-            mult = enemyDef.minMultiplier +
-                    ((enemyDef.maxMultiplier - enemyDef.minMultiplier) * rng.nextDouble());
+            mult = enemyDef.getMinMultiplier() +
+                    ((enemyDef.getMaxMultiplier() - enemyDef.getMinMultiplier()) * rng.nextDouble());
         }
 
         if (lastEnemySkillName.equals("Grave Cleaver")) {
             pierce = true;
         }
-
+        ;
         int damage = DamageCalculator.calculateDamage(enemy, hero, mult, pierce);
         if (damage > 0) {
             hero.takeDamage(damage);
