@@ -3,7 +3,6 @@ package GameGUI.ui;
 import GameGUI.model.entity.base.Combatant;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class InventoryDialog extends JDialog {
@@ -11,11 +10,8 @@ public class InventoryDialog extends JDialog {
     private final Combatant combatant;
     private final Runnable onUpdate;
 
-    private static final Color BG_DARK    = new Color(15, 15, 15);
-    private static final Color PANEL_DARK = new Color(25, 25, 25);
     private static final Color GOLD       = new Color(160, 140, 90);
     private static final Color TEXT_LIGHT = new Color(210, 210, 200);
-    private static final Color TEXT_DIM   = new Color(130, 120, 100);
 
     private JLabel normPotLbl, fullPotLbl, energyPotLbl, shardsLbl, feedbackLbl;
 
@@ -24,99 +20,93 @@ public class InventoryDialog extends JDialog {
         this.combatant = combatant;
         this.onUpdate  = onUpdate;
         setUndecorated(true);
-        setSize(400, 380);
+        setBackground(new Color(0, 0, 0, 0));
+        setSize(460, 460);
         setLocationRelativeTo(parent);
+
+        ImageIcon bgIcon  = loadIcon("assets/InventoryAssets/InventoryGUI.png");
+        Image     bgImage = (bgIcon != null) ? bgIcon.getImage() : null;
 
         JPanel root = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(BG_DARK);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-                g2.setColor(GOLD);
-                g2.setStroke(new BasicStroke(2));
-                g2.drawRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 20, 20);
+                if (bgImage != null) {
+                    g2.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
+                } else {
+                    g2.setColor(new Color(15, 15, 15));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                    g2.setColor(GOLD);
+                    g2.setStroke(new BasicStroke(2));
+                    g2.drawRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 20, 20);
+                }
             }
         };
         root.setOpaque(false);
-        root.setBorder(BorderFactory.createEmptyBorder(24, 28, 16, 28));
+        root.setBorder(BorderFactory.createEmptyBorder(70, 50, 40, 50));
         setContentPane(root);
 
-        // ── Title ─────────────────────────────────────────────────────────
-        JLabel title = new JLabel("Inventory", SwingConstants.CENTER);
-        title.setFont(new Font("Georgia", Font.BOLD, 22));
-        title.setForeground(GOLD);
-        title.setBorder(BorderFactory.createEmptyBorder(0, 0, 16, 0));
-        root.add(title, BorderLayout.NORTH);
-
-        // ── Content ───────────────────────────────────────────────────────
         JPanel content = new JPanel();
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
 
-        // Soul Shards
-        shardsLbl = new JLabel("", SwingConstants.CENTER);
+        // Soul Shards row — number sits inline to the left of the right edge
+        JPanel shardsRow = new JPanel(new BorderLayout());
+        shardsRow.setOpaque(false);
+        shardsRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        shardsRow.setPreferredSize(new Dimension(0, 34));
+        shardsLbl = new JLabel("0", SwingConstants.RIGHT);
         shardsLbl.setFont(new Font("Georgia", Font.BOLD, 18));
-        shardsLbl.setForeground(new Color(150, 200, 255));
-        shardsLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(shardsLbl);
+        shardsLbl.setForeground(new Color(160, 80, 255));
+        // Right padding so it doesn't hug the very edge
+        shardsLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 18));
+        shardsRow.add(shardsLbl, BorderLayout.CENTER);
+        content.add(shardsRow);
         content.add(Box.createVerticalStrut(20));
 
-        // Divider
-        JSeparator sep = new JSeparator();
-        sep.setForeground(new Color(80, 70, 50));
-        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        content.add(sep);
-        content.add(Box.createVerticalStrut(16));
-
-        // Flask label
-        JLabel flaskTitle = new JLabel("Potions", SwingConstants.CENTER);
-        flaskTitle.setFont(new Font("Georgia", Font.ITALIC, 13));
-        flaskTitle.setForeground(TEXT_DIM);
-        flaskTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        content.add(flaskTitle);
-        content.add(Box.createVerticalStrut(12));
-
-        // Normal Flask row
-        normPotLbl = rowLabel("🧪 Normal Healing Potion: 0");
-        JButton useNormBtn = flaskBtn("Consume");
+        // Normal Healing Potion row
+        normPotLbl = potionCountLabel("0");
+        JButton useNormBtn = consumeBtn();
         useNormBtn.addActionListener(e -> usePotion("normal"));
-        content.add(flaskRow(normPotLbl, useNormBtn));
+        content.add(potionRow(normPotLbl, useNormBtn));
         content.add(Box.createVerticalStrut(10));
 
-        // Crimson Flask row
-        fullPotLbl = rowLabel("🩸 Full Healing Potion: 0");
-        JButton useFullBtn = flaskBtn("Consume");
+        // Full Healing Potion row
+        fullPotLbl = potionCountLabel("0");
+        JButton useFullBtn = consumeBtn();
         useFullBtn.addActionListener(e -> usePotion("full"));
-        content.add(flaskRow(fullPotLbl, useFullBtn));
+        content.add(potionRow(fullPotLbl, useFullBtn));
         content.add(Box.createVerticalStrut(10));
 
-        // Cerulean Flask row
-        energyPotLbl = rowLabel("✨ Energy Potion: 0");
-        JButton useEnergyBtn = flaskBtn("Consume");
+        // Energy Potion row
+        energyPotLbl = potionCountLabel("0");
+        JButton useEnergyBtn = consumeBtn();
         useEnergyBtn.addActionListener(e -> usePotion("energy"));
-        content.add(flaskRow(energyPotLbl, useEnergyBtn));
+        content.add(potionRow(energyPotLbl, useEnergyBtn));
 
         root.add(content, BorderLayout.CENTER);
 
-        // ── Bottom ────────────────────────────────────────────────────────
+        // Bottom
         feedbackLbl = new JLabel(" ", SwingConstants.CENTER);
         feedbackLbl.setFont(new Font("Georgia", Font.ITALIC, 13));
         feedbackLbl.setForeground(GOLD);
 
-        JButton closeBtn = new JButton("✕  Close");
-        closeBtn.setFont(new Font("Georgia", Font.BOLD, 13));
-        closeBtn.setForeground(TEXT_DIM);
-        closeBtn.setBackground(BG_DARK);
-        closeBtn.setFocusPainted(false);
+        ImageIcon exitNormal = loadIconFitWidth("assets/InventoryAssets/ExitInventory.png", 130);
+        ImageIcon exitHover  = loadIconFitWidth("assets/InventoryAssets/ExitHoverInventory.png", 130);
+
+        JButton closeBtn = new JButton(exitNormal);
+        closeBtn.setRolloverIcon(exitHover);
+        closeBtn.setRolloverEnabled(true);
+        closeBtn.setContentAreaFilled(false);
         closeBtn.setBorderPainted(false);
+        closeBtn.setFocusPainted(false);
+        closeBtn.setOpaque(false);
         closeBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         closeBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { closeBtn.setForeground(GOLD); }
-            public void mouseExited (java.awt.event.MouseEvent e) { closeBtn.setForeground(TEXT_DIM); }
+            public void mouseEntered(java.awt.event.MouseEvent e) { utils.SoundUtil.play("HoverSound.wav"); }
         });
-        closeBtn.addActionListener(e -> dispose());
+        closeBtn.addActionListener(e -> { utils.SoundUtil.play("SelectSound2.wav"); dispose(); });
 
         JPanel bottom = new JPanel(new BorderLayout());
         bottom.setOpaque(false);
@@ -131,36 +121,81 @@ public class InventoryDialog extends JDialog {
         refreshUI();
     }
 
-    private JLabel rowLabel(String text) {
-        JLabel lbl = new JLabel(text);
-        lbl.setFont(new Font("Georgia", Font.PLAIN, 15));
-        lbl.setForeground(TEXT_LIGHT);
+    /**
+     * Red bold count label — fixed width so it always sits
+     * flush right before the Consume button.
+     */
+    private JLabel potionCountLabel(String text) {
+        JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
+        lbl.setFont(new Font("Georgia", Font.BOLD, 16));
+        lbl.setForeground(new Color(220, 60, 60)); // red
+        lbl.setPreferredSize(new Dimension(38, 44));
+        lbl.setMinimumSize(new Dimension(38, 44));
+        lbl.setMaximumSize(new Dimension(38, 44));
         return lbl;
     }
 
-    private JButton flaskBtn(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Georgia", Font.BOLD, 12));
-        btn.setForeground(GOLD);
-        btn.setBackground(PANEL_DARK);
+    private JButton consumeBtn() {
+        ImageIcon normalIcon = loadIconFitWidth("assets/InventoryAssets/Consume.png", 125);
+        ImageIcon hoverIcon  = loadIconFitWidth("assets/InventoryAssets/ConsumeHover.png", 125);
+
+        JButton btn = new JButton(normalIcon);
+        btn.setRolloverIcon(hoverIcon);
+        btn.setRolloverEnabled(true);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
         btn.setFocusPainted(false);
+        btn.setOpaque(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(GOLD, 1),
-                BorderFactory.createEmptyBorder(4, 12, 4, 12)));
+
+        if (normalIcon != null) {
+            Dimension d = new Dimension(normalIcon.getIconWidth(), normalIcon.getIconHeight());
+            btn.setPreferredSize(d);
+            btn.setMaximumSize(d);
+            btn.setMinimumSize(d);
+        }
+
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(new Color(50, 44, 22)); }
-            public void mouseExited (java.awt.event.MouseEvent e) { btn.setBackground(PANEL_DARK); }
+            public void mouseEntered(java.awt.event.MouseEvent e) { utils.SoundUtil.play("HoverSound.wav"); }
         });
+        btn.addActionListener(e -> utils.SoundUtil.play("SelectSound2.wav"));
         return btn;
     }
 
-    private JPanel flaskRow(JLabel label, JButton button) {
-        JPanel row = new JPanel(new BorderLayout(10, 0));
+    /**
+     * Layout: [spacer fills left] [red count, right-aligned] [8px gap] [Consume btn]
+     * Everything is vertically centred via GridBagLayout CENTER anchor.
+     */
+    private JPanel potionRow(JLabel countLabel, JButton button) {
+        JPanel row = new JPanel(new GridBagLayout());
         row.setOpaque(false);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        row.add(label, BorderLayout.CENTER);
-        row.add(button, BorderLayout.EAST);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        row.setPreferredSize(new Dimension(0, 44));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy  = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill   = GridBagConstraints.NONE;
+
+        // Invisible spacer — pushes count + button to the right
+        gbc.gridx   = 0;
+        gbc.weightx = 1.0;
+        gbc.fill    = GridBagConstraints.HORIZONTAL;
+        gbc.insets  = new Insets(0, 0, 0, 0);
+        row.add(Box.createHorizontalGlue(), gbc);
+
+        // Red count — right-aligned, fixed width
+        gbc.gridx   = 1;
+        gbc.weightx = 0;
+        gbc.fill    = GridBagConstraints.NONE;
+        gbc.insets  = new Insets(0, 0, 0, 8); // 8px gap between count and button
+        row.add(countLabel, gbc);
+
+        // Consume button
+        gbc.gridx   = 2;
+        gbc.insets  = new Insets(0, 0, 0, 0);
+        row.add(button, gbc);
+
         return row;
     }
 
@@ -178,9 +213,28 @@ public class InventoryDialog extends JDialog {
     }
 
     private void refreshUI() {
-        shardsLbl.setText("Soul Shards: " + combatant.getSoulShards());
-        normPotLbl.setText("🧪 Normal Healing Potion: "   + combatant.inventory.potions.getNormalHealingPotions());
-        fullPotLbl.setText("🩸 Full Healing Potion: "  + combatant.inventory.potions.getFullHealingPotions());
-        energyPotLbl.setText("✨ Energy Potion: " + combatant.inventory.potions.getEnergyPotions());
+        shardsLbl.setText(String.valueOf(combatant.getSoulShards()));
+        normPotLbl.setText(String.valueOf(combatant.inventory.potions.getNormalHealingPotions()));
+        fullPotLbl.setText(String.valueOf(combatant.inventory.potions.getFullHealingPotions()));
+        energyPotLbl.setText(String.valueOf(combatant.inventory.potions.getEnergyPotions()));
+    }
+
+    private ImageIcon loadIconFitWidth(String path, int targetWidth) {
+        ImageIcon raw = loadIcon(path);
+        if (raw == null) return null;
+        int w = raw.getIconWidth();
+        int h = raw.getIconHeight();
+        int targetHeight = (w == 0) ? 40 : (int)((double) h / w * targetWidth);
+        Image scaled = raw.getImage().getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
+    }
+
+    private ImageIcon loadIcon(String path) {
+        java.net.URL url = getClass().getClassLoader().getResource(path);
+        if (url != null) return new ImageIcon(url);
+        java.io.File f = new java.io.File(path);
+        if (f.exists()) return new ImageIcon(f.getAbsolutePath());
+        System.err.println("Asset not found: " + path);
+        return null;
     }
 }
