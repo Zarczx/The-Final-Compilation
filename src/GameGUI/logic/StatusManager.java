@@ -60,28 +60,16 @@ public class StatusManager {
     // =========================================================================
 
     public void applyStun(List<String> logs) {
-        if (isImmuneToEffects()) {
-            logs.add("🛡️ " + owner.name + "'s armor resists the Stun!");
-            return;
-        }
         activeEffects.put(Effect.STUNNED, 1);
         logs.add("💫 " + owner.name + " is Stunned!");
     }
 
     public void applyFreeze(List<String> logs) {
-        if (isImmuneToEffects()) {
-            logs.add("🛡️ " + owner.name + "'s armor resists the Freeze!");
-            return;
-        }
         activeEffects.put(Effect.FROZEN, 1);
         logs.add("❄️ " + owner.name + " is Frozen solid!");
     }
 
     public void applyConfuse(int turns, List<String> logs) {
-        if (isImmuneToEffects()) {
-            logs.add("🛡️ " + owner.name + "'s armor resists the Confusion!");
-            return;
-        }
         if (turns > 0) {
             activeEffects.merge(Effect.CONFUSED, turns, Integer::sum);
             logs.add("🌀 " + owner.name + " is Confused for " + turns + " turn(s)!");

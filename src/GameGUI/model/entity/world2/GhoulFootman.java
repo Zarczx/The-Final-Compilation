@@ -3,6 +3,6 @@ import GameGUI.model.entity.base.BaseEnemy;
 
 public class GhoulFootman extends BaseEnemy {
     public GhoulFootman() {
-        super("Ghoul Footman", "Undead Soldier", "🧟‍♂️", 700, 128, 18, 2, 2, 360, 1.00, 1.20);
+        super("Ghoul Footman",    "Undead Soldier",  "🧟‍♂️", 780,  235, 70, 2, 2, 820,  1.05, 1.20);
     }
 }
