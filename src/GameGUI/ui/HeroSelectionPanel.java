@@ -1,14 +1,12 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.DataManager;
-import GameGUI.model.entity.HeroData;
-import GameGUI.model.entity.HeroData.HeroDefinition;
+import GameGUI.model.entity.data.DataManager;
+import GameGUI.model.entity.data.HeroData.HeroDefinition;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.image.BufferedImage;

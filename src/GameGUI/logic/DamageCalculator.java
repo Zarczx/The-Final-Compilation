@@ -1,6 +1,6 @@
 package GameGUI.logic;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 
 /**
  * DamageCalculator — Handles all math for attacks.

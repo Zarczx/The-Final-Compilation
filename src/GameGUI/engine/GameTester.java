@@ -1,11 +1,11 @@
 package GameGUI.engine;
 
-import GameGUI.model.entity.DataManager;
-import GameGUI.model.entity.HeroData;
-import GameGUI.model.entity.HeroData.ArmorDef;
-import GameGUI.model.entity.HeroData.HeroDefinition;
-import GameGUI.model.entity.HeroData.WeaponDef;
+import GameGUI.model.entity.data.DataManager;
+import GameGUI.model.entity.data.HeroData.ArmorDef;
+import GameGUI.model.entity.data.HeroData.HeroDefinition;
+import GameGUI.model.entity.data.HeroData.WeaponDef;
 
+import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Sword;
 import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;
@@ -71,8 +71,8 @@ public class GameTester {
         });
 
         ArmorDef[] allArmors = {
-                DataManager.getData().getLeatherGuard(), DataManager.getData().getIronVanguard(), DataManager.getData().getAegisMail(),
-                DataManager.getData().getVanguardRobe(), DataManager.getData().getSkyforgePlate(), DataManager.getData().getCelestialBattlegear()
+                Armor.LEATHER_GUARD, Armor.IRON_VANGUARD, Armor.AEGIS_MAIL,
+                Armor.VANGUARD_ROBE, Armor.SKYFORGE_PLATE, Armor.CELESTIAL_BATTLEGEAR
         };
         JComboBox<ArmorDef> armorCombo = new JComboBox<>(allArmors);
         armorCombo.setRenderer(new DefaultListCellRenderer() {

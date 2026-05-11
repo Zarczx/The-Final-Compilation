@@ -1,7 +1,8 @@
 package GameGUI.model;
 
-import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.EnemyData;
+import GameGUI.model.entity.data.HeroData;
 import GameGUI.model.equipment.*;
 
 public class HeroFactory {
@@ -44,11 +45,11 @@ public class HeroFactory {
         return hero;
     }
 
-    public static Combatant createEnemy(HeroData.EnemyDefinition def) {
+    public static Combatant createEnemy(EnemyData def){
         // ★ Removed the 'null' at the end that used to represent 'special'
         return new Combatant(
-                def.name, def.role, def.emoji,
-                def.maxHp, def.attack, def.defense,
+                def.getName(), def.getRole(), def.getEmoji(),
+                def.getMaxHp(), def.getAttack(), def.getDefense(),
                 0, 0
         );
     }

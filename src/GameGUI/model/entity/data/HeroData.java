@@ -1,4 +1,6 @@
-package GameGUI.model.entity;
+package GameGUI.model.entity.data;
+
+import GameGUI.model.entity.base.BaseEnemy;
 
 import java.util.List;
 
@@ -83,36 +85,23 @@ public interface HeroData {
     }
 
     // ─── Enemy Definition ────────────────────────────────────────────────────
-    class EnemyDefinition {
-        public final String name, role, emoji;
-        public final int maxHp, attack, defense, worldLevel, count, xpReward;
-        public final double minMultiplier, maxMultiplier;
 
-        public EnemyDefinition(String name, String role, String emoji,
-                               int maxHp, int attack, int defense,
-                               int worldLevel, int count, int xpReward,
-                               double minMultiplier, double maxMultiplier) {
-            this.name = name; this.role = role; this.emoji = emoji;
-            this.maxHp = maxHp; this.attack = attack; this.defense = defense;
-            this.worldLevel = worldLevel; this.count = count; this.xpReward = xpReward;
-            this.minMultiplier = minMultiplier; this.maxMultiplier = maxMultiplier;
-        }
-    }
 
     // ─── Function Contracts (To be implemented by base classes) ──────────────
 
     // Armors
-    ArmorDef getLeatherGuard();
+    /*ArmorDef getLeatherGuard();
     ArmorDef getIronVanguard();
     ArmorDef getAegisMail();
     ArmorDef getVanguardRobe();
     ArmorDef getSkyforgePlate();
     ArmorDef getCelestialBattlegear();
+    */
 
     // Registries
     List<HeroDefinition> getHeroes();
-    List<EnemyDefinition> getWorld1Enemies();
-    List<EnemyDefinition> getWorld2Enemies();
-    List<EnemyDefinition> getWorld3Enemies();
-    List<EnemyDefinition> getFinalBossSequence();
+    List<EnemyData> getWorld1Enemies();
+    List<EnemyData> getWorld2Enemies();
+    List<EnemyData> getWorld3Enemies();
+    List<EnemyData> getFinalBossSequence();
 }

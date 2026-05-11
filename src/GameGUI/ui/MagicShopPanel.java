@@ -1,6 +1,6 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.Combatant;
+import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.ShopPassive;
 
 import javax.swing.*;

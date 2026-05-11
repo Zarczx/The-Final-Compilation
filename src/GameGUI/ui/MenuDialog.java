@@ -1,7 +1,8 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.EnemyData;
+import GameGUI.model.entity.data.HeroData;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +17,7 @@ public class MenuDialog extends JDialog {
     private static final Color TEXT_DIM   = new Color(130, 120, 100);
 
     public MenuDialog(Window parent, Combatant hero, HeroData.HeroDefinition heroDef,
-                      Combatant enemy, HeroData.EnemyDefinition enemyDef,
+                      Combatant enemy, EnemyData enemyDef,
                       Runnable onUpdate, Supplier<String> bossTauntSupplier,
                       BooleanSupplier isBossCheck, Runnable onFullyClose) {
         super(parent, "Menu", ModalityType.APPLICATION_MODAL);

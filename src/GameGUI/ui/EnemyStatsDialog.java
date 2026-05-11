@@ -1,7 +1,8 @@
 package GameGUI.ui;
 
-import GameGUI.model.entity.Combatant;
-import GameGUI.model.entity.HeroData;
+import GameGUI.model.entity.base.Combatant;
+import GameGUI.model.entity.data.EnemyData;
+import GameGUI.model.entity.data.HeroData;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +16,7 @@ public class EnemyStatsDialog extends JDialog {
     private static final Color TEXT_DIM   = new Color(130, 120, 100);
     private static final Color RED        = new Color(200, 80, 80);
 
-    public EnemyStatsDialog(Window parent, Combatant enemy, HeroData.EnemyDefinition enemyDef) {
+    public EnemyStatsDialog(Window parent, Combatant enemy, EnemyData enemyDef) {
         super(parent, "Enemy Stats", ModalityType.APPLICATION_MODAL);
         setUndecorated(true);
         setSize(480, 520);
@@ -38,7 +39,7 @@ public class EnemyStatsDialog extends JDialog {
         setContentPane(root);
 
         // ── Title ─────────────────────────────────────────────────────────
-        JLabel title = new JLabel(enemyDef.name, SwingConstants.CENTER);
+        JLabel title = new JLabel(enemyDef.getName(), SwingConstants.CENTER);
         title.setFont(new Font("Georgia", Font.BOLD, 20));
         title.setForeground(RED);
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
@@ -49,7 +50,7 @@ public class EnemyStatsDialog extends JDialog {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setOpaque(false);
 
-        content.add(dimLabel("Role: " + enemyDef.role));
+        content.add(dimLabel("Role: " + enemyDef.getRole()));
         content.add(Box.createVerticalStrut(14));
         content.add(divider());
         content.add(Box.createVerticalStrut(10));
@@ -69,8 +70,8 @@ public class EnemyStatsDialog extends JDialog {
         content.add(sectionHeader("Skills"));
         content.add(Box.createVerticalStrut(8));
 
-        // Enemy skills are not in EnemyDefinition yet — show placeholders
-        String[][] enemySkills = getEnemySkills(enemyDef.name);
+        // Enemy skills are not in EnemyDatayet — show placeholders
+        String[][] enemySkills = getEnemySkills(enemyDef.getName());
         for (String[] skill : enemySkills) {
             content.add(skillCard(skill[0], skill[1], skill[2]));
             content.add(Box.createVerticalStrut(8));
