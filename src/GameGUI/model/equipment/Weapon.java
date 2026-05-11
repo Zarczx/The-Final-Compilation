@@ -1,7 +1,8 @@
 package GameGUI.model.equipment;
 
 import GameGUI.model.entity.base.Combatant;
-import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.WeaponDef;
+import GameGUI.model.entity.data.WeaponType;
 import GameGUI.model.logic.StatusManager;
 
 import java.util.HashMap;
@@ -9,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class Weapon {
-    public HeroData.WeaponType type;
+    public WeaponType type;
     public String name, rarity;
     public int atkBuff, lifestealPercent, poisonChance, bleedChance;
     public int stunChance, freezeChance, confuseChance, energyPerAttack, extraHitChance;
@@ -17,7 +18,7 @@ public abstract class Weapon {
     public int addLifestealPercent = 0;
     public Map<String, String> enchantments = new HashMap<>();
 
-    public Weapon(HeroData.WeaponDef def) {
+    public Weapon(WeaponDef def) {
         this.type             = def.type;
         this.name             = def.name;
         this.rarity           = def.rarity;

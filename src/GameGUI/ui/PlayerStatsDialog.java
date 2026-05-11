@@ -1,7 +1,8 @@
 package GameGUI.ui;
 
 import GameGUI.model.entity.base.Combatant;
-import GameGUI.model.entity.data.HeroData;
+import GameGUI.model.entity.data.HeroDefinition;
+import GameGUI.model.entity.data.SkillDef;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Weapon;
 
@@ -17,7 +18,7 @@ public class PlayerStatsDialog extends JDialog {
     private static final Color TEXT_LIGHT = new Color(210, 210, 200);
     private static final Color TEXT_DIM   = new Color(130, 120, 100);
 
-    public PlayerStatsDialog(Window parent, Combatant hero, HeroData.HeroDefinition heroDef) {
+    public PlayerStatsDialog(Window parent, Combatant hero, HeroDefinition heroDef) {
         super(parent, "Player Stats", ModalityType.APPLICATION_MODAL);
         setUndecorated(true);
 
@@ -166,7 +167,7 @@ public class PlayerStatsDialog extends JDialog {
         content.add(sectionHeader("Skills"));
         content.add(Box.createVerticalStrut(8));
         if (heroDef.skills != null) {
-            for (HeroData.SkillDef skill : heroDef.skills) {
+            for (SkillDef skill : heroDef.skills) {
                 content.add(skillCard(skill.icon, skill.name, skill.description));
                 content.add(Box.createVerticalStrut(8));
             }
