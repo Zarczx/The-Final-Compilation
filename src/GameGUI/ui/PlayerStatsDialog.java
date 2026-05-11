@@ -5,7 +5,6 @@ import GameGUI.model.entity.data.HeroDefinition;
 import GameGUI.model.entity.data.SkillDef;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Weapon;
-import GameGUI.model.entity.data.definition.*;
 
 import javax.swing.*;
 import javax.swing.ToolTipManager;
