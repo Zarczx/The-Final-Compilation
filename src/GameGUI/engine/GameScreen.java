@@ -2,8 +2,7 @@ package GameGUI.engine;
 
 import GameGUI.model.entity.data.DataManager;
 import GameGUI.model.entity.data.EnemyData;
-import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.HeroDefinition;
+import GameGUI.model.entity.data.HeroDefinition;
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.ui.BattlePanel;
 import GameGUI.ui.DashboardPanel;

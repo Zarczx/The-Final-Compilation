@@ -2,8 +2,7 @@ package GameGUI.model.system;
 
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.DataManager;
-import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.HeroDefinition;
+import GameGUI.model.entity.data.HeroDefinition;
 import GameGUI.model.equipment.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

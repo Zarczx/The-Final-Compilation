@@ -1,8 +1,5 @@
 package GameGUI.model.entity.data;
 
-import GameGUI.model.entity.base.BaseEnemy;
-import GameGUI.model.entity.data.definition.*;
-
 import java.util.List;
 
 public interface HeroData {

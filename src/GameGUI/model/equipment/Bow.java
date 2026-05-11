@@ -2,7 +2,7 @@ package GameGUI.model.equipment;
 
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.WeaponDef;
+import GameGUI.model.entity.data.WeaponDef;
 
 import java.util.ArrayList;
 import java.util.List;

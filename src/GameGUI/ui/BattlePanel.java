@@ -1,8 +1,8 @@
 package GameGUI.ui;
 
 import GameGUI.model.entity.base.Combatant;
-import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.*;
+import GameGUI.model.entity.data.HeroDefinition;
+import GameGUI.model.entity.data.SkillDef;
 import GameGUI.model.entity.data.EnemyData;
 
 import GameGUI.model.HeroFactory;

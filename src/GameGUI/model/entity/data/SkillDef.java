@@ -1,4 +1,4 @@
-package GameGUI.model.entity.data.definition;
+package GameGUI.model.entity.data;
 
 // ─── Skill Definition ────────────────────────────────────────────────────
 public class SkillDef {

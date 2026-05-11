@@ -1,9 +1,9 @@
 package GameGUI.engine;
 
 import GameGUI.model.entity.data.DataManager;
-import GameGUI.model.entity.data.definition.ArmorDef;
-import GameGUI.model.entity.data.definition.HeroDefinition;
-import GameGUI.model.entity.data.definition.WeaponDef;
+import GameGUI.model.entity.data.ArmorDef;
+import GameGUI.model.entity.data.HeroDefinition;
+import GameGUI.model.entity.data.WeaponDef;
 
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Sword;

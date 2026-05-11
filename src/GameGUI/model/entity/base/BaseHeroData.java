@@ -2,7 +2,8 @@ package GameGUI.model.entity.base;
 
 import GameGUI.model.entity.data.EnemyData;
 import GameGUI.model.entity.data.HeroData;
-import GameGUI.model.entity.data.definition.*;
+import GameGUI.model.entity.data.HeroDefinition;
+import GameGUI.model.entity.data.SkillDef;
 import GameGUI.model.equipment.Armor;
 import GameGUI.model.equipment.Bow;
 import GameGUI.model.equipment.Staff;

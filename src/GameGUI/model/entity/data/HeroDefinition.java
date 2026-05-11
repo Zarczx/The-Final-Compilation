@@ -1,6 +1,4 @@
-package GameGUI.model.entity.data.definition;
-
-import GameGUI.model.entity.data.HeroData;
+package GameGUI.model.entity.data;
 
 // ─── Hero Definition ─────────────────────────────────────────────────────
 public class HeroDefinition {
