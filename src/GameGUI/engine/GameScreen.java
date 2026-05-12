@@ -320,8 +320,13 @@ public class GameScreen extends JPanel {
         this.confirmedHero = hero;
         this.currentWorld = 3;
         if (typingTimer != null) typingTimer.stop();
-        battlePanel.setBattleBackground("/assets/Backgrounds/NecroBackground.png");
-        startFinalBossTransition();
+        switchMusic("FinalBossBattleMusic.WAV", 0.8f);
+        cardLayout.show(cardPanel, SCREEN_BATTLE);
+        battlePanel.startEnemySequence(
+                confirmedHero,
+                DataManager.getData().getFinalBossSequence(),
+                this::showKhaiVictoryDialogue
+        );
     }
 
     public void debugSkipToShop(HeroDefinition heroDef) {
@@ -410,6 +415,7 @@ public class GameScreen extends JPanel {
         allEnemies.addAll(DataManager.getData().getWorld1Enemies());
         allEnemies.addAll(DataManager.getData().getWorld2Enemies());
         allEnemies.addAll(DataManager.getData().getWorld3Enemies());
+        allEnemies.addAll(DataManager.getData().getFinalBossSequence());
 
         java.util.List<EnemyData> match = allEnemies.stream()
                 .filter(e -> e.getName().equals(enemyName))

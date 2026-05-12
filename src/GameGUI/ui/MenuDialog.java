@@ -18,6 +18,7 @@ public class MenuDialog extends JDialog {
 
     public MenuDialog(Window parent, Combatant hero, HeroDefinition heroDef,
                       Combatant enemy, EnemyData enemyDef,
+                      int nullStacks, int voidStacks,
                       Runnable onUpdate, Supplier<String> bossTauntSupplier,
                       BooleanSupplier isBossCheck, Runnable onFullyClose) {
         super(parent, "Menu", ModalityType.APPLICATION_MODAL);
@@ -103,7 +104,7 @@ public class MenuDialog extends JDialog {
 
         enemyStatsBtn.addActionListener(e -> {
             dispose();
-            EnemyStatsDialog es = new EnemyStatsDialog(parent, enemy, enemyDef);
+            EnemyStatsDialog es = new EnemyStatsDialog(parent, enemy, enemyDef,nullStacks, voidStacks);
             es.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override public void windowClosed(java.awt.event.WindowEvent ev) {
                     if (onFullyClose != null) onFullyClose.run();

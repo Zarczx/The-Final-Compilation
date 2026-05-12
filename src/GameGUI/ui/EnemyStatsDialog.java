@@ -6,6 +6,7 @@ import GameGUI.model.entity.data.HeroData;
 
 import javax.swing.*;
 import java.awt.*;
+import javax.swing.ToolTipManager;
 
 public class EnemyStatsDialog extends JDialog {
 
@@ -16,7 +17,7 @@ public class EnemyStatsDialog extends JDialog {
     private static final Color TEXT_DIM   = new Color(130, 120, 100);
     private static final Color RED        = new Color(200, 80, 80);
 
-    public EnemyStatsDialog(Window parent, Combatant enemy, EnemyData enemyDef) {
+    public EnemyStatsDialog(Window parent, Combatant enemy, EnemyData enemyDef, int nullStacks, int voidStacks) {
         super(parent, "Enemy Stats", ModalityType.APPLICATION_MODAL);
         setUndecorated(true);
         setSize(480, 520);
@@ -59,9 +60,47 @@ public class EnemyStatsDialog extends JDialog {
         content.add(Box.createVerticalStrut(6));
         content.add(statRow("❤  HP",      enemy.getCurrentHp() + " / " + enemy.getMaxHp(), new Color(200, 80, 80)));
         content.add(Box.createVerticalStrut(4));
-        content.add(statRow("⚔  Attack",  String.valueOf(enemy.attack),  new Color(220, 160, 60)));
+
+        // 1. Create the stat rows as variables so we can attach tooltips to them
+        JPanel atkRow = statRow("⚔  Attack", String.valueOf(enemy.attack), new Color(220, 160, 60));
+        JPanel defRow = statRow("🛡  Defense", String.valueOf(enemy.defense), new Color(100, 180, 120));
+
+        // 2. Check if the enemy is the Final Boss to apply the custom logic
+        if (enemyDef.getName().equals("Khai the Necromancer")) {
+
+            // Set tooltip timing (matches PlayerStatsDialog)
+            ToolTipManager.sharedInstance().setInitialDelay(400);
+            ToolTipManager.sharedInstance().setDismissDelay(6000);
+            ToolTipManager.sharedInstance().setReshowDelay(400);
+
+            // Calculate estimated total percentage gained (+5% per stack)
+            int atkBonusPercent = nullStacks * 5;
+            int defBonusPercent = voidStacks * 5;
+
+            // 3. Build the HTML Tooltip for Attack (Null Energy)
+            String atkTip = "<html><div style='font-family:Arial; padding:5px 8px; background:#1a1a2e; width:200px;'>"
+                    + "<span style='color:#dca03c;'>🔮 <b>Null Energy Stacks: " + nullStacks + "</b></span><br>"
+                    + "<hr style='border-color:#444; margin:3px 0;'>"
+                    + "<span style='color:#ff6666;'>Total Bonus: <b>+" + atkBonusPercent + "% ATK</b></span><br>"
+                    + "<span style='color:#66ff99;'>Current ATK: <b>" + enemy.attack + "</b></span>"
+                    + "</div></html>";
+            atkRow.setToolTipText(atkTip);
+
+            // 4. Build the HTML Tooltip for Defense (Void Energy)
+            String defTip = "<html><div style='font-family:Arial; padding:5px 8px; background:#1a1a2e; width:200px;'>"
+                    + "<span style='color:#8c78a5;'>🕳️ <b>Void Energy Stacks: " + voidStacks + "</b></span><br>"
+                    + "<hr style='border-color:#444; margin:3px 0;'>"
+                    + "<span style='color:#6699ff;'>Total Bonus: <b>+" + defBonusPercent + "% DEF</b></span><br>"
+                    + "<span style='color:#66ff99;'>Current DEF: <b>" + enemy.defense + "</b></span>"
+                    + "</div></html>";
+            defRow.setToolTipText(defTip);
+        }
+
+        // 5. Add them to the content panel
+        content.add(atkRow);
         content.add(Box.createVerticalStrut(4));
-        content.add(statRow("🛡  Defense", String.valueOf(enemy.defense), new Color(100, 180, 120)));
+        content.add(defRow);
+
         content.add(Box.createVerticalStrut(14));
         content.add(divider());
         content.add(Box.createVerticalStrut(10));
