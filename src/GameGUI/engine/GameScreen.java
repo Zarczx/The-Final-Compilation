@@ -408,7 +408,7 @@ public class GameScreen extends JPanel {
 
         java.util.List<EnemyData> allEnemies = new java.util.ArrayList<>();
         allEnemies.addAll(DataManager.getData().getWorld1Enemies());
-        allEnemies.addAll(DataManager.getData().getWorld1Enemies());
+        allEnemies.addAll(DataManager.getData().getWorld2Enemies());
         allEnemies.addAll(DataManager.getData().getWorld3Enemies());
 
         java.util.List<EnemyData> match = allEnemies.stream()
@@ -448,7 +448,7 @@ public class GameScreen extends JPanel {
                 case "Obsidian Crusher"    -> "/assets/Backgrounds/World3BG21.5.png";
                 case "Soulflayer Gargoyle" -> "/assets/Backgrounds/World3BG27.png";
                 case "Zyrryl"              -> "/assets/Backgrounds/World3BG30.5.png";
-                case "Khai the Gray"   -> "/assets/Backgrounds/NecroBackground.png";
+                case "Khai the Necromancer"   -> "/assets/Backgrounds/NecroBackground.png";
                 default                    -> "/assets/Backgrounds/World3BG9.png";
             };
             battlePanel.setBattleBackground(bg);
