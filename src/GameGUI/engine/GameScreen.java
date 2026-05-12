@@ -408,7 +408,7 @@ public class GameScreen extends JPanel {
 
         java.util.List<EnemyData> allEnemies = new java.util.ArrayList<>();
         allEnemies.addAll(DataManager.getData().getWorld1Enemies());
-        allEnemies.addAll(DataManager.getData().getWorld1Enemies());
+        allEnemies.addAll(DataManager.getData().getWorld2Enemies());
         allEnemies.addAll(DataManager.getData().getWorld3Enemies());
 
         java.util.List<EnemyData> match = allEnemies.stream()
