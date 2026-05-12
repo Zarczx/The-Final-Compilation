@@ -224,13 +224,14 @@ public class GameTester {
             case 5  -> { mainScreen.debugSkipToEnemy(customTestHero, "Carrion Bat",         1);       battleStarted[0] = true; }
             case 6  -> { mainScreen.debugSkipToHollowStag(customTestHero);                            battleStarted[0] = true; }
             case 7  -> { mainScreen.debugSkipToWorld2(customTestHero);                                battleStarted[0] = true; }
+
             case 8  -> { mainScreen.debugSkipToEnemy(customTestHero, "Plague Vermin",       2);       battleStarted[0] = true; }
             case 9  -> { mainScreen.debugSkipToEnemy(customTestHero, "Forsaken Cultist",    2);       battleStarted[0] = true; }
             case 10 -> { mainScreen.debugSkipToEnemy(customTestHero, "Blight Hound",        2);       battleStarted[0] = true; }
             case 11 -> { mainScreen.debugSkipToEnemy(customTestHero, "Ghoul Footman",       2);       battleStarted[0] = true; }
-            case 12 -> { mainScreen.debugSkipToEnemy(customTestHero, "The Black Jailer",        2);       battleStarted[0] = true; }
-            case 13 -> { mainScreen.debugSkipToEnemy(customTestHero, "Luther Von", 2); battleStarted[0] = true; }
-            case 14 -> { mainScreen.debugSkipToWorld3(customTestHero);                                battleStarted[0] = true; }
+            case 12 -> { mainScreen.debugSkipToEnemy(customTestHero, "The Black Jailer",    2);       battleStarted[0] = true; }
+            case 13 -> { mainScreen.debugSkipToEnemy(customTestHero, "Luther Von",          2);       battleStarted[0] = true; }
+            case 14 -> { mainScreen.debugSkipToWorld3(customTestHero);                              battleStarted[0] = true; }
             case 15 -> { mainScreen.debugSkipToEnemy(customTestHero, "Flame Revenant",      3);       battleStarted[0] = true; }
             case 16 -> { mainScreen.debugSkipToEnemy(customTestHero, "Bone Warlock",        3);       battleStarted[0] = true; }
             case 17 -> { mainScreen.debugSkipToEnemy(customTestHero, "Obsidian Crusher",    3);       battleStarted[0] = true; }

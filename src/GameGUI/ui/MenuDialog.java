@@ -5,6 +5,7 @@ import GameGUI.model.entity.data.EnemyData;
 import GameGUI.model.entity.data.HeroDefinition;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -57,8 +58,8 @@ public class MenuDialog extends JDialog {
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setOpaque(false);
 
-        // Boss taunt banner
-        if (isBoss && bossTauntSupplier != null) {
+        // Boss taunt banner - removed from here and moved down
+        /*if (isBoss && bossTauntSupplier != null) {
             String taunt = bossTauntSupplier.get();
             JLabel tauntLabel = new JLabel(
                     "<html><div style='text-align:center; width:300px;'>" + taunt + "</div></html>",
@@ -71,7 +72,7 @@ public class MenuDialog extends JDialog {
                     BorderFactory.createEmptyBorder(8, 12, 8, 12)));
             centerPanel.add(tauntLabel);
             centerPanel.add(Box.createVerticalStrut(12));
-        }
+        }*/
 
         JButton inventoryBtn   = menuBtn("Inventory",   "Inventory",   210);
         JButton playerStatsBtn = menuBtn("Player Stats", "PlayerStats", 210);
@@ -117,6 +118,31 @@ public class MenuDialog extends JDialog {
         centerPanel.add(playerStatsBtn);
         centerPanel.add(Box.createVerticalStrut(12));
         centerPanel.add(enemyStatsBtn);
+
+        // Boss taunt banner - relocated to here
+        if (isBoss && bossTauntSupplier != null) {
+            centerPanel.add(Box.createVerticalStrut(20)); // space below enemy stats
+
+            String taunt = bossTauntSupplier.get();
+            // Reduced width to better fit within the ornate theme, not occupy full space.
+            JLabel tauntLabel = new JLabel(
+                    "<html><div style='text-align:center; width:240px;'>" + taunt + "</div></html>",
+                    SwingConstants.CENTER);
+            tauntLabel.setFont(new Font("Georgia", Font.ITALIC, 13));
+            // Color: Deep crimson from image_0.png
+            tauntLabel.setForeground(new Color(120, 30, 30));
+            tauntLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            // Border: Replace the red border with a bronze etched border.
+            Color darkBronze = new Color(130, 90, 50); // Tarnished bronze
+            Color gold = new Color(160, 140, 90);      // Standard gold
+            tauntLabel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED, gold, darkBronze), ""),
+                    BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+
+            centerPanel.add(tauntLabel);
+            centerPanel.add(Box.createVerticalStrut(20)); // space below the taunt banner
+        }
 
         root.add(centerPanel, BorderLayout.CENTER);
 
@@ -188,14 +214,14 @@ public class MenuDialog extends JDialog {
             btn.setMaximumSize(d);
         }
 
-        // ✅ Hover sound
+
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 utils.SoundUtil.play("HoverSound.wav");
             }
         });
 
-        // ✅ Click sound
+
         btn.addActionListener(e -> utils.SoundUtil.play("SelectSound.wav"));
 
         return btn;
