@@ -236,10 +236,18 @@ public class BattleManager {
     }
 
     private ActionResult resolveSkipTurn(List<String> logs) {
-        hero.heal((int) (hero.getMaxHp() * 0.10));
-        hero.restoreEnergy(15);
+        int hpAmount = (int) (hero.getMaxHp() * 0.10);
+        int energyAmount = 15;
+
+        hero.heal(hpAmount);
+        hero.restoreEnergy(energyAmount);
         hero.setSpecialCooldown(Math.max(0, hero.getSpecialCooldown() - 1));
-        return new ActionResult(hero.name + " rests, recovering HP and Energy.", 0, 0, false, true, null);
+
+        // Formatted log message with specific amounts
+        String logMsg = String.format("%s rests, recovering %d HP and %d Energy.",
+                hero.name, hpAmount, energyAmount);
+
+        return new ActionResult(logMsg, 0, 0, false, true, null);
     }
 
     // =========================================================================

@@ -5356,7 +5356,7 @@ public class BattlePanel extends JPanel {
     // ════════════════════════════════════════════════════════════════════════
     // ★ BATTLE LOGIC
     // ════════════════════════════════════════════════════════════════════════
-    private void onPlayerAction(BattleManager.BattleAction action) {
+    private void onPlayerAction(BattleManager.BattleAction action){
         if (animating || engine.getCurrentTurn() != BattleManager.TurnOwner.PLAYER) return;
         stopTurnTimer();
         animating = true;
@@ -5402,6 +5402,7 @@ public class BattlePanel extends JPanel {
             else if (action == BattleManager.BattleAction.ULTIMATE) playKarlRainAnimation(afterHeroAnim);
             else {
                 if (pResult != null) addLogFromResult(pResult, true);
+                refreshBattleUI();// added ui refresh here for the skip turn button to update the hp and energy bar immediately
                 if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
                     handleVictory();
                     animating = false;
@@ -5411,9 +5412,9 @@ public class BattlePanel extends JPanel {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
-                    refreshBattleUI();
                     playEnemyAttack(() -> {
                         playHeroHurtAnimation(() -> {
+                            refreshBattleUI(); // ako gi move ang refresh here para ma tarong update
                             clearLog();
                             if (er != null) addEnemyAttackLog(er);
                             if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
@@ -5439,6 +5440,7 @@ public class BattlePanel extends JPanel {
             else if (action == BattleManager.BattleAction.ULTIMATE) playSimonMeteorStormAnimation(afterHeroAnim);
             else {
                 if (pResult != null) addLogFromResult(pResult, true);
+                refreshBattleUI();// added ui refresh here for the skip turn button to update the hp and energy bar immediately
                 if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
                     handleVictory();
                     animating = false;
@@ -5451,6 +5453,7 @@ public class BattlePanel extends JPanel {
                     refreshBattleUI();
                     playEnemyAttack(() -> {
                         playHeroHurtAnimation(() -> {
+                            refreshBattleUI(); // ako gi move ang refresh here para ma tarong update
                             clearLog();
                             if (er != null) addEnemyAttackLog(er);
                             if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
@@ -5476,6 +5479,7 @@ public class BattlePanel extends JPanel {
             else if (action == BattleManager.BattleAction.ULTIMATE) playEternalCrossSlashAnimation(afterHeroAnim);
             else {
                 if (pResult != null) addLogFromResult(pResult, true);
+                refreshBattleUI();// added ui refresh here for the skip turn button to update the hp and energy bar immediately
                 if (engine.checkOutcome() == BattleManager.BattleOutcome.VICTORY) {
                     handleVictory();
                     animating = false;
@@ -5488,6 +5492,7 @@ public class BattlePanel extends JPanel {
                     refreshBattleUI();
                     playEnemyAttack(() -> {
                         playHeroHurtAnimation(() -> {
+                            refreshBattleUI(); // ako gi move ang refresh here para ma tarong update
                             clearLog();
                             if (er != null) addEnemyAttackLog(er);
                             if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
