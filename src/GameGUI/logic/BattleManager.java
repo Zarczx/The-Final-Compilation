@@ -88,7 +88,7 @@ public class BattleManager {
         List<String> logs = new ArrayList<>();
 
         hero.getStatusManager().updateStatModifiers(logs);
-        applyMagePassive();
+
 
         if (hero.getStatusManager().checkHardCC(logs)) {
             hero.getStatusManager().updateDoTEffects(logs);
@@ -132,6 +132,7 @@ public class BattleManager {
 
         int totalDamage = 0;
         boolean loggedBladeSwift = false;
+        boolean loggedHuntersInstinct = false;
 
         // Loop for multi-hit skills
         for (int i = 0; i < skill.hitCount; i++) {
@@ -158,6 +159,12 @@ public class BattleManager {
             // Apply Archer Passive per hit
             if ("Archer".equals(heroDef.role) && (double) enemy.getCurrentHp() / enemy.getMaxHp() < 0.3) {
                 hitDamage = (int) (hitDamage * 1.2);
+
+                // Add this block to display the visual feedback
+                if (!loggedHuntersInstinct) {
+                    logs.add("🏹 Hunter's Instinct! +20% Damage applied.");
+                    loggedHuntersInstinct = true;
+                }
             }
 
             totalDamage += hitDamage;
@@ -179,6 +186,7 @@ public class BattleManager {
         }
 
         applySkillStatusEffects(skill.name, logs);
+        applyMagePassive(logs);
 
         String msg = hero.name + " uses " + skill.name + " for " + totalDamage + " damage"
                 + (skill.hitCount > 1 ? " (" + skill.hitCount + " hits)!" : "!");
@@ -363,9 +371,15 @@ public class BattleManager {
         return BattleOutcome.ONGOING;
     }
 
-    private void applyMagePassive() {
+    private void applyMagePassive(List<String> logs) {
         if (heroDef != null && "Mage".equals(heroDef.role)) {
-            hero.restoreEnergy((int) (hero.getMaxEnergy() * 0.05));
+            int restoreAmount = (int) (hero.getMaxEnergy() * 0.05);
+
+            // Only apply and log if the Mage is actually missing mana
+            if (hero.getEnergy() < hero.getMaxEnergy()) {
+                hero.restoreEnergy(restoreAmount);
+                logs.add("🔮 Arcane Flow: Restored " + restoreAmount + " Mana.");
+            }
         }
     }
 
