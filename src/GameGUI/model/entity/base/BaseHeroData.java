@@ -23,8 +23,8 @@ public class BaseHeroData implements HeroData {
                         "Blade Swift - Gains 5% Stamina on Critical Hit.",
                         100, 10, 5, 60, // Note: Set to normal stats if not testing!
                         new SkillDef[]{
-                                new SkillDef("🗡️", "Blade Rush", "A quick, fluid slash that catches the opponent off guard.\n⚡ Effects: 30% chance to apply Strengthen (+20% ATK for 2 turns).", 1.15, 1.35, false, 0, 5, 1),
-                                new SkillDef("⚔️", "Piercing Slash", "A powerful, focused strike aimed to pierce enemy's armor.\n⚡ Effects: 30% chance to Stun (1 turn).", 1.35, 1.55, true, 0, 10, 1),
+                                new SkillDef("🗡️", "Blade Rush", "A quick, fluid slash that catches the opponent off guard.\n⚡ Effects: 30% chance to apply Strengthen (+20% ATK for 2 turns).", 1.35, 1.55, false, 0, 5, 1),
+                                new SkillDef("⚔️", "Piercing Slash", "A powerful, focused strike aimed to pierce enemy's armor.\n⚡ Effects: 30% chance to Stun (1 turn).", 1.15, 1.35, true, 0, 10, 1),
                                 new SkillDef("✝️", "Eternal Cross Slash", "Unleashes a flurry of crossing strikes. Hits 3 times.\n⚡ Effects: Applies Bleed for 2 turns. Grants Fortified (+20% DEF for 2 turns).", 1.15, 1.35, false, 3, 20, 3)
                         },
                         Sword.OLD_BROADSWORD, Armor.LEATHER_GUARD
@@ -33,11 +33,11 @@ public class BaseHeroData implements HeroData {
                         "Karl Clover Dior IV", "Archer", "🏹",
                         "Born in the Forest of Silence, Karl's arrows never miss their mark.",
                         "Hunter's Instinct - +20% damage to enemies below 30% HP.",
-                        80, 12, 3, 80,
+                        80, 12, 3, 20,
                         new SkillDef[]{
                                 new SkillDef("🏹", "Piercing Arrow", "Fires an arrow that slices through armor and flesh alike.\n⚡ Effects: 30% chance to inflict Bleed (2 turns).", 1.00, 1.25, true, 0, 1, 1),
                                 new SkillDef("🎯", "Bullseye", "Steadies breath for a deadly precise shot. Guaranteed Critical Hit.\n⚡ Effects: 30% chance to apply Weakness (-30% DEF for 2 turns).", 1.10, 1.30, false, 0, 3, 1),
-                                new SkillDef("🌩️", "Rain of a Thousand Arrows", "Releases a rapid flurry of arrows. Hits 5 times.\n⚡ Effects: Grants Nimble. Grants Strengthen (+20% ATK for 2 turns).", 1.00, 1.80, false, 3, 5, 5)
+                                new SkillDef("🌩️", "Rain of a Thousand Arrows", "Releases a rapid flurry of arrows. Hits 5 times.\n⚡ Effects: Grants Nimble. Grants Strengthen (+20% ATK for 2 turns).", 1.00, 1.50, false, 3, 5, 5)
                         },
                         Bow.WOODEN_BOW, Armor.LEATHER_GUARD
                 ),
@@ -47,9 +47,9 @@ public class BaseHeroData implements HeroData {
                         "Arcane Flow - Restores +5% of total Mana each turn.",
                         60, 18, 2, 150,
                         new SkillDef[]{
-                                new SkillDef("🔥", "Fireball", "Conjures a blazing orb of fire and hurls it at an enemy.\n⚡ Effects: Applies Burn (1 turn). 30% chance to Weaken (-15% ATK for 2 turns).", 1.25, 1.55, false, 0, 15, 1),
-                                new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.00, 1.25, false, 0, 25, 1),
-                                new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 0.95, 1.69, false, 3, 40, 5)
+                                new SkillDef("🔥", "Fireball", "Conjures a blazing orb of fire and hurls it at an enemy.\n⚡ Effects: Applies Burn (1 turn). 30% chance to Weaken (-15% ATK for 2 turns).", 1.00, 1.25, false, 0, 15, 1),
+                                new SkillDef("❄️", "Ice Prison", "Encases the target in solid ice.\n⚡ Effects: 30% chance to Freeze. If frozen: Apply Fragile (-15% DEF for 1 turn).", 1.05, 1.30, false, 0, 25, 1),
+                                new SkillDef("☄️", "Meteor Storm", "Summons a storm of blazing meteors. Hits 5 times.\n⚡ Effects: Grants Strengthen (+20% ATK for 2 turns). 50% chance to apply Burn (2 turns).", 0.85, 1.45, false, 3, 40, 5)
                         },
                         Staff.WOODEN_STAFF, Armor.LEATHER_GUARD
                 ),

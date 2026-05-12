@@ -12,10 +12,10 @@ public class Sword extends Weapon {
     // ─── Sword Constants ─────────────────────────────────────────────────────
     public static final WeaponDef OLD_BROADSWORD     = new WeaponDef(WeaponType.SWORD, "Old Broadsword",     "⚪", 5,  0,  0, 0, 0, 0, 0, 0, 0);
     public static final WeaponDef IRON_SHORTSWORD    = new WeaponDef(WeaponType.SWORD, "Iron Shortsword",    "🟢", 10, 0,  0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef TWINSTRIKE_BLADE   = new WeaponDef(WeaponType.SWORD, "Twinstrike Blade",   "🔵", 20, 0,  0, 0, 0, 0, 0, 0, 20);
-    public static final WeaponDef LIFEBOND_BLADE     = new WeaponDef(WeaponType.SWORD, "Lifebond Blade",     "🔵", 20, 8,  0, 0, 0, 0, 0, 0, 0);
-    public static final WeaponDef ECLIPSE_GREATSWORD = new WeaponDef(WeaponType.SWORD, "Eclipse Greatsword", "🟣", 35, 12, 0, 0, 0, 0, 0, 0, 25);
-    public static final WeaponDef CELESTIAL_EDGE     = new WeaponDef(WeaponType.SWORD, "Celestial Edge",     "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 30);
+    public static final WeaponDef TWINSTRIKE_BLADE   = new WeaponDef(WeaponType.SWORD, "Twinstrike Blade",   "🔵", 15, 0,  0, 0, 0, 0, 0, 0, 10);
+    public static final WeaponDef LIFEBOND_BLADE     = new WeaponDef(WeaponType.SWORD, "Lifebond Blade",     "🔵", 15, 3,  0, 0, 0, 0, 0, 0, 0);
+    public static final WeaponDef ECLIPSE_GREATSWORD = new WeaponDef(WeaponType.SWORD, "Eclipse Greatsword", "🟣", 30, 5, 0, 0, 0, 0, 0, 0, 25);
+    public static final WeaponDef CELESTIAL_EDGE     = new WeaponDef(WeaponType.SWORD, "Celestial Edge",     "🟡", 50, 15, 0, 0, 0, 0, 0, 0, 35);
 
     // ─── Constructor ─────────────────────────────────────────────────────────
     public Sword(WeaponDef def) {

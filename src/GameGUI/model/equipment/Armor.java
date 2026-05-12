@@ -27,7 +27,7 @@ public class Armor {
             new ArmorDef("Skyforge Plate", "🟣", 0, 40, true, true, 20, 15);
 
     public static final ArmorDef CELESTIAL_BATTLEGEAR =
-            new ArmorDef("Celestial Battlegear", "🟡", 0, 50, true, true, 30, 20);
+            new ArmorDef("Celestial Battlegear", "🟡", 0, 50, true, true, 30, 15);
 
     // ─── Constructor & Methods ──────────────────────────────────────────────
     public Armor(ArmorDef def) {
