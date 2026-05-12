@@ -5386,7 +5386,7 @@ public class BattlePanel extends JPanel {
                     clearLog();
                     if (pResult != null) addLogFromResult(pResult, true);
 
-                    Timer t1 = new Timer(2000, e -> {
+                    Timer t1 = new Timer(2300, e -> {
                         clearLog();
                         executeEnemyTurnSequence();
                     });
@@ -5407,7 +5407,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                     return;
                 }
-                Timer t1 = new Timer(2000, e -> {
+                Timer t1 = new Timer(2300, e -> {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
@@ -5444,7 +5444,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                     return;
                 }
-                Timer t1 = new Timer(2000, e -> {
+                Timer t1 = new Timer(2300, e -> {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
@@ -5481,7 +5481,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                     return;
                 }
-                Timer t1 = new Timer(2000, e -> {
+                Timer t1 = new Timer(2300, e -> {
                     engine.advanceToEnemyTurn();
                     setTurnLabel(false);
                     BattleManager.ActionResult er = engine.enemyTurn();
@@ -5545,7 +5545,7 @@ public class BattlePanel extends JPanel {
             setActionsEnabled(false);
 
             // Wait a moment so the player can read the "Turn Skipped" message, then start enemy turn
-            Timer skipTimer = new Timer(2000, e -> {
+            Timer skipTimer = new Timer(2300, e -> {
                 clearLog();
                 executeEnemyTurnSequence();
             });
@@ -5588,7 +5588,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                 });
             } else {
-                Timer t = new Timer(2000, e -> {
+                Timer t = new Timer(2300, e -> {
                     clearLog();
                     beginPlayerTurnSequence();
                 });
@@ -5690,7 +5690,7 @@ public class BattlePanel extends JPanel {
 
                 savedHeroCombatant = engine.getHero();
 
-                delay(2000, () -> {
+                delay(2300, () -> {
                     clearLog();
                     addLog(
                             getNextApproachMessage(eDef, enemyFightIndex),
@@ -5731,7 +5731,7 @@ public class BattlePanel extends JPanel {
 
                 final String hordeEndPotionDrops = potionDrops;
 
-                delay(2000, () -> {
+                delay(2300, () -> {
                     startPostVictorySequence(eDef, afterSequence, hordeEndPotionDrops);
                 });
             }

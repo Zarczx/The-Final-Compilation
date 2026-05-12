@@ -11,7 +11,7 @@ public class StatusManager {
     private final Combatant owner;
 
     public enum Effect {
-        STUNNED, FROZEN, CONFUSED,
+        STUNNED, FROZEN, CONFUSED, FEARED,
         POISONED, BLEEDING, BURNING,
         WEAKENED, FRAGILE,
         STRENGTHENED, FORTIFIED
@@ -74,6 +74,14 @@ public class StatusManager {
             activeEffects.merge(Effect.CONFUSED, turns, Integer::sum);
             logs.add("🌀 " + owner.name + " is Confused for " + turns + " turn(s)!");
         }
+    }
+
+    public void applyFear(List<String> logs) {
+        activeEffects.put(Effect.FEARED, 1);
+        logs.add("😱 " + owner.name + " is Terrified by Fear and will skip their turn!");
+
+        // Fear also confuses the target for 1 turn
+        applyConfuse(1, logs);
     }
 
     public void applyPoison(int turns, List<String> logs) {
@@ -167,9 +175,16 @@ public class StatusManager {
             activeEffects.remove(Effect.FROZEN);
             return true;
         }
+
         if (has(Effect.STUNNED)) {
             logs.add("💫 " + owner.name + " is Stunned — TURN SKIPPED!");
             activeEffects.remove(Effect.STUNNED);
+            return true;
+        }
+
+        if (has(Effect.FEARED)) {
+            logs.add("😱 " + owner.name + " is paralyzed by Fear — TURN SKIPPED!");
+            activeEffects.remove(Effect.FEARED);
             return true;
         }
         return false;
@@ -273,7 +288,7 @@ public class StatusManager {
             if (entry.getValue() <= 0) continue;
             Effect effect = entry.getKey();
             String icon = switch (effect) {
-                case STUNNED -> "💫"; case FROZEN -> "❄️"; case CONFUSED -> "🌀";
+                case STUNNED -> "💫"; case FROZEN -> "❄️"; case CONFUSED -> "🌀"; case FEARED -> "😱";
                 case POISONED -> "☠️"; case BLEEDING -> "🩸"; case BURNING -> "🔥";
                 case WEAKENED -> "📉"; case FRAGILE -> "🔻";
                 case STRENGTHENED -> "💪"; case FORTIFIED -> "🛡️";

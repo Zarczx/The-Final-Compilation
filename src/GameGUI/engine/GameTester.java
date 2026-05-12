@@ -225,7 +225,7 @@ public class GameTester {
             case 6  -> { mainScreen.debugSkipToHollowStag(customTestHero);                            battleStarted[0] = true; }
             case 7  -> { mainScreen.debugSkipToWorld2(customTestHero);                                battleStarted[0] = true; }
 
-            case 8  -> { mainScreen.debugSkipToEnemy(customTestHero, "Plague Vermin",       2);       battleStarted[0] = true; }
+            case 8  -> { mainScreen.debugSkipToEnemy(customTestHero, "P lague Vermin",       2);       battleStarted[0] = true; }
             case 9  -> { mainScreen.debugSkipToEnemy(customTestHero, "Forsaken Cultist",    2);       battleStarted[0] = true; }
             case 10 -> { mainScreen.debugSkipToEnemy(customTestHero, "Blight Hound",        2);       battleStarted[0] = true; }
             case 11 -> { mainScreen.debugSkipToEnemy(customTestHero, "Ghoul Footman",       2);       battleStarted[0] = true; }
