@@ -21,7 +21,7 @@ public class InventoryDialog extends JDialog {
         this.onUpdate  = onUpdate;
         setUndecorated(true);
         setBackground(new Color(0, 0, 0, 0));
-        setSize(460, 460);
+        setSize(460, 540);
         setLocationRelativeTo(parent);
 
         ImageIcon bgIcon  = loadIcon("assets/InventoryAssets/InventoryGUI.png");
@@ -44,7 +44,7 @@ public class InventoryDialog extends JDialog {
             }
         };
         root.setOpaque(false);
-        root.setBorder(BorderFactory.createEmptyBorder(70, 50, 40, 50));
+        root.setBorder(BorderFactory.createEmptyBorder(110, 50, 40, 40));
         setContentPane(root);
 
         JPanel content = new JPanel();
@@ -60,30 +60,30 @@ public class InventoryDialog extends JDialog {
         shardsLbl.setFont(new Font("Georgia", Font.BOLD, 18));
         shardsLbl.setForeground(new Color(160, 80, 255));
         // Right padding so it doesn't hug the very edge
-        shardsLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 18));
-        shardsRow.add(shardsLbl, BorderLayout.CENTER);
+        shardsLbl.setBorder(BorderFactory.createEmptyBorder(0, 0, 25, 100));
+        shardsRow.add(shardsLbl, BorderLayout.EAST);
         content.add(shardsRow);
-        content.add(Box.createVerticalStrut(20));
+        content.add(Box.createVerticalStrut(42));
 
         // Normal Healing Potion row
         normPotLbl = potionCountLabel("0");
         JButton useNormBtn = consumeBtn();
         useNormBtn.addActionListener(e -> usePotion("normal"));
-        content.add(potionRow(normPotLbl, useNormBtn));
-        content.add(Box.createVerticalStrut(10));
+        content.add(paddedRow(potionRow(normPotLbl, useNormBtn), 10));
+        content.add(Box.createVerticalStrut(42));
 
         // Full Healing Potion row
         fullPotLbl = potionCountLabel("0");
         JButton useFullBtn = consumeBtn();
         useFullBtn.addActionListener(e -> usePotion("full"));
-        content.add(potionRow(fullPotLbl, useFullBtn));
-        content.add(Box.createVerticalStrut(10));
+        content.add(paddedRow(potionRow(fullPotLbl, useFullBtn), -17));
+        content.add(Box.createVerticalStrut(26));
 
         // Energy Potion row
         energyPotLbl = potionCountLabel("0");
         JButton useEnergyBtn = consumeBtn();
         useEnergyBtn.addActionListener(e -> usePotion("energy"));
-        content.add(potionRow(energyPotLbl, useEnergyBtn));
+        content.add(paddedRow(potionRow(energyPotLbl, useEnergyBtn), -3));
 
         root.add(content, BorderLayout.CENTER);
 
@@ -136,8 +136,8 @@ public class InventoryDialog extends JDialog {
     }
 
     private JButton consumeBtn() {
-        ImageIcon normalIcon = loadIconFitWidth("assets/InventoryAssets/Consume.png", 125);
-        ImageIcon hoverIcon  = loadIconFitWidth("assets/InventoryAssets/ConsumeHover.png", 125);
+        ImageIcon normalIcon = loadIconFitWidth("assets/InventoryAssets/Consume.png", 100);
+        ImageIcon hoverIcon  = loadIconFitWidth("assets/InventoryAssets/ConsumeHover.png", 100);
 
         JButton btn = new JButton(normalIcon);
         btn.setRolloverIcon(hoverIcon);
@@ -179,21 +179,21 @@ public class InventoryDialog extends JDialog {
 
         // Invisible spacer — pushes count + button to the right
         gbc.gridx   = 0;
-        gbc.weightx = 1.0;
+        gbc.weightx = 0.3;
         gbc.fill    = GridBagConstraints.HORIZONTAL;
-        gbc.insets  = new Insets(0, 0, 0, 0);
+        gbc.insets  = new Insets(0, 0, 0, 8);
         row.add(Box.createHorizontalGlue(), gbc);
 
         // Red count — right-aligned, fixed width
         gbc.gridx   = 1;
         gbc.weightx = 0;
         gbc.fill    = GridBagConstraints.NONE;
-        gbc.insets  = new Insets(0, 0, 0, 8); // 8px gap between count and button
+        gbc.insets  = new Insets(0, 0, 0, 4); // 8px gap between count and button
         row.add(countLabel, gbc);
 
         // Consume button
         gbc.gridx   = 2;
-        gbc.insets  = new Insets(0, 0, 0, 0);
+        gbc.insets  = new Insets(0, 0, 0, 5);
         row.add(button, gbc);
 
         return row;
@@ -236,5 +236,12 @@ public class InventoryDialog extends JDialog {
         if (f.exists()) return new ImageIcon(f.getAbsolutePath());
         System.err.println("Asset not found: " + path);
         return null;
+    }
+    private JPanel paddedRow(JPanel row, int topPad) {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setOpaque(false);
+        wrapper.setBorder(BorderFactory.createEmptyBorder(topPad, 0, 0, 0));
+        wrapper.add(row, BorderLayout.CENTER);
+        return wrapper;
     }
 }
