@@ -5898,23 +5898,138 @@ public class BattlePanel extends JPanel {
 
         // 2. Second chance: Quiz Revive (Only if not used yet)
         if (!hasUsedQuizRevive) {
-            String ans = JOptionPane.showInputDialog(this, "Q: What keyword is used to inherit a class in Java?");
-            if (ans != null && ans.trim().equalsIgnoreCase("extends")) {
-                hasUsedQuizRevive = true; // Mark as used so it cannot be triggered again
+            // Build custom styled dialog
+            JDialog quizDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), true);
+            quizDialog.setUndecorated(true);
+            quizDialog.setBackground(new Color(0, 0, 0, 0));
+
+            JPanel root = new JPanel(new BorderLayout()) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(58, 38, 18));
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+                    g2.setColor(new Color(160, 120, 50));
+                    g2.setStroke(new BasicStroke(3));
+                    g2.drawRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 16, 16);
+                    // Inner border
+                    g2.setColor(new Color(120, 85, 35));
+                    g2.setStroke(new BasicStroke(1));
+                    g2.drawRoundRect(5, 5, getWidth() - 10, getHeight() - 10, 12, 12);
+                }
+            };
+            root.setOpaque(false);
+            root.setBorder(BorderFactory.createEmptyBorder(24, 30, 24, 30));
+
+            // Title
+            JLabel title = new JLabel("⚠ SECOND CHANCE", SwingConstants.CENTER);
+            title.setFont(new Font("Georgia", Font.BOLD, 18));
+            title.setForeground(new Color(220, 180, 80));
+            title.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+
+            // Question
+            JLabel question = new JLabel("Q: What keyword is used to inherit a class in Java?", SwingConstants.CENTER);
+            question.setFont(new Font("Georgia", Font.ITALIC, 13));
+            question.setForeground(new Color(210, 195, 160));
+            question.setBorder(BorderFactory.createEmptyBorder(0, 0, 14, 0));
+
+            // Input field
+            JTextField answerField = new JTextField();
+            answerField.setFont(new Font("Georgia", Font.PLAIN, 14));
+            answerField.setForeground(new Color(220, 200, 140));
+            answerField.setBackground(new Color(35, 22, 10));
+            answerField.setCaretColor(new Color(220, 180, 80));
+            answerField.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(140, 100, 40), 2),
+                    BorderFactory.createEmptyBorder(6, 10, 6, 10)
+            ));
+            answerField.setPreferredSize(new Dimension(280, 36));
+
+            // Buttons panel
+            JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 0));
+            btnPanel.setOpaque(false);
+            btnPanel.setBorder(BorderFactory.createEmptyBorder(16, 0, 0, 0));
+
+            JButton confirmBtn = new JButton("Confirm");
+            confirmBtn.setFont(new Font("Georgia", Font.BOLD, 13));
+            confirmBtn.setForeground(new Color(220, 180, 80));
+            confirmBtn.setBackground(new Color(50, 32, 12));
+            confirmBtn.setFocusPainted(false);
+            confirmBtn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(160, 120, 50), 2),
+                    BorderFactory.createEmptyBorder(6, 20, 6, 20)
+            ));
+            confirmBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            confirmBtn.setOpaque(true);
+            confirmBtn.setContentAreaFilled(true);
+
+            JButton cancelBtn = new JButton("Give Up");
+            cancelBtn.setFont(new Font("Georgia", Font.BOLD, 13));
+            cancelBtn.setForeground(new Color(180, 80, 80));
+            cancelBtn.setBackground(new Color(50, 32, 12));
+            cancelBtn.setFocusPainted(false);
+            cancelBtn.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(140, 60, 60), 2),
+                    BorderFactory.createEmptyBorder(6, 20, 6, 20)
+            ));
+            cancelBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            cancelBtn.setOpaque(true);
+            cancelBtn.setContentAreaFilled(true);
+
+            btnPanel.add(confirmBtn);
+            btnPanel.add(cancelBtn);
+
+            JPanel center = new JPanel();
+            center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
+            center.setOpaque(false);
+            title.setAlignmentX(CENTER_ALIGNMENT);
+            question.setAlignmentX(CENTER_ALIGNMENT);
+            answerField.setAlignmentX(CENTER_ALIGNMENT);
+            center.add(title);
+            center.add(question);
+            center.add(answerField);
+            center.add(btnPanel);
+
+            root.add(center, BorderLayout.CENTER);
+            quizDialog.setContentPane(root);
+            quizDialog.pack();
+            quizDialog.setSize(420, 220);
+            quizDialog.setLocationRelativeTo(this);
+
+            // Button actions
+            boolean[] answered = {false};
+
+            confirmBtn.addActionListener(e -> {
+                answered[0] = true;
+                quizDialog.dispose();
+            });
+            cancelBtn.addActionListener(e -> {
+                quizDialog.dispose();
+            });
+            answerField.addActionListener(e -> {
+                answered[0] = true;
+                quizDialog.dispose();
+            });
+
+            quizDialog.setVisible(true);
+
+            // After dialog closes
+            if (answered[0] && answerField.getText().trim().equalsIgnoreCase("extends")) {
+                hasUsedQuizRevive = true;
                 currentHero.setCurrentHp(currentHero.getMaxHp() / 2);
                 currentHero.setEnergy(currentHero.getMaxEnergy() / 2);
                 clearLog();
                 addLog("Correct! Revived at 50% HP!", GREEN);
                 refreshBattleUI();
                 setTurnLabel(true);
-                setActionsEnabled(true); startTurnTimer();
+                setActionsEnabled(true);
+                startTurnTimer();
                 animating = false;
             } else {
-                // Failed quiz or cancelled -> True Death
                 showResult(false);
             }
         } else {
-            // 3. Out of chances (No soulstone, quiz already used) -> True Death
             showResult(false);
         }
     }
@@ -6769,7 +6884,12 @@ public class BattlePanel extends JPanel {
             currentHero.recalculateBuffs();
 
             addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(80, 80, 80));
-            showItemDropImage("/assets/ItemAssets/World1ItemDrop.png", onDone);
+            String dropImage = switch(role) {
+                case "Archer" -> "/assets/ItemAssets/World1ItemDrop3.png";
+                case "Mage"   -> "/assets/ItemAssets/World1ItemDrop2.png";
+                default       -> "/assets/ItemAssets/World1ItemDrop.png";  // Swordsman/Kael
+            };
+            showItemDropImage(dropImage, onDone);
         }
         else if (eDef.getName().equals("The Black Jailer")) {
             showBlackJailerLoot(onDone);
@@ -6790,7 +6910,12 @@ public class BattlePanel extends JPanel {
             currentHero.recalculateBuffs();
 
             addLog("🎁 Obtained: " + w.name + " & " + a.name + "!", new Color(160, 120, 20));
-            showItemDropImage("/assets/ItemAssets/World3ItemDrop.png", onDone);
+            String dropImage = switch(role) {
+                case "Archer" -> "/assets/ItemAssets/World3KarlSet.png";
+                case "Mage"   -> "/assets/ItemAssets/World3SimonSet.png";
+                default       -> "/assets/ItemAssets/World3KaelSet.png";
+            };
+            showItemDropImage(dropImage, onDone);
         } else {
             // Not a mini-boss, just proceed
             onDone.run();
@@ -6849,32 +6974,90 @@ public class BattlePanel extends JPanel {
     }
 
     private void showBlackJailerLoot(Runnable onDone) {
+        // Remove all children from lootChoiceOverlay and rebuild it
+        lootChoiceOverlay.removeAll();
+        lootChoiceOverlay.setLayout(null);
+        lootChoiceOverlay.setBackground(new Color(0, 0, 0, 180));
+        lootChoiceOverlay.setOpaque(true);
+
+        // Background image
+        java.net.URL bgUrl = getClass().getResource("/assets/ItemAssets/BlackJailerArmorDrop.png");
+        if (bgUrl != null) {
+            ImageIcon bgIcon = new ImageIcon(bgUrl);
+            Image scaled = bgIcon.getImage().getScaledInstance(700, 560, Image.SCALE_SMOOTH);
+            JLabel bgLabel = new JLabel(new ImageIcon(scaled));
+            bgLabel.setBounds((1280 - 700) / 2, (720 - 560) / 2, 700, 560);
+            lootChoiceOverlay.add(bgLabel);
+
+            // Load TakeItem button icons
+            ImageIcon takeNormal1 = loadLootBtnIcon("/assets/ItemAssets/TakeItem.png", 140, 45);
+            ImageIcon takeHover1  = loadLootBtnIcon("/assets/ItemAssets/TakeItemHover.png", 140, 45);
+            ImageIcon takeNormal2 = loadLootBtnIcon("/assets/ItemAssets/TakeItem.png", 140, 45);
+            ImageIcon takeHover2  = loadLootBtnIcon("/assets/ItemAssets/TakeItemHover.png", 140, 45);
+
+            int overlayX = (1280 - 700) / 2;
+            int overlayY = (720 - 560) / 2;
+
+            // Button 1 — left item (Aegis Mail)
+            JButton btn1 = buildLootImageBtn(takeNormal1, takeHover1);
+            btn1.setBounds(overlayX + 120, overlayY + 475, 140, 45);
+            btn1.addActionListener(e -> {
+                utils.SoundUtil.play("SelectSound2.wav");
+                lootChoiceOverlay.setVisible(false);
+                currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
+                currentHero.recalculateBuffs();
+                addLog("🎁 Obtained: Aegis Mail!", new Color(200, 180, 50));
+                delay(1500, onDone);
+            });
+            lootChoiceOverlay.add(btn1);
+
+            // Button 2 — right item (Vanguard Robe)
+            JButton btn2 = buildLootImageBtn(takeNormal2, takeHover2);
+
+            btn2.setBounds(overlayX + 443, overlayY + 475, 140, 45);
+            btn2.addActionListener(e -> {
+                utils.SoundUtil.play("SelectSound2.wav");
+                lootChoiceOverlay.setVisible(false);
+                currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
+                currentHero.recalculateBuffs();
+                addLog("🎁 Obtained: Vanguard Robe!", new Color(200, 180, 50));
+                delay(1500, onDone);
+            });
+            lootChoiceOverlay.add(btn2);
+
+            // Make bgLabel last so buttons render on top
+            lootChoiceOverlay.setComponentZOrder(btn1, 0);
+            lootChoiceOverlay.setComponentZOrder(btn2, 0);
+            lootChoiceOverlay.setComponentZOrder(bgLabel, lootChoiceOverlay.getComponentCount() - 1);
+        }
+
         lootChoiceOverlay.setVisible(true);
         setComponentZOrder(lootChoiceOverlay, 0);
+        lootChoiceOverlay.revalidate();
+        lootChoiceOverlay.repaint();
+    }
 
-        lootItem1Icon.setText("🛡️");
-        lootItem1Name.setText("Aegis Mail");
-        lootItem1Desc.setText("+25 DEF\nImmune to ATK↓ and DEF↓ debuffs.");
-        for (ActionListener al : lootItem1Btn.getActionListeners()) lootItem1Btn.removeActionListener(al);
-        lootItem1Btn.addActionListener(e -> {
-            lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
-            currentHero.recalculateBuffs();
-            addLog("🎁 Obtained: Aegis Mail!", new Color(80, 80, 80));
-            delay(1500, onDone);
+    private JButton buildLootImageBtn(ImageIcon normal, ImageIcon hover) {
+        JButton btn = new JButton(normal);
+        btn.setRolloverIcon(hover);
+        btn.setRolloverEnabled(true);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setOpaque(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                utils.SoundUtil.play("HoverSound.wav");
+            }
         });
+        return btn;
+    }
 
-        lootItem2Icon.setText("🧥");
-        lootItem2Name.setText("Vanguard Robe");
-        lootItem2Desc.setText("+25 DEF\nImmune to Poison, Burn, and Bleed.");
-        for (ActionListener al : lootItem2Btn.getActionListeners()) lootItem2Btn.removeActionListener(al);
-        lootItem2Btn.addActionListener(e -> {
-            lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
-            currentHero.recalculateBuffs();
-            addLog("🎁 Obtained: Vanguard Robe!", new Color(80, 80, 80));
-            delay(1500, onDone);
-        });
+    private ImageIcon loadLootBtnIcon(String path, int w, int h) {
+        java.net.URL url = getClass().getResource(path);
+        if (url == null) return null;
+        return new ImageIcon(new ImageIcon(url).getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH));
     }
 
     private void showWorld2LootChoice(String role, Runnable onDone) {
@@ -6890,36 +7073,71 @@ public class BattlePanel extends JPanel {
             w2 = new Staff(Staff.FLAMEHEART_STAFF);
         }
 
+        // Pick the correct drop image per hero
+        String dropImagePath = switch(role) {
+            case "Archer" -> "/assets/ItemAssets/LutherKarlDrop.png";
+            case "Mage"   -> "/assets/ItemAssets/LutherSimonDrop.png";
+            default       -> "/assets/ItemAssets/LutherKaelDrop.png";
+        };
+
+        lootChoiceOverlay.removeAll();
+        lootChoiceOverlay.setLayout(null);
+        lootChoiceOverlay.setBackground(new Color(0, 0, 0, 180));
+        lootChoiceOverlay.setOpaque(true);
+
+        java.net.URL bgUrl = getClass().getResource(dropImagePath);
+        if (bgUrl != null) {
+            ImageIcon bgIcon = new ImageIcon(bgUrl);
+            Image scaled = bgIcon.getImage().getScaledInstance(700, 560, Image.SCALE_SMOOTH);
+            JLabel bgLabel = new JLabel(new ImageIcon(scaled));
+            bgLabel.setBounds((1280 - 700) / 2, (720 - 560) / 2, 700, 560);
+            lootChoiceOverlay.add(bgLabel);
+
+            ImageIcon takeNormal1 = loadLootBtnIcon("/assets/ItemAssets/TakeItem.png", 140, 45);
+            ImageIcon takeHover1  = loadLootBtnIcon("/assets/ItemAssets/TakeItemHover.png", 140, 45);
+            ImageIcon takeNormal2 = loadLootBtnIcon("/assets/ItemAssets/TakeItem.png", 140, 45);
+            ImageIcon takeHover2  = loadLootBtnIcon("/assets/ItemAssets/TakeItemHover.png", 140, 45);
+
+            int overlayX = (1280 - 700) / 2;
+            int overlayY = (720 - 560) / 2;
+
+            final Weapon fw1 = w1, fw2 = w2;
+
+            JButton btn1 = buildLootImageBtn(takeNormal1, takeHover1);
+            btn1.setBounds(overlayX + 120, overlayY + 475, 140, 45);
+            btn1.addActionListener(e -> {
+                utils.SoundUtil.play("SelectSound2.wav");
+                lootChoiceOverlay.setVisible(false);
+                currentHero.inventory.setEquippedWeapon(fw1);
+                currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
+                currentHero.recalculateBuffs();
+                addLog("🎁 Chose: " + fw1.name + " & Aegis Mail!", new Color(200, 180, 50));
+                delay(1500, onDone);
+            });
+            lootChoiceOverlay.add(btn1);
+
+            JButton btn2 = buildLootImageBtn(takeNormal2, takeHover2);
+            btn2.setBounds(overlayX + 443, overlayY + 475, 140, 45);
+            btn2.addActionListener(e -> {
+                utils.SoundUtil.play("SelectSound2.wav");
+                lootChoiceOverlay.setVisible(false);
+                currentHero.inventory.setEquippedWeapon(fw2);
+                currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
+                currentHero.recalculateBuffs();
+                addLog("🎁 Chose: " + fw2.name + " & Vanguard Robe!", new Color(200, 180, 50));
+                delay(1500, onDone);
+            });
+            lootChoiceOverlay.add(btn2);
+
+            lootChoiceOverlay.setComponentZOrder(btn1, 0);
+            lootChoiceOverlay.setComponentZOrder(btn2, 0);
+            lootChoiceOverlay.setComponentZOrder(bgLabel, lootChoiceOverlay.getComponentCount() - 1);
+        }
+
         lootChoiceOverlay.setVisible(true);
         setComponentZOrder(lootChoiceOverlay, 0);
-
-        // Setup Item 1 (Offensive Weapon + Aegis Mail)
-        lootItem1Icon.setText("⚔️");
-        lootItem1Name.setText(w1.name);
-        lootItem1Desc.setText("ATK: +" + w1.atkBuff + "\n" + getWeaponEffectDesc(w1) + "\n\nIncludes: Aegis Mail (+25 DEF)");
-        for (ActionListener al : lootItem1Btn.getActionListeners()) lootItem1Btn.removeActionListener(al);
-        lootItem1Btn.addActionListener(e -> {
-            lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedWeapon(w1);
-            currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
-            currentHero.recalculateBuffs();
-            addLog("🎁 Chose: " + w1.name + " & Aegis Mail!", new Color(200, 180, 50));
-            delay(1500, onDone);
-        });
-
-        // Setup Item 2 (Utility Weapon + Vanguard Robe)
-        lootItem2Icon.setText("⚔️");
-        lootItem2Name.setText(w2.name);
-        lootItem2Desc.setText("ATK: +" + w2.atkBuff + "\n" + getWeaponEffectDesc(w2) + "\n\nIncludes: Vanguard Robe (+25 DEF)");
-        for (ActionListener al : lootItem2Btn.getActionListeners()) lootItem2Btn.removeActionListener(al);
-        lootItem2Btn.addActionListener(e -> {
-            lootChoiceOverlay.setVisible(false);
-            currentHero.inventory.setEquippedWeapon(w2);
-            currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
-            currentHero.recalculateBuffs();
-            addLog("🎁 Chose: " + w2.name + " & Vanguard Robe!", new Color(200, 180, 50));
-            delay(1500, onDone);
-        });
+        lootChoiceOverlay.revalidate();
+        lootChoiceOverlay.repaint();
     }
 
     private String getWeaponEffectDesc(Weapon w) {
