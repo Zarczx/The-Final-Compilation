@@ -75,6 +75,7 @@ public class BattleManager {
     public int        getRound()              { return round;              }
     public TurnOwner  getCurrentTurn()        { return currentTurn;        }
     public String     getLastEnemySkillName() { return lastEnemySkillName; }
+    public FinalBossManager getFinalBossManager() { return finalBossManager; }
 
     public boolean canUseSkill1()   { return hero.getEnergy() >= s1Cost; }
     public boolean canUseSkill2()   { return hero.getEnergy() >= s2Cost; }

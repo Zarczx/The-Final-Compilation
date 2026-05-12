@@ -1,5 +1,6 @@
 package GameGUI.ui;
 
+import GameGUI.logic.FinalBossManager;
 import GameGUI.model.entity.base.Combatant;
 import GameGUI.model.entity.data.HeroDefinition;
 import GameGUI.model.entity.data.EnemyData;
@@ -1082,10 +1083,33 @@ public class BattlePanel extends JPanel {
         if (currentHero == null || heroDef == null) return;
         boolean isBoss = isBossOrMiniboss();
         if (!isBoss) pauseTurnTimer();
+
         Window owner = SwingUtilities.getWindowAncestor(this);
         Runnable onFullyClose = !isBoss ? this::resumeTurnTimer : null;
-        MenuDialog menu = new MenuDialog(owner, currentHero, heroDef, currentEnemy, enemyDef,
-                () -> refreshBattleUI(), this::getBossPauseBlockMessage, this::isBossOrMiniboss, onFullyClose);
+
+        int nullStacks = 0;
+        int voidStacks = 0;
+
+        // Check if the enemy is Khai, and if so, grab the stacks!
+        if (enemyDef.getName().equals("Khai the Necromancer")) {
+            // Change 'battleManager' to whatever your variable is actually named in this class
+            FinalBossManager activeBossManager = engine.getFinalBossManager();
+
+            if (activeBossManager != null) {
+                nullStacks = activeBossManager.nullEnergyStacks;
+                voidStacks = activeBossManager.voidEnergyStacks;
+            }
+        }
+
+        MenuDialog menu = new MenuDialog(
+                owner, currentHero, heroDef, currentEnemy, enemyDef,
+                nullStacks, voidStacks,
+                () -> refreshBattleUI(),
+                this::getBossPauseBlockMessage,
+                this::isBossOrMiniboss,
+                onFullyClose
+        );
+
         menu.setVisible(true);
     }
 
@@ -5497,7 +5521,7 @@ public class BattlePanel extends JPanel {
                             if (er != null) addEnemyAttackLog(er);
                             if (engine.checkOutcome() == BattleManager.BattleOutcome.DEFEAT) handleDefeat();
                             else {
-                                Timer t3 = new Timer(800, ev2 -> {
+                                Timer t3 = new Timer(2500, ev2 -> {
                                     clearLog();
                                     setTurnLabel(true);
                                     setActionsEnabled(true); startTurnTimer();
@@ -5593,7 +5617,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                 });
             } else {
-                Timer t = new Timer(3000, e -> {
+                Timer t = new Timer(2500, e -> {
                     clearLog();
                     beginPlayerTurnSequence();
                 });
