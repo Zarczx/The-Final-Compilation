@@ -121,9 +121,6 @@ public class FinalBossManager {
     }
 
     public void executeDarkAscension(List<String> logs) {
-        if (rng.nextDouble() < 0.30) {
-            hero.getStatusManager().applyWeaken((int)(hero.effectiveAttack() * 0.30), 2, logs);
-            logs.add("😱 You are paralyzed by Fear! (ATK Decreased)");
-        }
+
     }
 }

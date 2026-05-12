@@ -410,6 +410,7 @@ public class BattleManager {
             case "Shadow Bolt" -> {
                 if (rng.nextDouble() < 0.30) heroSM.applyWeaken((int)(hero.attack * 0.20), 2, logs);
             }
+
             case "Corpse Explosion" -> {
                 if (rng.nextDouble() < 0.30) heroSM.applyFragile((int)(hero.defense * 0.30), 2, logs);
             }
@@ -455,13 +456,12 @@ public class BattleManager {
                 }
             }
             case "Dark Ascension" -> {
+                // 1. Roll the 30% chance to apply the REAL Fear effect
+                if (rng.nextDouble() < 0.30) {
+                    heroSM.applyFear(logs);
+                }
                 if (finalBossManager != null) {
                     finalBossManager.executeDarkAscension(logs);
-                } else {
-                    if (rng.nextDouble() < 0.30) {
-                        heroSM.applyWeaken((int)(hero.attack * 0.30), 2, logs);
-                        logs.add("😱 You are paralyzed by Fear! (ATK Decreased)");
-                    }
                 }
             }
         }
