@@ -5593,7 +5593,7 @@ public class BattlePanel extends JPanel {
                     animating = false;
                 });
             } else {
-                Timer t = new Timer(2300, e -> {
+                Timer t = new Timer(3000, e -> {
                     clearLog();
                     beginPlayerTurnSequence();
                 });
@@ -6230,12 +6230,17 @@ public class BattlePanel extends JPanel {
         enemyHpBar.setMaximum(currentEnemy.getMaxHp());
         if (heroEnergyBar != null) heroEnergyBar.setMaximum(currentHero.getMaxEnergy());
 
-        heroHpBar.setValue(currentHero.getCurrentHp());
-        heroHpText.setText(currentHero.getCurrentHp() + "/" + currentHero.getMaxHp());
+        // --- FIX: Clamp Hero HP to 0 ---
+        int displayedHeroHp = Math.max(0, currentHero.getCurrentHp());
+        heroHpBar.setValue(displayedHeroHp);
+        heroHpText.setText(displayedHeroHp + "/" + currentHero.getMaxHp());
+
         if (heroLvlLbl != null) heroLvlLbl.setText("Lv." + currentHero.getLevel());
 
-        enemyHpBar.setValue(currentEnemy.getCurrentHp());
-        enemyHpText.setText(currentEnemy.getCurrentHp() + "/" + currentEnemy.getMaxHp());
+        // --- FIX: Clamp Enemy HP to 0 ---
+        int displayedEnemyHp = Math.max(0, currentEnemy.getCurrentHp());
+        enemyHpBar.setValue(displayedEnemyHp);
+        enemyHpText.setText(displayedEnemyHp + "/" + currentEnemy.getMaxHp());
 
         if (heroEnergyBar != null) {
             heroEnergyBar.setValue(currentHero.getEnergy());
@@ -7078,7 +7083,6 @@ public class BattlePanel extends JPanel {
             w2 = new Staff(Staff.FLAMEHEART_STAFF);
         }
 
-        // Pick the correct drop image per hero
         String dropImagePath = switch(role) {
             case "Archer" -> "/assets/ItemAssets/LutherKarlDrop.png";
             case "Mage"   -> "/assets/ItemAssets/LutherSimonDrop.png";
@@ -7108,28 +7112,30 @@ public class BattlePanel extends JPanel {
 
             final Weapon fw1 = w1, fw2 = w2;
 
+            // Button 1 logic (Weapon Only)
             JButton btn1 = buildLootImageBtn(takeNormal1, takeHover1);
             btn1.setBounds(overlayX + 120, overlayY + 475, 140, 45);
             btn1.addActionListener(e -> {
                 utils.SoundUtil.play("SelectSound2.wav");
                 lootChoiceOverlay.setVisible(false);
-                currentHero.inventory.setEquippedWeapon(fw1);
-                currentHero.inventory.setEquippedArmor(new Armor(Armor.AEGIS_MAIL));
+                currentHero.inventory.setEquippedWeapon(fw1); // Equips Weapon
+                // Removed: Armor equip line
                 currentHero.recalculateBuffs();
-                addLog("🎁 Chose: " + fw1.name + " & Aegis Mail!", new Color(200, 180, 50));
+                addLog("🎁 Obtained: " + fw1.name + "!", new Color(200, 180, 50));
                 delay(1500, onDone);
             });
             lootChoiceOverlay.add(btn1);
 
+            // Button 2 logic (Weapon Only)
             JButton btn2 = buildLootImageBtn(takeNormal2, takeHover2);
             btn2.setBounds(overlayX + 443, overlayY + 475, 140, 45);
             btn2.addActionListener(e -> {
                 utils.SoundUtil.play("SelectSound2.wav");
                 lootChoiceOverlay.setVisible(false);
-                currentHero.inventory.setEquippedWeapon(fw2);
-                currentHero.inventory.setEquippedArmor(new Armor(Armor.VANGUARD_ROBE));
+                currentHero.inventory.setEquippedWeapon(fw2); // Equips Weapon
+                // Removed: Armor equip line
                 currentHero.recalculateBuffs();
-                addLog("🎁 Chose: " + fw2.name + " & Vanguard Robe!", new Color(200, 180, 50));
+                addLog("🎁 Obtained: " + fw2.name + "!", new Color(200, 180, 50));
                 delay(1500, onDone);
             });
             lootChoiceOverlay.add(btn2);
