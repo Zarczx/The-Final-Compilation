@@ -3,6 +3,6 @@ import GameGUI.model.entity.base.BaseEnemy;
 
 public class ShadeSprite extends BaseEnemy {
     public ShadeSprite() {
-        super("Shade Sprite",     "Lost Soul",    "S",  80,  37, 10, 1, 2, 170, 0.85, 1.05);
+        super("Shade Sprite",     "Lost Soul",    "S",  100,  50, 13, 1, 2, 170, 0.85, 1.05);
     }
 }

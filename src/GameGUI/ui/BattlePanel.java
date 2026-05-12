@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import utils.RandomUtil;
 
 public class BattlePanel extends JPanel {
 
@@ -5650,7 +5651,16 @@ public class BattlePanel extends JPanel {
                     eDef.getName().equals("Luther Von") ||
                     eDef.getName().equals("The Tower Warden");
 
-            int individualShards = isBoss ? 10 : 1;
+            int individualShards;
+            if (isBoss) {
+                individualShards = 10;
+            } else if (enemyDef.getWorldLevel() >= 3) {
+                // No shard drops in World 3+ (shop already passed)
+                individualShards = 0;
+            } else {
+                // Random 1-3 shards for regular enemies in World 1 and 2
+                individualShards = RandomUtil.range(1, 3);
+            }
 
             // 2. Apply Rewards Immediately
             boolean leveledUp = ProgressionService.gainExp(currentHero, individualXp, enemyDef.getWorldLevel());
