@@ -221,7 +221,26 @@ public class DashboardPanel extends JPanel {
         ));
 
         JButton btn = new RoundButton("← Return to Menu");
-        btn.addActionListener(e -> onMainMenu.run());
+        btn.addActionListener(e -> {
+            // Get the main window (JFrame) hosting this panel
+            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(DashboardPanel.this);
+
+            // Clear the current screen (Dashboard)
+            topFrame.getContentPane().removeAll();
+
+            // Add the TitleScreen back
+            topFrame.getContentPane().add(new GameGUI.TitleScreen());
+
+            // Refresh the frame to show the new screen
+            topFrame.revalidate();
+            topFrame.repaint();
+
+            // Optional: You can still call onMainMenu.run() here if you need
+            // it to clean up other game states before switching screens.
+            if (onMainMenu != null) {
+                onMainMenu.run();
+            }
+        });
         footer.add(btn, BorderLayout.WEST);
 
         JLabel hint = new JLabel("Updated live on completion");
