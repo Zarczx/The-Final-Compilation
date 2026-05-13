@@ -18,10 +18,12 @@ import java.io.File;
 /**
  * PrefiEncounterGUI — redesigned to match PlayerStatsDialog's
  * dark-brown / gold aesthetic, using Pixelari as the display font.
+ * All layout alignment fixed: consistent CENTER_ALIGNMENT throughout
+ * and scrollWrap forces content to fill the full viewport width.
  */
 public class PrefiEncounterGUI extends JPanel {
 
-    // ── Palette (mirrors PlayerStatsDialog) ───────────────────────────────────
+    // ── Palette ───────────────────────────────────────────────────────────────
     private static final Color C_BG           = new Color(15,  15,  15);
     private static final Color C_PANEL        = new Color(25,  25,  25);
     private static final Color C_CARD         = new Color(30,  25,  15);
@@ -140,7 +142,6 @@ public class PrefiEncounterGUI extends JPanel {
         setBackground(C_BG);
         setPreferredSize(new Dimension(620, 700));
 
-        // Outer gold border frame (same style as PlayerStatsDialog root)
         JPanel frame = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g;
@@ -221,10 +222,11 @@ public class PrefiEncounterGUI extends JPanel {
                 "◆   Success grants a legendary artifact"
         };
         for (String r : rules) {
-            JLabel l = new JLabel(r);
+            JLabel l = new JLabel(r, SwingConstants.CENTER);
             l.setFont(PIXEL_12);
             l.setForeground(C_TEXT_DIM);
-            l.setAlignmentX(Component.LEFT_ALIGNMENT);
+            l.setAlignmentX(Component.CENTER_ALIGNMENT);
+            l.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
             card.add(l);
             card.add(vGap(4));
         }
@@ -242,34 +244,36 @@ public class PrefiEncounterGUI extends JPanel {
         content.add(screenTitle("OOP TRIAL"));
         content.add(vGap(12));
 
-        // counter + pips row
-        qCounterLabel = new JLabel("Question 1 of 4");
+        // counter label — centered
+        qCounterLabel = new JLabel("Question 1 of 4", SwingConstants.CENTER);
         qCounterLabel.setFont(PIXEL_11);
         qCounterLabel.setForeground(C_TEXT_DIM);
-        qCounterLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        qCounterLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        qCounterLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 18));
         content.add(qCounterLabel);
         content.add(vGap(6));
 
+        // progress pips — centered
         qPipsPanel = new JPanel(new GridLayout(1, Q_TEXT.length, 6, 0));
         qPipsPanel.setBackground(C_BG);
         qPipsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 6));
-        qPipsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        qPipsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         content.add(qPipsPanel);
         content.add(vGap(8));
 
-        // timer row
+        // timer row — centered
         JPanel timerRow = new JPanel(new BorderLayout());
         timerRow.setBackground(C_BG);
-        timerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        timerRow.setAlignmentX(Component.CENTER_ALIGNMENT);
         timerRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 18));
-        timerLabel = new JLabel("15s remaining");
+        timerLabel = new JLabel("15s remaining", SwingConstants.RIGHT);
         timerLabel.setFont(PIXEL_10);
         timerLabel.setForeground(C_TEXT_DIM);
         timerRow.add(timerLabel, BorderLayout.EAST);
         content.add(timerRow);
         content.add(vGap(4));
 
-        // timer bar
+        // timer bar — centered
         timerBarPanel = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -286,12 +290,14 @@ public class PrefiEncounterGUI extends JPanel {
         timerBarPanel.setBackground(C_BG);
         timerBarPanel.setPreferredSize(new Dimension(0, 5));
         timerBarPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 5));
-        timerBarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        timerBarPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         content.add(timerBarPanel);
         content.add(vGap(14));
 
-        // question card
+        // question card — centered
         JPanel qCard = goldCard();
+        qCard.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+
         qTextArea = new JTextArea();
         qTextArea.setFont(PIXEL_12);
         qTextArea.setForeground(C_TEXT);
@@ -300,22 +306,23 @@ public class PrefiEncounterGUI extends JPanel {
         qTextArea.setLineWrap(true);
         qTextArea.setWrapStyleWord(true);
         qTextArea.setOpaque(false);
-        qTextArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        qTextArea.setAlignmentX(Component.CENTER_ALIGNMENT);
         qCard.add(qTextArea);
         qCard.add(vGap(12));
 
         qOptionsPanel = new JPanel();
         qOptionsPanel.setLayout(new BoxLayout(qOptionsPanel, BoxLayout.Y_AXIS));
         qOptionsPanel.setBackground(new Color(30, 25, 15));
-        qOptionsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        qOptionsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         qCard.add(qOptionsPanel);
         content.add(qCard);
         content.add(vGap(10));
 
+        // feedback panel — centered
         qFeedbackPanel = new JPanel();
         qFeedbackPanel.setLayout(new BoxLayout(qFeedbackPanel, BoxLayout.Y_AXIS));
         qFeedbackPanel.setBackground(C_BG);
-        qFeedbackPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        qFeedbackPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         content.add(qFeedbackPanel);
 
         return scrollWrap(content);
@@ -400,10 +407,10 @@ public class PrefiEncounterGUI extends JPanel {
         content.add(goldDivider());
         content.add(vGap(14));
 
-        // flip cards
+        // flip cards row — centered
         JPanel flipRow = new JPanel(new GridLayout(1, 2, 12, 0));
         flipRow.setBackground(C_BG);
-        flipRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        flipRow.setAlignmentX(Component.CENTER_ALIGNMENT);
         flipRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 210));
         flipPaneWeapon = buildFlipCard(true);
         flipPaneArmor  = buildFlipCard(false);
@@ -411,21 +418,22 @@ public class PrefiEncounterGUI extends JPanel {
         flipRow.add(flipPaneArmor);
         content.add(flipRow);
 
-        // choice area
+        // choice area — centered
         rewardChoiceArea = new JPanel();
         rewardChoiceArea.setLayout(new BoxLayout(rewardChoiceArea, BoxLayout.Y_AXIS));
         rewardChoiceArea.setBackground(C_BG);
-        rewardChoiceArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rewardChoiceArea.setAlignmentX(Component.CENTER_ALIGNMENT);
         rewardChoiceArea.setVisible(false);
 
         JLabel choiceHint = new JLabel("Choose wisely — the other shall be destroyed", SwingConstants.CENTER);
         choiceHint.setFont(PIXEL_11);
         choiceHint.setForeground(C_TEXT_DIM);
         choiceHint.setAlignmentX(Component.CENTER_ALIGNMENT);
+        choiceHint.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
         JPanel choiceBtns = new JPanel(new GridLayout(1, 2, 10, 0));
         choiceBtns.setBackground(C_BG);
-        choiceBtns.setAlignmentX(Component.LEFT_ALIGNMENT);
+        choiceBtns.setAlignmentX(Component.CENTER_ALIGNMENT);
         choiceBtns.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         JButton btnWeapon = primaryBtn("CLAIM WEAPON", e -> chooseArtifact(true));
         JButton btnArmor  = blueBtn("CLAIM ARMOR",  e -> chooseArtifact(false));
@@ -433,6 +441,8 @@ public class PrefiEncounterGUI extends JPanel {
         choiceBtns.add(btnArmor);
 
         JButton btnDecline = ghostBtn("Walk Away", e -> declineReward());
+        btnDecline.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnDecline.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
 
         rewardChoiceArea.add(vGap(14));
         rewardChoiceArea.add(goldDivider());
@@ -443,18 +453,18 @@ public class PrefiEncounterGUI extends JPanel {
         rewardChoiceArea.add(vGap(6));
         rewardChoiceArea.add(btnDecline);
 
-        // confirm area
+        // confirm area — centered
         rewardConfirmArea = new JPanel();
         rewardConfirmArea.setLayout(new BoxLayout(rewardConfirmArea, BoxLayout.Y_AXIS));
         rewardConfirmArea.setBackground(C_BG);
-        rewardConfirmArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rewardConfirmArea.setAlignmentX(Component.CENTER_ALIGNMENT);
         rewardConfirmArea.setVisible(false);
 
         JPanel confirmCard = goldCard();
         rewardConfirmDesc = new JLabel("<html></html>");
         rewardConfirmDesc.setFont(PIXEL_11);
         rewardConfirmDesc.setForeground(C_TEXT);
-        rewardConfirmDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rewardConfirmDesc.setAlignmentX(Component.CENTER_ALIGNMENT);
         confirmCard.add(rewardConfirmDesc);
 
         JButton btnProceed = primaryBtn("PROCEED TO FINAL BOSS", e -> finish());
@@ -607,9 +617,9 @@ public class PrefiEncounterGUI extends JPanel {
         qPipsPanel.removeAll();
         for (int i = 0; i < Q_TEXT.length; i++) {
             final Color pipColor;
-            if      (i < currentQuestion) pipColor = C_GOLD;
-            else if (i == currentQuestion) pipColor = C_GOLD_BRIGHT;
-            else                           pipColor = new Color(40, 35, 20);
+            if      (i < currentQuestion)  pipColor = C_GOLD;
+            else if (i == currentQuestion)  pipColor = C_GOLD_BRIGHT;
+            else                            pipColor = new Color(40, 35, 20);
             JPanel pip = new JPanel() {
                 @Override protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g;
@@ -669,8 +679,8 @@ public class PrefiEncounterGUI extends JPanel {
 
     private void selectAnswer(int selectedIdx, JButton[] optBtns, int total) {
         stopCountdown();
-        int correct   = Q_CORRECT[currentQuestion];
-        boolean isOk  = selectedIdx == correct;
+        int correct  = Q_CORRECT[currentQuestion];
+        boolean isOk = selectedIdx == correct;
 
         for (int i = 0; i < total; i++) {
             optBtns[i].setEnabled(false);
@@ -711,7 +721,7 @@ public class PrefiEncounterGUI extends JPanel {
         fb.setLayout(new BorderLayout());
         fb.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
         fb.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
-        fb.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fb.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel lbl = new JLabel(message, SwingConstants.CENTER);
         lbl.setFont(PIXEL_11);
@@ -838,7 +848,6 @@ public class PrefiEncounterGUI extends JPanel {
     //  WIDGET HELPERS
     // =========================================================================
 
-    /** Option button — numbered badge + label, gold border card style */
     private JButton makeOptionBtn(int number, String text, boolean wrong, boolean correct, boolean dim) {
         Color bg  = correct ? new Color(10, 25, 10) : wrong ? new Color(28, 8, 8) : C_CARD;
         Color bdr = correct ? C_GREEN_BDR           : wrong ? C_RED_BDR           : C_GOLD_BORDER;
@@ -856,7 +865,7 @@ public class PrefiEncounterGUI extends JPanel {
         b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        b.setAlignmentX(Component.LEFT_ALIGNMENT);
+        b.setAlignmentX(Component.CENTER_ALIGNMENT);
         b.setOpaque(true);
 
         JLabel badge = new JLabel(String.valueOf(number), SwingConstants.CENTER);
@@ -901,6 +910,7 @@ public class PrefiEncounterGUI extends JPanel {
 
     // ── Layout helpers ────────────────────────────────────────────────────────
 
+    /** Vertical box panel; all children must use CENTER_ALIGNMENT. */
     private JPanel vBox() {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
@@ -935,12 +945,15 @@ public class PrefiEncounterGUI extends JPanel {
         return l;
     }
 
-    /** A bordered card panel matching PlayerStatsDialog's skillCard look */
+    /**
+     * A rounded gold-bordered card.
+     * Always CENTER_ALIGNMENT so it sits correctly in a vBox.
+     */
     private JPanel goldCard() {
         JPanel card = new RoundedPanel(10, C_CARD, C_GOLD_BORDER);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
-        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setAlignmentX(Component.CENTER_ALIGNMENT);
         return card;
     }
 
@@ -949,7 +962,7 @@ public class PrefiEncounterGUI extends JPanel {
         JLabel l = new JLabel("<html><body style='width:440px'><i>" + text + "</i></body></html>");
         l.setFont(PIXEL_11);
         l.setForeground(C_TEXT_DIM);
-        l.setAlignmentX(Component.LEFT_ALIGNMENT);
+        l.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(l);
         return card;
     }
@@ -958,7 +971,7 @@ public class PrefiEncounterGUI extends JPanel {
         JPanel p = new RoundedPanel(10, bg, border);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.setBorder(BorderFactory.createEmptyBorder(16, 18, 16, 18));
-        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+        p.setAlignmentX(Component.CENTER_ALIGNMENT);
         return p;
     }
 
@@ -978,6 +991,7 @@ public class PrefiEncounterGUI extends JPanel {
         return l;
     }
 
+    /** A 1-px horizontal gold rule, CENTER_ALIGNMENT so it stretches full width. */
     private JPanel goldDivider() {
         JPanel r = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -988,7 +1002,7 @@ public class PrefiEncounterGUI extends JPanel {
         r.setBackground(C_BG);
         r.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         r.setPreferredSize(new Dimension(0, 1));
-        r.setAlignmentX(Component.LEFT_ALIGNMENT);
+        r.setAlignmentX(Component.CENTER_ALIGNMENT);
         return r;
     }
 
@@ -1000,10 +1014,9 @@ public class PrefiEncounterGUI extends JPanel {
         return l;
     }
 
-    /** Primary gold button (same hover as PlayerStatsDialog close btn) */
     private JButton primaryBtn(String text, ActionListener al) {
         JButton b = makeStyledBtn(text, C_GOLD_BRIGHT, C_CARD, C_GOLD_BORDER2);
-        b.setAlignmentX(Component.LEFT_ALIGNMENT);
+        b.setAlignmentX(Component.CENTER_ALIGNMENT);
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         b.addActionListener(al);
         return b;
@@ -1011,7 +1024,7 @@ public class PrefiEncounterGUI extends JPanel {
 
     private JButton blueBtn(String text, ActionListener al) {
         JButton b = makeStyledBtn(text, C_BLUE, C_CARD, C_BLUE_BDR);
-        b.setAlignmentX(Component.LEFT_ALIGNMENT);
+        b.setAlignmentX(Component.CENTER_ALIGNMENT);
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         b.addActionListener(al);
         return b;
@@ -1020,7 +1033,7 @@ public class PrefiEncounterGUI extends JPanel {
     private JButton ghostBtn(String text, ActionListener al) {
         JButton b = makeStyledBtn(text, C_TEXT_DIM, C_BG, C_GOLD_BORDER);
         b.setFont(PIXEL_11);
-        b.setAlignmentX(Component.LEFT_ALIGNMENT);
+        b.setAlignmentX(Component.CENTER_ALIGNMENT);
         b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         b.addActionListener(al);
         return b;
@@ -1055,8 +1068,20 @@ public class PrefiEncounterGUI extends JPanel {
         return b;
     }
 
+    /**
+     * Wraps a vBox content panel in a JScrollPane that forces the content to
+     * fill the full viewport width.  Without this wrapper, BoxLayout panels
+     * collapse to their preferred width and drift to the left of the viewport.
+     */
     private JScrollPane scrollWrap(JPanel content) {
-        JScrollPane scroll = new JScrollPane(content);
+        // BorderLayout wrapper makes the vBox content stretch to viewport width.
+        // NORTH placement keeps the natural top-to-bottom stacking and lets the
+        // scroll pane grow vertically when needed.
+        JPanel fill = new JPanel(new BorderLayout());
+        fill.setBackground(C_BG);
+        fill.add(content, BorderLayout.NORTH);
+
+        JScrollPane scroll = new JScrollPane(fill);
         scroll.setBorder(null);
         scroll.setBackground(C_BG);
         scroll.getViewport().setBackground(C_BG);
